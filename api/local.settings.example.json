@@ -4,7 +4,12 @@
     "AzureWebJobsStorage": "",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "GITHUB_USER": "Haval-Jalal",
-    "GITHUB_TOKEN": "<optional: fine-grained token with public repo read, raises the rate limit>"
+    "GITHUB_TOKEN": "<optional: fine-grained token with public repo read, raises the rate limit>",
+    "ANTHROPIC_API_KEY": "<required for Build Lab + chat: key from console.anthropic.com>",
+    "AGENT_DAILY_CAP_USD": "3",
+    "AGENT_BUILD_PER_HOUR": "3",
+    "AGENT_CHAT_PER_HOUR": "20",
+    "ANALYTICS_SALT": "<any random string>"
   },
   "Host": {
     "CORS": "*"

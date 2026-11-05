@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { BarChart3, FileText, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { BarChart3, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
 import type { JourneyStep, SiteContent } from "../data/content";
 
-type Tab = "overview" | "content" | "settings";
+type Tab = "overview" | "content" | "leads" | "settings";
 
 export default function Admin() {
   const auth = useAuth();
@@ -30,6 +30,7 @@ export default function Admin() {
   const tabs: { key: Tab; label: string; icon: typeof BarChart3 }[] = [
     { key: "overview", label: "Översikt", icon: BarChart3 },
     { key: "content", label: "Innehåll", icon: FileText },
+    { key: "leads", label: "Leads", icon: Inbox },
     { key: "settings", label: "Inställningar", icon: SettingsIcon },
   ];
 
@@ -68,6 +69,7 @@ export default function Admin() {
         <main className="p-6 md:p-10">
           {tab === "overview" && <Overview />}
           {tab === "content" && <ContentEditor />}
+          {tab === "leads" && <Leads />}
           {tab === "settings" && <SettingsEditor />}
         </main>
       </div>
@@ -197,6 +199,60 @@ function TopList({ title, items, empty = "Inget ännu" }: { title: string; items
         </ul>
       )}
     </section>
+  );
+}
+
+/* ---------- Leads ---------- */
+
+type Lead = { id: string; ts: string; name: string; email: string; message: string; idea?: string; plan?: string; source: string };
+
+function Leads() {
+  const [data, setData] = useState<{ leads: Lead[]; spentTodayUsd: number; dailyCapUsd: number } | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  useEffect(() => {
+    fetch("/api/manage/leads")
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => setData({ leads: [], spentTodayUsd: 0, dailyCapUsd: 0 }));
+  }, []);
+  if (!data) return <p className="text-fg-muted">Hämtar…</p>;
+  return (
+    <div className="max-w-3xl space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
+          <p className="text-sm text-fg-muted">Idéer som besökare skickat från Build Lab.</p>
+        </div>
+        <div className="panel-tile rounded-xl px-4 py-2 text-xs text-fg-muted">
+          AI-kostnad idag: <span className="font-mono text-fg">{data.spentTodayUsd.toFixed(3)} USD</span> av {data.dailyCapUsd} USD
+        </div>
+      </header>
+      {data.leads.length === 0 ? (
+        <p className="text-sm text-fg-faint">Inga leads ännu.</p>
+      ) : (
+        <ul className="space-y-2">
+          {data.leads.map((l) => (
+            <li key={l.id} className="panel-tile rounded-xl">
+              <button onClick={() => setOpen(open === l.id ? null : l.id)} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
+                <span>
+                  <span className="text-sm font-medium text-fg">{l.name || "(utan namn)"}</span>
+                  <span className="ml-2 text-xs text-fg-muted">{l.email}</span>
+                </span>
+                <span className="font-mono text-[11px] text-fg-faint">{new Date(l.ts).toLocaleString("sv-SE")}</span>
+              </button>
+              {open === l.id && (
+                <div className="space-y-3 border-t border-white/5 px-4 py-3 text-sm">
+                  {l.message && <p className="text-fg">{l.message}</p>}
+                  {l.idea && <p className="text-fg-muted"><span className="text-fg-faint">Idé:</span> {l.idea}</p>}
+                  {l.plan && <pre className="whitespace-pre-wrap font-sans text-xs text-fg-muted">{l.plan}</pre>}
+                  <a href={`mailto:${l.email}`} className="inline-block rounded-full border border-white/10 px-3 py-1.5 text-xs text-fg hover:border-ember-400/50">Svara via e-post</a>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

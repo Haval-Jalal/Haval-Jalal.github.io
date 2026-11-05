@@ -8,6 +8,7 @@
     <RootNamespace>HavalApi</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Anthropic" Version="13.6.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.*" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.*" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.*" />

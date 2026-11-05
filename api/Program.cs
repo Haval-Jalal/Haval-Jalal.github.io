@@ -1,3 +1,5 @@
+using Anthropic;
+using HavalApi.Agent;
 using HavalApi.Data;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,5 +29,12 @@ var dataDir = Environment.GetEnvironmentVariable("DATA_DIR")
               ?? Path.Combine(AppContext.BaseDirectory, "..", "..", ".data");
 builder.Services.AddSingleton<IContentStore>(new JsonFileContentStore(dataDir));
 builder.Services.AddSingleton<IAnalyticsStore>(new JsonFileAnalyticsStore(dataDir));
+builder.Services.AddSingleton<ILeadStore>(new JsonFileLeadStore(dataDir));
+
+// AI features. AnthropicClient reads ANTHROPIC_API_KEY from the environment (local.settings.json
+// locally, app settings in Azure); AgentFunction answers 503 when it is missing.
+builder.Services.AddSingleton(new AnthropicClient());
+builder.Services.AddSingleton<AgentGuard>();
+builder.Services.AddSingleton<AgentService>();
 
 builder.Build().Run();
