@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
-import { projects } from "../data/content";
+import { useSiteContent } from "../lib/content";
 import { relativeTime, useGitHub, type GitHubActivity } from "../lib/github";
 
 type Props = {
@@ -21,13 +21,15 @@ type Props = {
 };
 
 // Shown while the API loads or if it is unreachable, so the panel always has a shape.
-const DEMO: GitHubActivity = {
-  user: "Haval-Jalal",
-  repos: projects.map((p) => ({ name: p.title, description: p.summary, url: p.repo, language: null, stars: 0, pushedAt: null })),
-  weeklyCommits: [3, 5, 2, 8, 6, 4, 9, 7, 11, 6, 10, 12],
-  commits90d: 83,
-  updatedAt: new Date().toISOString(),
-};
+function demoActivity(projects: { title: string; summary: string; repo: string }[]): GitHubActivity {
+  return {
+    user: "Haval-Jalal",
+    repos: projects.map((p) => ({ name: p.title, description: p.summary, url: p.repo, language: null, stars: 0, pushedAt: null })),
+    weeklyCommits: [3, 5, 2, 8, 6, 4, 9, 7, 11, 6, 10, 12],
+    commits90d: 83,
+    updatedAt: new Date().toISOString(),
+  };
+}
 
 // The floating "dashboard" from the hero. Looks like a SaaS admin, but the data is Haval's career.
 export default function HavalOS({ mouseX, mouseY }: Props) {
@@ -36,7 +38,8 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
   const rotateX = useTransform(mouseY, [-1, 1], [3, -3]);
   const rotateY = useTransform(mouseX, [-1, 1], [-4, 4]);
   const gh = useGitHub();
-  const data = gh.status === "ok" ? gh.data : DEMO;
+  const { projects } = useSiteContent().content;
+  const data = gh.status === "ok" ? gh.data : demoActivity(projects);
   const live = gh.status === "ok";
 
   return (

@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import { Volume2, VolumeX } from "lucide-react";
-import { nav } from "../data/content";
+import { useSiteContent } from "../lib/content";
 
 type Props = {
   soundOn: boolean;
@@ -9,7 +9,7 @@ type Props = {
 };
 
 export default function Nav({ soundOn, onToggleSound, dark = false }: Props) {
-  const links = nav;
+  const links = useSiteContent().content.nav;
   // Transparent over the hero, frosted once content starts scrolling underneath.
   const { scrollY } = useScroll();
   const barOpacity = useTransform(scrollY, [40, 160], [0, 1]);

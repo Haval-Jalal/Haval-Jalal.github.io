@@ -1,9 +1,10 @@
 import { motion } from "motion/react";
 import { ArrowUpRight, Github } from "lucide-react";
 import Section, { reveal, stagger } from "./Section";
-import { projects } from "../data/content";
+import { useSiteContent } from "../lib/content";
 
 export default function Projects() {
+  const projects = useSiteContent().content.projects.filter((p) => !p.hidden);
   return (
     <Section
       id="projekt"

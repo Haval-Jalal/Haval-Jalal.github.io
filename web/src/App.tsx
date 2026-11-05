@@ -10,7 +10,7 @@ import Stack from "./components/Stack";
 import BuildLab from "./components/BuildLab";
 import Contact from "./components/Contact";
 import { BACKGROUNDS, currentBackground, type BackgroundKey } from "./components/backgrounds";
-import { profile } from "./data/content";
+import { useSiteContent } from "./lib/content";
 import { attachGlobalSfx, setSoundEnabled } from "./lib/sound";
 import { trackView } from "./lib/beacon";
 
@@ -23,6 +23,8 @@ const ACCENT: Record<string, string> = {
 };
 
 export default function App() {
+  const { content } = useSiteContent();
+  const { profile } = content;
   const [soundOn, setSoundOn] = useState(false);
   const [bgKey] = useState<BackgroundKey>(currentBackground);
   const bg = BACKGROUNDS[bgKey];

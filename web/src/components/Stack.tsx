@@ -1,8 +1,9 @@
 import { motion } from "motion/react";
 import Section, { reveal, stagger } from "./Section";
-import { skills } from "../data/content";
+import { useSiteContent } from "../lib/content";
 
 export default function Stack() {
+  const { skills } = useSiteContent().content;
   return (
     <Section
       id="stack"

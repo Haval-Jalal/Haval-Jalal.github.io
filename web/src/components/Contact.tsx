@@ -1,9 +1,10 @@
 import { motion } from "motion/react";
 import { ArrowUpRight, FileDown, Github, Linkedin, Mail } from "lucide-react";
 import { reveal, stagger } from "./Section";
-import { profile } from "../data/content";
+import { useSiteContent } from "../lib/content";
 
 export default function Contact() {
+  const { profile } = useSiteContent().content;
   const links = [
     { icon: Github, label: "GitHub", href: profile.links.github, sub: "Haval-Jalal" },
     { icon: Linkedin, label: "LinkedIn", href: profile.links.linkedin || "#", sub: "Kommer" },

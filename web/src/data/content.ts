@@ -151,3 +151,34 @@ export const nav = [
   { label: "Build Lab", href: "#build-lab" },
   { label: "Kontakt", href: "#kontakt" },
 ];
+
+export type SiteSettings = {
+  background: "terrain" | "aurora" | "network" | "dunes";
+  soundDefault: boolean;
+  openForWork: boolean;
+  sectionOrder: string[] | null;
+};
+
+// The full document served by /api/content and edited in the admin panel.
+// Shape mirrors api/Data/SiteContent.cs; this bundled copy is the offline fallback.
+export type SiteContent = {
+  profile: typeof profile;
+  projects: (Project & { hidden?: boolean })[];
+  journey: JourneyStep[];
+  education: { school: string; program: string }[];
+  skills: SkillGroup[];
+  nav: { label: string; href: string }[];
+  settings: SiteSettings;
+  updatedAt: string;
+};
+
+export const defaultContent: SiteContent = {
+  profile,
+  projects,
+  journey,
+  education,
+  skills,
+  nav,
+  settings: { background: "terrain", soundDefault: false, openForWork: true, sectionOrder: null },
+  updatedAt: "2026-11-05T18:00:00Z",
+};

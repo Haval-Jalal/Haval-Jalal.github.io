@@ -1,8 +1,9 @@
 import { motion } from "motion/react";
 import Section, { reveal, stagger } from "./Section";
-import { education, journey, profile } from "../data/content";
+import { useSiteContent } from "../lib/content";
 
 export default function Journey() {
+  const { education, journey, profile } = useSiteContent().content;
   return (
     <Section
       id="resan"
