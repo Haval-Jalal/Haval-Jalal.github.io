@@ -219,6 +219,7 @@ type UsageSummary = {
   cacheReadTokens: number;
   perDay: { day: string; usd: number; inputTokens: number; outputTokens: number; calls: number }[];
   byFeature: { feature: string; calls: number; usd: number; inputTokens: number; outputTokens: number; avgUsd: number }[];
+  recent: { ts: string; feature: string; model: string; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; usd: number; truncated: boolean }[];
 };
 
 const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)" };
@@ -352,6 +353,44 @@ function AiUsage() {
           </table>
         )}
         <p className="mt-3 text-xs text-fg-faint">Cache-lästa tokens under perioden: {tok(data.cacheReadTokens)} (systemprompten cachas, så upprepade anrop blir billigare).</p>
+      </section>
+
+      <section className="panel-tile rounded-2xl p-5">
+        <h2 className="text-sm font-medium">Senaste anrop</h2>
+        <p className="text-xs text-fg-faint">Exakta räknare från API-svaret, samma som Anthropic Console använder. Cache-skrivningar räknas till 1,25× inputpris.</p>
+        {data.recent.length === 0 ? (
+          <p className="mt-3 text-xs text-fg-faint">Inga anrop under perioden.</p>
+        ) : (
+          <table className="mt-3 w-full text-left text-xs">
+            <thead className="text-fg-faint">
+              <tr>
+                <th className="py-1 font-medium">Tid</th>
+                <th className="py-1 font-medium">Funktion</th>
+                <th className="py-1 font-medium">Modell</th>
+                <th className="py-1 text-right font-medium">In</th>
+                <th className="py-1 text-right font-medium">Ut</th>
+                <th className="py-1 text-right font-medium">Cache läs/skriv</th>
+                <th className="py-1 text-right font-medium">Kostnad</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.recent.map((r, i) => (
+                <tr key={i} className="border-t border-white/5">
+                  <td className="py-2 font-mono text-fg-muted">{new Date(r.ts).toLocaleString("sv-SE", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
+                  <td className="py-2 text-fg">
+                    {r.feature === "build" ? "Build Lab" : "Chatt"}
+                    {r.truncated && <span className="ml-2 rounded bg-amber-400/15 px-1.5 py-px text-[10px] text-amber-200">avklippt</span>}
+                  </td>
+                  <td className="py-2 font-mono text-fg-muted">{r.model.replace("claude-", "")}</td>
+                  <td className="py-2 text-right font-mono">{tok(r.inputTokens)}</td>
+                  <td className="py-2 text-right font-mono">{tok(r.outputTokens)}</td>
+                  <td className="py-2 text-right font-mono text-fg-muted">{tok(r.cacheReadTokens)} / {tok(r.cacheWriteTokens)}</td>
+                  <td className="py-2 text-right font-mono text-fg">{usd(r.usd)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
     </div>
   );

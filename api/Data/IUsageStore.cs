@@ -10,7 +10,9 @@ public sealed record UsageRecord(
     long InputTokens,
     long OutputTokens,
     long CacheReadTokens,
-    decimal Usd);
+    decimal Usd,
+    long CacheWriteTokens = 0,
+    bool Truncated = false);
 
 public sealed record UsageSummary(
     int Days,
@@ -24,7 +26,8 @@ public sealed record UsageSummary(
     long OutputTokens,
     long CacheReadTokens,
     List<UsageDay> PerDay,
-    List<UsageFeature> ByFeature);
+    List<UsageFeature> ByFeature,
+    List<UsageRecord> Recent);
 
 public sealed record UsageDay(string Day, decimal Usd, long InputTokens, long OutputTokens, int Calls);
 public sealed record UsageFeature(string Feature, int Calls, decimal Usd, long InputTokens, long OutputTokens, decimal AvgUsd);
@@ -128,6 +131,7 @@ public sealed class JsonFileUsageStore(string dataDir) : IUsageStore
             rows.Sum(r => r.OutputTokens),
             rows.Sum(r => r.CacheReadTokens),
             perDay,
-            byFeature);
+            byFeature,
+            rows.OrderByDescending(r => r.Ts).Take(30).ToList());
     }
 }

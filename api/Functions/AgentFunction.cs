@@ -88,7 +88,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
             Usage? usageInfo = null;
             await foreach (var delta in agent.BuildStreamAsync(idea, eco, u => usageInfo = u, ct))
                 await WriteEvent(res, "delta", new { t = delta }, ct);
-            await WriteEvent(res, "done", new { usage = usageInfo }, ct);
+            await WriteEvent(res, "done", new { usage = usageInfo, truncated = usageInfo?.Truncated ?? false }, ct);
         }
         catch (AnthropicApiException ex)
         {

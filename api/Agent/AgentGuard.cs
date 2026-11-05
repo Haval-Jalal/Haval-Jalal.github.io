@@ -57,10 +57,10 @@ public sealed class AgentGuard(IUsageStore usage)
     };
 
     // Records a finished call and returns what it cost.
-    public async Task<decimal> RecordAsync(string feature, string model, long inputTokens, long outputTokens, long cacheReadTokens, CancellationToken ct)
+    public async Task<decimal> RecordAsync(string feature, string model, long inputTokens, long outputTokens, long cacheReadTokens, long cacheWriteTokens, bool truncated, CancellationToken ct)
     {
-        var usd = Pricing.Usd(model, inputTokens, outputTokens, cacheReadTokens);
-        await usage.AppendAsync(new UsageRecord(DateTime.UtcNow, feature, model, inputTokens, outputTokens, cacheReadTokens, usd), ct);
+        var usd = Pricing.Usd(model, inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens);
+        await usage.AppendAsync(new UsageRecord(DateTime.UtcNow, feature, model, inputTokens, outputTokens, cacheReadTokens, usd, cacheWriteTokens, truncated), ct);
         return usd;
     }
 
@@ -71,10 +71,10 @@ public sealed class AgentGuard(IUsageStore usage)
         decimal.TryParse(Environment.GetEnvironmentVariable(name), System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : fallback;
 }
 
-// Claude API list prices per million tokens.
+// Claude API list prices per million tokens. Cache writes (5-minute TTL) cost 1.25x input.
 public static class Pricing
 {
-    public static decimal Usd(string model, long inputTokens, long outputTokens, long cacheReadTokens)
+    public static decimal Usd(string model, long inputTokens, long outputTokens, long cacheReadTokens, long cacheWriteTokens = 0)
     {
         var (inPrice, outPrice, cachePrice) = model switch
         {
@@ -83,6 +83,6 @@ public static class Pricing
             var m when m.StartsWith("claude-opus-4-8") => (5m, 25m, 0.50m),
             _ => (5m, 25m, 0.50m),
         };
-        return (inputTokens * inPrice + outputTokens * outPrice + cacheReadTokens * cachePrice) / 1_000_000m;
+        return (inputTokens * inPrice + outputTokens * outPrice + cacheReadTokens * cachePrice + cacheWriteTokens * inPrice * 1.25m) / 1_000_000m;
     }
 }

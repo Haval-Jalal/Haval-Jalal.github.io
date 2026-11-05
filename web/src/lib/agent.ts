@@ -64,6 +64,7 @@ export async function streamBuild(
   onDelta: (text: string) => void,
   signal?: AbortSignal,
   onMode?: (mode: BudgetMode) => void,
+  onDone?: (info: { truncated: boolean }) => void,
 ): Promise<void> {
   const r = await fetch("/api/agent/build", {
     method: "POST",
@@ -92,6 +93,7 @@ export async function streamBuild(
       }
       if (event === "delta") onDelta((JSON.parse(data) as { t: string }).t);
       else if (event === "mode") onMode?.((JSON.parse(data) as { mode: BudgetMode }).mode);
+      else if (event === "done") onDone?.({ truncated: (JSON.parse(data) as { truncated?: boolean }).truncated === true });
       else if (event === "error") throw new AgentError((JSON.parse(data) as { error: string }).error);
     }
   }

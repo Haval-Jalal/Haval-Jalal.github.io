@@ -49,7 +49,7 @@ export default function BuildLab() {
   );
 }
 
-type LabState = { status: "idle" } | { status: "running" } | { status: "done" } | { status: "error"; message: string };
+type LabState = { status: "idle" } | { status: "running" } | { status: "done"; truncated: boolean } | { status: "error"; message: string };
 
 function Lab() {
   const [idea, setIdea] = useState("");
@@ -89,8 +89,9 @@ function Lab() {
     setState({ status: "running" });
     trackEvent("build_lab_run");
     try {
-      await streamBuild(trimmed, (t) => setRaw((r) => r + t), abort.current.signal, setMode);
-      setState({ status: "done" });
+      let truncated = false;
+      await streamBuild(trimmed, (t) => setRaw((r) => r + t), abort.current.signal, setMode, (info) => (truncated = info.truncated));
+      setState({ status: "done", truncated });
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
       const code = e instanceof AgentError ? e.code : "unknown";
@@ -153,7 +154,10 @@ function Lab() {
           <div className="mt-6 flex items-center justify-between gap-4">
             <p className="text-xs text-fg-faint">
               {state.status === "running" && "Bygger… prototypen dyker upp medan den skrivs."}
-              {state.status === "done" && "Klart. Prova prototypen nedan."}
+              {state.status === "done" && !state.truncated && "Klart. Prova prototypen nedan."}
+              {state.status === "done" && state.truncated && (
+                <span className="text-amber-200">Idén blev för stor för en prototyp och klipptes av. Prova att avgränsa den till kärnflödet.</span>
+              )}
               {state.status === "error" && <span className="text-red-300">{state.message}</span>}
               {state.status === "idle" && "Ctrl+Enter för att bygga. Max 3 per timme."}
             </p>
