@@ -1,10 +1,10 @@
 import {
   Activity,
   Bell,
-  Boxes,
   Briefcase,
   Code2,
   FolderGit2,
+  GitCommitHorizontal,
   GraduationCap,
   LayoutDashboard,
   Mail,
@@ -12,14 +12,21 @@ import {
   Sparkles,
 } from "lucide-react";
 import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
-import { projects, skills } from "../data/content";
-
-const projectCount = String(projects.length);
-const techCount = String(skills.reduce((n, g) => n + g.items.length, 0));
+import { projects } from "../data/content";
+import { relativeTime, useGitHub, type GitHubActivity } from "../lib/github";
 
 type Props = {
   mouseX: MotionValue<number>;
   mouseY: MotionValue<number>;
+};
+
+// Shown while the API loads or if it is unreachable, so the panel always has a shape.
+const DEMO: GitHubActivity = {
+  user: "Haval-Jalal",
+  repos: projects.map((p) => ({ name: p.title, description: p.summary, url: p.repo, language: null, stars: 0, pushedAt: null })),
+  weeklyCommits: [3, 5, 2, 8, 6, 4, 9, 7, 11, 6, 10, 12],
+  commits90d: 83,
+  updatedAt: new Date().toISOString(),
 };
 
 // The floating "dashboard" from the hero. Looks like a SaaS admin, but the data is Haval's career.
@@ -28,6 +35,9 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
   const y = useTransform(scrollY, [0, 900], [0, 140]);
   const rotateX = useTransform(mouseY, [-1, 1], [3, -3]);
   const rotateY = useTransform(mouseX, [-1, 1], [-4, 4]);
+  const gh = useGitHub();
+  const data = gh.status === "ok" ? gh.data : DEMO;
+  const live = gh.status === "ok";
 
   return (
     <motion.div
@@ -39,21 +49,21 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
     >
       <motion.div
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className="panel-glass overflow-hidden rounded-2xl text-sand-100"
+        className="panel-glass overflow-hidden rounded-2xl text-fg"
       >
         <div className="grid grid-cols-[180px_1fr] max-md:grid-cols-1">
-          <Sidebar />
-          <Main />
+          <Sidebar repoCount={data.repos.length} />
+          <Main data={data} live={live} />
         </div>
       </motion.div>
     </motion.div>
   );
 }
 
-function Sidebar() {
+function Sidebar({ repoCount }: { repoCount: number }) {
   const items = [
     { icon: LayoutDashboard, label: "Översikt", active: true },
-    { icon: FolderGit2, label: "Projekt", badge: projectCount },
+    { icon: FolderGit2, label: "Projekt", badge: String(repoCount) },
     { icon: Code2, label: "Stack" },
     { icon: Briefcase, label: "Erfarenhet" },
     { icon: GraduationCap, label: "Utbildning" },
@@ -63,18 +73,18 @@ function Sidebar() {
   return (
     <aside className="border-r border-white/5 p-4 max-md:hidden">
       <div className="mb-6 flex items-center gap-2 px-2">
-        <span className="grid size-6 place-items-center rounded-md bg-ember-400 text-obsidian-900">
+        <span className="grid size-6 place-items-center rounded-md bg-ember-400 text-night-950">
           <span className="text-xs font-bold leading-none">H</span>
         </span>
         <span className="text-sm font-semibold tracking-tight">Haval OS</span>
       </div>
-      <p className="mb-2 px-2 font-mono text-[10px] uppercase tracking-[0.18em] text-sand-300/50">Main</p>
+      <p className="mb-2 px-2 font-mono text-[10px] uppercase tracking-[0.18em] text-fg-faint">Main</p>
       <ul className="space-y-0.5">
         {items.map(({ icon: Icon, label, active, badge }) => (
           <li
             key={label}
             className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[13px] ${
-              active ? "bg-white/[0.06] text-sand-50" : "text-sand-200/70"
+              active ? "bg-white/[0.06] text-fg" : "text-fg-muted"
             }`}
           >
             <Icon className="size-3.5 shrink-0" strokeWidth={1.75} />
@@ -91,24 +101,25 @@ function Sidebar() {
   );
 }
 
-function Main() {
+function Main({ data, live }: { data: GitHubActivity; live: boolean }) {
+  const latest = data.repos[0];
   return (
     <div className="min-w-0">
       {/* Top bar */}
-      <div className="flex items-center gap-3 border-b border-white/5 px-5 py-3 text-xs text-sand-200/60">
+      <div className="flex items-center gap-3 border-b border-white/5 px-5 py-3 text-xs text-fg-muted">
         <span>Haval OS</span>
-        <span className="text-sand-200/30">/</span>
-        <span className="text-sand-50">Översikt</span>
+        <span className="text-fg-faint">/</span>
+        <span className="text-fg">Översikt</span>
         <div className="ml-auto flex items-center gap-2">
           <div className="flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1.5 max-sm:hidden">
             <Search className="size-3.5" />
-            <span className="text-sand-200/50">Sök projekt, teknik…</span>
-            <kbd className="ml-4 font-mono text-[10px] text-sand-200/40">⌘K</kbd>
+            <span className="text-fg-faint">Sök projekt, teknik…</span>
+            <kbd className="ml-4 font-mono text-[10px] text-fg-faint">⌘K</kbd>
           </div>
           <span className="grid size-7 place-items-center rounded-full bg-white/[0.05]">
             <Bell className="size-3.5" />
           </span>
-          <span className="grid size-7 place-items-center rounded-full bg-ember-500 font-mono text-[11px] font-semibold text-obsidian-900">
+          <span className="grid size-7 place-items-center rounded-full bg-ember-500 font-mono text-[11px] font-semibold text-night-950">
             HJ
           </span>
         </div>
@@ -117,53 +128,69 @@ function Main() {
       <div className="p-5">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold tracking-tight text-sand-50">Översikt</h3>
-            <p className="mt-0.5 flex items-center gap-1.5 text-xs text-sand-200/60">
-              <span className="size-1.5 rounded-full bg-emerald-400" />
-              Live · uppdaterad nyss
+            <h3 className="text-lg font-semibold tracking-tight text-fg">Översikt</h3>
+            <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-muted">
+              <span className={`size-1.5 rounded-full ${live ? "bg-emerald-400" : "bg-fg-faint"}`} />
+              {live ? `Live från GitHub · ${relativeTime(data.updatedAt)}` : "Demo-data · väntar på API"}
             </p>
           </div>
           <div className="flex gap-2 text-xs">
-            <span className="rounded-full border border-white/10 px-3 py-1.5 text-sand-200/80">2015 — 2026</span>
-            <span className="rounded-full bg-ember-500 px-3 py-1.5 font-medium text-obsidian-900">+ Nytt projekt</span>
+            <span className="rounded-full border border-white/10 px-3 py-1.5 text-fg-muted">Senaste 90 dagarna</span>
+            <a
+              href={`https://github.com/${data.user}`}
+              target="_blank"
+              rel="noreferrer"
+              className="pointer-events-auto rounded-full bg-ember-500 px-3 py-1.5 font-medium text-night-950"
+            >
+              Öppna GitHub
+            </a>
           </div>
         </div>
 
         {/* KPI tiles */}
         <div className="grid grid-cols-4 gap-3 max-md:grid-cols-2">
-          <Kpi icon={FolderGit2} label="Projekt" value={projectCount} delta="+2 senaste kvartalet" />
-          <Kpi icon={Boxes} label="Teknologier" value={techCount} delta="+3 i år" />
+          <Kpi icon={FolderGit2} label="Publika repos" value={String(data.repos.length)} delta={latest ? `senast: ${latest.name}` : "—"} />
+          <Kpi icon={GitCommitHorizontal} label="Commits · 90 d" value={String(data.commits90d)} delta={latest?.pushedAt ? `push ${relativeTime(latest.pushedAt)}` : "publika events"} />
           <Kpi icon={Activity} label="År på Volvo Cars" value="10+" delta="teamledarskap" />
-          <div className="rounded-xl bg-gradient-to-br from-ember-400 to-ember-600 p-4 text-obsidian-900">
+          <div className="rounded-xl bg-gradient-to-br from-ember-400 to-ember-600 p-4 text-night-950">
             <div className="flex items-center justify-between text-xs font-medium">
               <span>Status</span>
-              <span className="rounded-full bg-obsidian-900/15 px-2 py-0.5 font-mono text-[10px]">LIVE</span>
+              <span className="rounded-full bg-night-950/15 px-2 py-0.5 font-mono text-[10px]">LIVE</span>
             </div>
             <p className="mt-3 text-xl font-semibold leading-tight tracking-tight">Öppen för uppdrag</p>
             <p className="mt-1 text-[11px] opacity-80">Göteborg · remote fungerar</p>
           </div>
         </div>
 
-        {/* Chart + heat grid */}
+        {/* Chart + repos */}
         <div className="mt-3 grid grid-cols-[1.6fr_1fr] gap-3 max-md:grid-cols-1">
           <div className="panel-tile rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-sand-50">Utvecklingskurva</p>
-                <p className="text-[11px] text-sand-200/50">Från produktion till produktion-klar kod</p>
+                <p className="text-sm font-medium text-fg">Commits per vecka</p>
+                <p className="text-[11px] text-fg-faint">Senaste 12 veckorna, publika repos</p>
               </div>
               <div className="flex gap-1 text-[11px]">
-                <span className="rounded-full bg-ember-500 px-2 py-0.5 text-obsidian-900">.NET</span>
-                <span className="px-2 py-0.5 text-sand-200/60">React</span>
-                <span className="px-2 py-0.5 text-sand-200/60">Azure</span>
+                <span className="rounded-full bg-ember-500 px-2 py-0.5 text-night-950">.NET</span>
+                <span className="px-2 py-0.5 text-fg-muted">React</span>
+                <span className="px-2 py-0.5 text-fg-muted">Azure</span>
               </div>
             </div>
-            <Curve />
+            <Bars values={data.weeklyCommits} />
           </div>
           <div className="panel-tile rounded-xl p-4">
-            <p className="text-sm font-medium text-sand-50">Aktivitet</p>
-            <p className="text-[11px] text-sand-200/50">Commits per vecka, senaste 12</p>
-            <HeatGrid />
+            <p className="text-sm font-medium text-fg">Senast uppdaterade repos</p>
+            <ul className="mt-3 space-y-2">
+              {data.repos.slice(0, 4).map((r) => (
+                <li key={r.name} className="flex items-center gap-2 text-xs">
+                  <span className="size-1.5 shrink-0 rounded-full bg-ember-400" />
+                  <span className="truncate text-fg">{r.name}</span>
+                  <span className="ml-auto shrink-0 font-mono text-[10px] text-fg-faint">
+                    {r.language ?? (r.pushedAt ? relativeTime(r.pushedAt) : "")}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
@@ -184,80 +211,31 @@ function Kpi({
 }) {
   return (
     <div className="panel-tile rounded-xl p-4">
-      <div className="flex items-center gap-2 text-xs text-sand-200/70">
+      <div className="flex items-center gap-2 text-xs text-fg-muted">
         <span className="grid size-6 place-items-center rounded-md bg-ember-500/15 text-ember-300">
           <Icon className="size-3.5" strokeWidth={1.75} />
         </span>
         {label}
       </div>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-sand-50">{value}</p>
-      <p className="mt-1 text-[11px] text-emerald-300/80">{delta}</p>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-fg">{value}</p>
+      <p className="mt-1 truncate text-[11px] text-emerald-300/80">{delta}</p>
     </div>
   );
 }
 
-function Curve() {
-  const pts = [8, 10, 11, 14, 18, 22, 30, 38, 52, 60, 74, 90];
-  const w = 520;
-  const h = 120;
-  const step = w / (pts.length - 1);
-  const path = pts
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${i * step} ${h - (p / 100) * h}`)
-    .join(" ");
+function Bars({ values }: { values: number[] }) {
+  const max = Math.max(1, ...values);
   return (
-    <svg viewBox={`0 0 ${w} ${h + 8}`} className="mt-4 h-32 w-full">
-      <defs>
-        <linearGradient id="curve-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#e8933a" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#e8933a" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {[0.25, 0.5, 0.75].map((g) => (
-        <line key={g} x1="0" x2={w} y1={h * g} y2={h * g} stroke="white" strokeOpacity="0.05" />
-      ))}
-      <motion.path
-        d={`${path} L ${w} ${h} L 0 ${h} Z`}
-        fill="url(#curve-fill)"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.6, duration: 0.8 }}
-      />
-      <motion.path
-        d={path}
-        fill="none"
-        stroke="#f2b26b"
-        strokeWidth="2"
-        strokeLinecap="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ delay: 1.1, duration: 1.4, ease: "easeInOut" }}
-      />
-      <motion.circle
-        cx={w}
-        cy={h - 0.9 * h}
-        r="4"
-        fill="#f2b26b"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 2.4 }}
-      />
-    </svg>
-  );
-}
-
-function HeatGrid() {
-  // Deterministic pseudo-activity so the grid is identical on every render.
-  const cells = Array.from({ length: 7 * 12 }, (_, i) => ((i * 37) % 11) / 10);
-  return (
-    <div className="mt-4 grid grid-cols-12 gap-1">
-      {cells.map((v, i) => (
-        <motion.span
+    <div className="mt-5 flex h-28 items-end gap-1.5">
+      {values.map((v, i) => (
+        <motion.div
           key={i}
-          className="aspect-square rounded-[3px]"
-          style={{ background: `rgba(232,147,58,${0.08 + v * 0.85})` }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 + (i % 12) * 0.05, duration: 0.3 }}
+          className="flex-1 rounded-t-sm bg-gradient-to-t from-ember-600 to-ember-300"
+          style={{ opacity: 0.45 + (v / max) * 0.55 }}
+          initial={{ height: 0 }}
+          animate={{ height: `${Math.max(4, (v / max) * 100)}%` }}
+          transition={{ delay: 1.1 + i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          title={`${v} commits`}
         />
       ))}
     </div>

@@ -1,0 +1,9 @@
+# .NET
+api/bin/
+api/obj/
+api/local.settings.json
+.vs/
+*.user
+
+# Node
+node_modules/

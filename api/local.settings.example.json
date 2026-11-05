@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "GITHUB_USER": "Haval-Jalal",
+    "GITHUB_TOKEN": "<optional: fine-grained token with public repo read, raises the rate limit>"
+  },
+  "Host": {
+    "CORS": "*"
+  }
+}
