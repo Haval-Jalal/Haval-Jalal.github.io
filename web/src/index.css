@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@theme {
+  /* Warm sand palette, from sky haze down to shadowed dune. */
+  --color-sand-50: #f6eddd;
+  --color-sand-100: #efe2c9;
+  --color-sand-200: #e5d0ab;
+  --color-sand-300: #d8ba8a;
+  --color-sand-400: #c9a36c;
+  --color-sand-500: #b58a52;
+  --color-sand-600: #97703f;
+  --color-sand-700: #765430;
+  --color-sand-800: #4f3820;
+  --color-sand-900: #2b2118;
+
+  /* Ink for text on sand, ember for accents, obsidian for the panel. */
+  --color-ink: #2b2118;
+  --color-ink-soft: #5a4a3a;
+  --color-ember-300: #f2b26b;
+  --color-ember-400: #e8933a;
+  --color-ember-500: #d9772a;
+  --color-ember-600: #b85d1f;
+  --color-obsidian-900: #15110e;
+  --color-obsidian-800: #1d1813;
+  --color-obsidian-700: #27211b;
+  --color-obsidian-600: #352c24;
+
+  /* Dark tech theme: near-black surfaces, light text. Sections stay slightly
+     transparent so the ember terrain behind them shows through. */
+  --color-night-950: #07070b;
+  --color-night-900: #0b0b11;
+  --color-night-800: #12121a;
+  --color-night-700: #1a1a24;
+  --color-fg: #ecebf2;
+  --color-fg-muted: #a7a5b3;
+  --color-fg-faint: #6e6c7a;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  @apply bg-night-950 text-fg font-sans antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-ember-400);
+  color: var(--color-night-950);
+}
+
+/* Subtle film grain over everything; takes the "flat vector" edge off the dark surfaces. */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.07;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.panel-glass {
+  background: color-mix(in oklab, var(--color-night-800) 86%, transparent);
+  border: 1px solid color-mix(in oklab, white 12%, transparent);
+  box-shadow:
+    0 1px 0 0 color-mix(in oklab, white 7%, transparent) inset,
+    0 40px 80px -30px rgba(0, 0, 0, 0.8),
+    0 0 120px -40px color-mix(in oklab, var(--color-ember-500) 45%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.panel-tile {
+  background: color-mix(in oklab, var(--color-night-700) 70%, transparent);
+  border: 1px solid color-mix(in oklab, white 8%, transparent);
+}
+
+/* Section surfaces: ~6-8% see-through so the terrain glows behind the content. */
+.surface-a {
+  background: color-mix(in oklab, var(--color-night-950) 93%, transparent);
+}
+.surface-b {
+  background: color-mix(in oklab, var(--color-night-900) 92%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
