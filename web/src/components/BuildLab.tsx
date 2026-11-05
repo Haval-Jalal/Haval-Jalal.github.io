@@ -190,7 +190,7 @@ function Plan({ text }: { text: string }) {
         if (/^#{1,3}\s/.test(l) || (i === 0 && !l.startsWith("-"))) {
           return (
             <p key={i} className="text-base font-semibold text-fg">
-              {l.replace(/^#{1,3}\s/, "")}
+              {l.replace(/^#{1,3}\s/, "").replace(/\*\*/g, "")}
             </p>
           );
         }

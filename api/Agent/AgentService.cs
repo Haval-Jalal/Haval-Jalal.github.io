@@ -67,7 +67,7 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
         {
             if (ev.TryPickStart(out var start))
             {
-                model = start.Message.Model.ToString() ?? BuildModel;
+                model = start.Message.Model.ToString()?.Trim('"') ?? BuildModel;
                 inputTokens = start.Message.Usage.InputTokens;
                 cacheRead = start.Message.Usage.CacheReadInputTokens ?? 0;
             }

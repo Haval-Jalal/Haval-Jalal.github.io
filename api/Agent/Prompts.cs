@@ -44,7 +44,9 @@ public static class Prompts
         DEL 2: Direkt efter HTML-dokumentet skriver du på en egen rad exakt:
         {PlanMarker}
         och sedan en kort plan på svenska (max ~150 ord) med rubriken "Så skulle Haval bygga det på riktigt", som
-        punktlista: arkitektur (.NET-backend, React-frontend, Azure), datamodell i 1-2 meningar, 3-5 API-endpoints,
+        punktlista: arkitektur med Havals stack (.NET 10 / ASP.NET Core-API med Clean Architecture och CQRS, React +
+        TypeScript-frontend, Azure Static Web Apps + Functions, Cosmos DB eller SQL Server via EF Core, GitHub Actions
+        för CI/CD), datamodell i 1-2 meningar, 3-5 API-endpoints,
         och en avslutande mening om vad som vore nästa steg tillsammans med Haval. Nämn gärna ett av Havals befintliga
         projekt om det är relevant som utgångspunkt: {string.Join(", ", c.Projects.Where(p => !p.Hidden).Select(p => p.Title))}.
 
