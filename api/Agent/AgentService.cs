@@ -15,6 +15,7 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
 {
     public const string ChatModel = "claude-sonnet-5-5";
     public const string BuildModel = "claude-opus-5-5";
+    public const string EcoBuildModel = "claude-sonnet-5-5";
 
     public async Task<ChatReply> ChatAsync(IReadOnlyList<ChatTurn> turns, CancellationToken ct)
     {
@@ -45,21 +46,24 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
     }
 
     // Streams text deltas; the final Usage is reported through the callback after the stream ends.
+    // Eco mode (past the daily eco threshold) swaps to Sonnet with a shorter prototype.
     public async IAsyncEnumerable<string> BuildStreamAsync(
         string idea,
+        bool eco,
         Action<Usage> onDone,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
     {
         var site = await content.GetAsync(ct);
         long inputTokens = 0, outputTokens = 0, cacheRead = 0;
-        var model = BuildModel;
+        var requested = eco ? EcoBuildModel : BuildModel;
+        var model = requested;
 
         var stream = client.Messages.CreateStreaming(new MessageCreateParams
         {
-            Model = BuildModel,
-            MaxTokens = 6000,
-            OutputConfig = new OutputConfig { Effort = Effort.Medium },
-            System = new List<TextBlockParam> { new() { Text = Prompts.Build(site), CacheControl = new CacheControlEphemeral() } },
+            Model = requested,
+            MaxTokens = eco ? 3500 : 6000,
+            OutputConfig = new OutputConfig { Effort = eco ? Effort.Low : Effort.Medium },
+            System = new List<TextBlockParam> { new() { Text = Prompts.Build(site, eco), CacheControl = new CacheControlEphemeral() } },
             Messages = [new UserMessageParam { Content = $"Idé: {idea}" }],
         }, cancellationToken: ct);
 
@@ -67,7 +71,7 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
         {
             if (ev.TryPickStart(out var start))
             {
-                model = start.Message.Model.ToString()?.Trim('"') ?? BuildModel;
+                model = start.Message.Model.ToString()?.Trim('"') ?? requested;
                 inputTokens = start.Message.Usage.InputTokens;
                 cacheRead = start.Message.Usage.CacheReadInputTokens ?? 0;
             }

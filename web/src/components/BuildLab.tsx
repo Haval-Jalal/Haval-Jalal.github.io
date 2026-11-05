@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
 import { Bot, Loader2, Send, Sparkles, Wand2 } from "lucide-react";
 import Section, { reveal, stagger } from "./Section";
-import { AgentError, chat, friendlyError, PLAN_MARKER, sendLead, streamBuild, type ChatMsg } from "../lib/agent";
+import { AgentError, chat, friendlyError, getStatus, PLAN_MARKER, sendLead, streamBuild, type BudgetMode, type ChatMsg } from "../lib/agent";
 import { trackEvent } from "../lib/beacon";
 
 const EXAMPLES = [
@@ -56,7 +56,14 @@ function Lab() {
   const [state, setState] = useState<LabState>({ status: "idle" });
   const [raw, setRaw] = useState("");
   const [shownHtml, setShownHtml] = useState("");
+  const [mode, setMode] = useState<BudgetMode>("full");
   const abort = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    void getStatus().then(setMode);
+  }, []);
+
+  const stopped = mode === "stopped";
 
   const markerAt = raw.indexOf(PLAN_MARKER);
   const html = markerAt >= 0 ? raw.slice(0, markerAt) : raw;
@@ -82,11 +89,13 @@ function Lab() {
     setState({ status: "running" });
     trackEvent("build_lab_run");
     try {
-      await streamBuild(trimmed, (t) => setRaw((r) => r + t), abort.current.signal);
+      await streamBuild(trimmed, (t) => setRaw((r) => r + t), abort.current.signal, setMode);
       setState({ status: "done" });
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
-      setState({ status: "error", message: friendlyError(e instanceof AgentError ? e.code : "unknown") });
+      const code = e instanceof AgentError ? e.code : "unknown";
+      if (code === "daily_cap") setMode("stopped");
+      setState({ status: "error", message: friendlyError(code) });
     }
   };
 
@@ -99,9 +108,14 @@ function Lab() {
       className="panel-glass rounded-3xl p-2"
     >
       <motion.div variants={reveal} className="rounded-[1.25rem] border border-white/5 bg-night-950/60 p-5 md:p-7">
-        <div className="flex items-center gap-2 text-xs text-fg-faint">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-fg-faint">
           <Sparkles className="size-3.5 text-ember-300" />
-          Build Lab · drivs av Claude Opus
+          Build Lab · drivs av Claude {mode === "eco" ? "Sonnet" : "Opus"}
+          {mode === "eco" && (
+            <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-amber-200" title="Dagens budget är nästan slut, så prototyperna byggs med en snabbare modell.">
+              Sparläge
+            </span>
+          )}
         </div>
         <label htmlFor="build-idea" className="sr-only">
           Beskriv din idé
@@ -129,23 +143,31 @@ function Lab() {
             </button>
           ))}
         </div>
-        <div className="mt-6 flex items-center justify-between gap-4">
-          <p className="text-xs text-fg-faint">
-            {state.status === "running" && "Bygger… prototypen dyker upp medan den skrivs."}
-            {state.status === "done" && "Klart. Prova prototypen nedan."}
-            {state.status === "error" && <span className="text-red-300">{state.message}</span>}
-            {state.status === "idle" && "Ctrl+Enter för att bygga. Max 3 per timme."}
-          </p>
-          <button
-            type="button"
-            onClick={() => void run(idea)}
-            disabled={idea.trim().length < 8 || state.status === "running"}
-            className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950 transition-opacity disabled:opacity-40"
-          >
-            {state.status === "running" ? <Loader2 className="size-4 animate-spin" /> : <Wand2 className="size-4" />}
-            Bygg prototyp
-          </button>
-        </div>
+        {stopped ? (
+          <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-sm text-fg">Dagens AI-budget är slut, men idén behöver inte vänta.</p>
+            <p className="mt-1 text-xs text-fg-muted">Skicka den till Haval så bygger han prototypen själv och hör av sig.</p>
+            <LeadForm idea={idea} plan="" compact />
+          </div>
+        ) : (
+          <div className="mt-6 flex items-center justify-between gap-4">
+            <p className="text-xs text-fg-faint">
+              {state.status === "running" && "Bygger… prototypen dyker upp medan den skrivs."}
+              {state.status === "done" && "Klart. Prova prototypen nedan."}
+              {state.status === "error" && <span className="text-red-300">{state.message}</span>}
+              {state.status === "idle" && "Ctrl+Enter för att bygga. Max 3 per timme."}
+            </p>
+            <button
+              type="button"
+              onClick={() => void run(idea)}
+              disabled={idea.trim().length < 8 || state.status === "running"}
+              className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950 transition-opacity disabled:opacity-40"
+            >
+              {state.status === "running" ? <Loader2 className="size-4 animate-spin" /> : <Wand2 className="size-4" />}
+              Bygg prototyp
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {(shownHtml || plan || (state.status !== "idle" && raw)) && (
@@ -208,17 +230,18 @@ function Plan({ text }: { text: string }) {
   );
 }
 
-function LeadForm({ idea, plan }: { idea: string; plan: string }) {
+function LeadForm({ idea, plan, compact = false }: { idea: string; plan: string; compact?: boolean }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot, never shown
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setStatus("sending");
     try {
-      await sendLead({ name, email, message, idea, plan, source: "build-lab" });
+      await sendLead({ name, email, message, idea, plan, website, source: compact ? "build-lab-budget" : "build-lab" });
       setStatus("sent");
       trackEvent("lead_sent");
     } catch {
@@ -227,11 +250,20 @@ function LeadForm({ idea, plan }: { idea: string; plan: string }) {
   };
 
   if (status === "sent")
-    return <p className="mt-6 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">Tack! Haval hör av sig.</p>;
+    return <p className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">Tack! Haval hör av sig.</p>;
 
   return (
-    <form onSubmit={submit} className="mt-6 grid gap-3 border-t border-white/5 pt-6 sm:grid-cols-2">
-      <p className="text-sm font-medium text-fg sm:col-span-2">Vill du bygga det här på riktigt? Skicka idén till Haval.</p>
+    <form onSubmit={submit} className={`grid gap-3 sm:grid-cols-2 ${compact ? "mt-4" : "mt-6 border-t border-white/5 pt-6"}`}>
+      {!compact && <p className="text-sm font-medium text-fg sm:col-span-2">Vill du bygga det här på riktigt? Skicka idén till Haval.</p>}
+      <input
+        tabIndex={-1}
+        autoComplete="off"
+        value={website}
+        onChange={(e) => setWebsite(e.target.value)}
+        name="website"
+        aria-hidden="true"
+        className="absolute -left-[9999px] h-px w-px opacity-0"
+      />
       <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Namn" className={input} />
       <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-post" className={input} />
       <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={2} placeholder="Meddelande (valfritt)" className={`${input} sm:col-span-2`} />

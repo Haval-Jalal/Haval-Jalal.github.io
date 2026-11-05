@@ -3,32 +3,58 @@ using HavalApi.Data;
 
 namespace HavalApi.Agent;
 
-// Keeps the AI features from being abused or draining the credits: a per-IP sliding window per
-// feature (in memory) and a daily spend cap read from the persisted usage records.
+public enum BudgetMode
+{
+    Full,     // Opus builds
+    Eco,      // past the eco threshold of the daily cap: Sonnet builds, shorter output
+    Stopped,  // daily or monthly cap reached: no AI calls, lead form only
+}
+
+// Keeps the AI features from being abused or draining the credits: per-IP sliding windows
+// (hourly and daily, in memory) and a two-layer spend budget read from the persisted usage records.
 public sealed class AgentGuard(IUsageStore usage)
 {
     private readonly ConcurrentDictionary<string, List<DateTime>> _windows = new();
 
     public int BuildPerHour { get; } = Env("AGENT_BUILD_PER_HOUR", 3);
+    public int BuildPerDay { get; } = Env("AGENT_BUILD_PER_DAY", 5);
     public int ChatPerHour { get; } = Env("AGENT_CHAT_PER_HOUR", 20);
-    public decimal DailyCapUsd { get; } = Env("AGENT_DAILY_CAP_USD", 3m);
+    public decimal DailyCapUsd { get; } = Env("AGENT_DAILY_CAP_USD", 3.3m);
+    public decimal MonthlyCapUsd { get; } = Env("AGENT_MONTHLY_CAP_USD", 90m);
+    public decimal EcoThreshold { get; } = Env("AGENT_ECO_THRESHOLD", 0.7m);
 
-    public bool TryTake(string feature, string ip, int perHour)
+    public bool TryTake(string feature, string ip, int limit, TimeSpan window)
     {
-        var key = $"{feature}:{ip}";
+        var key = $"{feature}:{window.TotalMinutes}:{ip}";
         var list = _windows.GetOrAdd(key, _ => []);
         lock (list)
         {
-            var cutoff = DateTime.UtcNow.AddHours(-1);
+            var cutoff = DateTime.UtcNow - window;
             list.RemoveAll(t => t < cutoff);
-            if (list.Count >= perHour) return false;
+            if (list.Count >= limit) return false;
             list.Add(DateTime.UtcNow);
             return true;
         }
     }
 
-    public async Task<bool> OverDailyCapAsync(CancellationToken ct) =>
-        await usage.SpentTodayUsdAsync(ct) >= DailyCapUsd;
+    public async Task<BudgetMode> ModeAsync(CancellationToken ct)
+    {
+        var today = await usage.SpentTodayUsdAsync(ct);
+        var month = await usage.SpentMonthUsdAsync(ct);
+        if (today >= DailyCapUsd || month >= MonthlyCapUsd) return BudgetMode.Stopped;
+        if (today >= DailyCapUsd * EcoThreshold) return BudgetMode.Eco;
+        return BudgetMode.Full;
+    }
+
+    public async Task<Budget> BudgetAsync(CancellationToken ct) =>
+        new(DailyCapUsd, MonthlyCapUsd, ModeName(await ModeAsync(ct)));
+
+    public static string ModeName(BudgetMode m) => m switch
+    {
+        BudgetMode.Eco => "eco",
+        BudgetMode.Stopped => "stopped",
+        _ => "full",
+    };
 
     // Records a finished call and returns what it cost.
     public async Task<decimal> RecordAsync(string feature, string model, long inputTokens, long outputTokens, long cacheReadTokens, CancellationToken ct)

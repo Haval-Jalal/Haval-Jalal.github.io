@@ -15,6 +15,19 @@ namespace HavalApi.Functions;
 public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore leads, IUsageStore usage, ILogger<AgentFunction> log)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private static readonly TimeSpan Hour = TimeSpan.FromHours(1);
+    private static readonly TimeSpan Day = TimeSpan.FromDays(1);
+
+    // Public: lets the UI show "sparläge" / "budget slut" before the visitor starts typing.
+    [Function("AgentStatus")]
+    public async Task<IActionResult> Status(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "agent/status")] HttpRequest req,
+        CancellationToken ct)
+    {
+        var mode = Configured() ? AgentGuard.ModeName(await guard.ModeAsync(ct)) : "off";
+        req.HttpContext.Response.Headers.CacheControl = "no-store";
+        return new OkObjectResult(new { mode });
+    }
 
     // Digital Haval: small JSON round-trip, no streaming needed for short answers.
     [Function("AgentChat")]
@@ -23,8 +36,8 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         CancellationToken ct)
     {
         if (!Configured()) return Unavailable("not_configured");
-        if (await guard.OverDailyCapAsync(ct)) return Unavailable("daily_cap");
-        if (!guard.TryTake("chat", ClientIp(req), guard.ChatPerHour)) return TooMany();
+        if (await guard.ModeAsync(ct) == BudgetMode.Stopped) return Unavailable("daily_cap");
+        if (!guard.TryTake("chat", ClientIp(req), guard.ChatPerHour, Hour)) return TooMany();
 
         var dto = await ReadAsync<ChatDto>(req, ct);
         if (dto?.Messages is not { Count: > 0 } || dto.Messages.Any(m => string.IsNullOrWhiteSpace(m.Text) || m.Text.Length > 2000))
@@ -50,14 +63,17 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         CancellationToken ct)
     {
         if (!Configured()) return Unavailable("not_configured");
-        if (await guard.OverDailyCapAsync(ct)) return Unavailable("daily_cap");
+        var mode = await guard.ModeAsync(ct);
+        if (mode == BudgetMode.Stopped) return Unavailable("daily_cap");
 
         var dto = await ReadAsync<BuildDto>(req, ct);
         var idea = dto?.Idea?.Trim();
         if (string.IsNullOrEmpty(idea) || idea.Length < 8 || idea.Length > 800)
             return new BadRequestObjectResult(new { error = "invalid_idea" });
 
-        if (!guard.TryTake("build", ClientIp(req), guard.BuildPerHour)) return TooMany();
+        var ip = ClientIp(req);
+        if (!guard.TryTake("build", ip, guard.BuildPerHour, Hour) || !guard.TryTake("build", ip, guard.BuildPerDay, Day))
+            return TooMany();
 
         var res = req.HttpContext.Response;
         res.StatusCode = 200;
@@ -67,10 +83,12 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
 
         try
         {
-            Usage? usage = null;
-            await foreach (var delta in agent.BuildStreamAsync(idea, u => usage = u, ct))
+            var eco = mode == BudgetMode.Eco;
+            await WriteEvent(res, "mode", new { mode = AgentGuard.ModeName(mode) }, ct);
+            Usage? usageInfo = null;
+            await foreach (var delta in agent.BuildStreamAsync(idea, eco, u => usageInfo = u, ct))
                 await WriteEvent(res, "delta", new { t = delta }, ct);
-            await WriteEvent(res, "done", new { usage }, ct);
+            await WriteEvent(res, "done", new { usage = usageInfo }, ct);
         }
         catch (AnthropicApiException ex)
         {
@@ -89,10 +107,14 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "agent/lead")] HttpRequest req,
         CancellationToken ct)
     {
-        if (!guard.TryTake("lead", ClientIp(req), 5)) return TooMany();
+        if (!guard.TryTake("lead", ClientIp(req), 5, Hour)) return TooMany();
         var dto = await ReadAsync<LeadDto>(req, ct);
         if (dto is null || string.IsNullOrWhiteSpace(dto.Email) || !dto.Email.Contains('@') || dto.Email.Length > 200)
             return new BadRequestObjectResult(new { error = "invalid_email" });
+
+        // Honeypot: real visitors never see the "website" field; bots fill it. Pretend success.
+        if (!string.IsNullOrWhiteSpace(dto.Website))
+            return new OkObjectResult(new { ok = true });
 
         var lead = new Data.Lead(
             Guid.NewGuid().ToString("N"),
@@ -125,7 +147,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
     {
         if (ClientPrincipal.From(req) is not { IsAdmin: true }) return new UnauthorizedResult();
         var days = int.TryParse(req.Query["days"], out var d) ? Math.Clamp(d, 1, 365) : 30;
-        return new OkObjectResult(await usage.SummaryAsync(days, guard.DailyCapUsd, ct));
+        return new OkObjectResult(await usage.SummaryAsync(days, await guard.BudgetAsync(ct), ct));
     }
 
     private static bool Configured() => !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY"));
@@ -172,5 +194,6 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         [JsonPropertyName("idea")] public string? Idea { get; set; }
         [JsonPropertyName("plan")] public string? Plan { get; set; }
         [JsonPropertyName("source")] public string? Source { get; set; }
+        [JsonPropertyName("website")] public string? Website { get; set; }
     }
 }

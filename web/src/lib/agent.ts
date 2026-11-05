@@ -34,6 +34,20 @@ async function codeOf(r: Response): Promise<string> {
   }
 }
 
+export type BudgetMode = "full" | "eco" | "stopped" | "off";
+
+// "full" = Opus builds, "eco" = Sonnet builds past 70 % of the daily cap, "stopped" = caps reached
+// (lead form only), "off" = no API key on this environment.
+export async function getStatus(): Promise<BudgetMode> {
+  try {
+    const r = await fetch("/api/agent/status", { cache: "no-store" });
+    if (!r.ok) return "off";
+    return ((await r.json()) as { mode: BudgetMode }).mode;
+  } catch {
+    return "off";
+  }
+}
+
 export async function chat(messages: ChatMsg[]): Promise<{ reply: string; refused: boolean }> {
   const r = await fetch("/api/agent/chat", {
     method: "POST",
@@ -45,7 +59,12 @@ export async function chat(messages: ChatMsg[]): Promise<{ reply: string; refuse
 }
 
 // Reads the server-sent event stream from /api/agent/build and forwards text deltas.
-export async function streamBuild(idea: string, onDelta: (text: string) => void, signal?: AbortSignal): Promise<void> {
+export async function streamBuild(
+  idea: string,
+  onDelta: (text: string) => void,
+  signal?: AbortSignal,
+  onMode?: (mode: BudgetMode) => void,
+): Promise<void> {
   const r = await fetch("/api/agent/build", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -72,12 +91,13 @@ export async function streamBuild(idea: string, onDelta: (text: string) => void,
         else if (line.startsWith("data: ")) data += line.slice(6);
       }
       if (event === "delta") onDelta((JSON.parse(data) as { t: string }).t);
+      else if (event === "mode") onMode?.((JSON.parse(data) as { mode: BudgetMode }).mode);
       else if (event === "error") throw new AgentError((JSON.parse(data) as { error: string }).error);
     }
   }
 }
 
-export async function sendLead(lead: { name: string; email: string; message: string; idea?: string; plan?: string; source?: string }) {
+export async function sendLead(lead: { name: string; email: string; message: string; idea?: string; plan?: string; source?: string; website?: string }) {
   const r = await fetch("/api/agent/lead", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

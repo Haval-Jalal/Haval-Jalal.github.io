@@ -30,7 +30,7 @@ public static class Prompts
     }
 
     // Build Lab: a runnable single-file prototype followed by a short "how Haval would build this for real".
-    public static string Build(SiteContent c) => $"""
+    public static string Build(SiteContent c, bool eco = false) => $"""
         Du är byggmotorn i "AI Build Lab" på Haval Jalals portfolio. Besökaren beskriver en idé; du levererar två delar.
 
         DEL 1: En körbar prototyp som EN enda HTML-fil.
@@ -38,7 +38,8 @@ public static class Prompts
         - All CSS och JS inline. Inga externa resurser alls (inga CDN, typsnitt, bilder, fetch). Prototypen körs i en
           sandboxad iframe utan nätverk; använd exempeldata i koden.
         - Modern, mörk, snygg design med en tydlig accentfärg, responsiv, riktiga interaktioner (knappar fungerar,
-          formulär reagerar, state sparas i minnet). Max ~180 rader. Svenska i gränssnittet om inte idén kräver annat.
+          formulär reagerar, state sparas i minnet). Max ~{(eco ? 110 : 180)} rader{(eco ? ", fokusera på kärnflödet" : "")}.
+          Svenska i gränssnittet om inte idén kräver annat.
         - Börja svaret direkt med <!doctype html>. Ingen text före, inga kodstaket (```).
 
         DEL 2: Direkt efter HTML-dokumentet skriver du på en egen rad exakt:

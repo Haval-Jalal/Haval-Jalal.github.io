@@ -6,8 +6,11 @@
     "GITHUB_USER": "Haval-Jalal",
     "GITHUB_TOKEN": "<optional: fine-grained token with public repo read, raises the rate limit>",
     "ANTHROPIC_API_KEY": "<required for Build Lab + chat: key from console.anthropic.com>",
-    "AGENT_DAILY_CAP_USD": "3",
+    "AGENT_DAILY_CAP_USD": "3.3",
+    "AGENT_MONTHLY_CAP_USD": "90",
+    "AGENT_ECO_THRESHOLD": "0.7",
     "AGENT_BUILD_PER_HOUR": "3",
+    "AGENT_BUILD_PER_DAY": "5",
     "AGENT_CHAT_PER_HOUR": "20",
     "ANALYTICS_SALT": "<any random string>"
   },

@@ -16,6 +16,9 @@ public sealed record UsageSummary(
     int Days,
     decimal SpentTodayUsd,
     decimal DailyCapUsd,
+    decimal SpentMonthUsd,
+    decimal MonthlyCapUsd,
+    string Mode,          // "full" | "eco" | "stopped"
     decimal TotalUsd,
     long InputTokens,
     long OutputTokens,
@@ -30,8 +33,12 @@ public interface IUsageStore
 {
     Task AppendAsync(UsageRecord record, CancellationToken ct);
     Task<decimal> SpentTodayUsdAsync(CancellationToken ct);
-    Task<UsageSummary> SummaryAsync(int days, decimal dailyCapUsd, CancellationToken ct);
+    Task<decimal> SpentMonthUsdAsync(CancellationToken ct);
+    Task<UsageSummary> SummaryAsync(int days, Budget budget, CancellationToken ct);
 }
+
+// Caps and the current mode, computed by AgentGuard and passed into the summary.
+public sealed record Budget(decimal DailyCapUsd, decimal MonthlyCapUsd, string Mode);
 
 public sealed class JsonFileUsageStore(string dataDir) : IUsageStore
 {
@@ -60,11 +67,18 @@ public sealed class JsonFileUsageStore(string dataDir) : IUsageStore
         return (await ReadSinceAsync(today, ct)).Sum(r => r.Usd);
     }
 
-    public async Task<UsageSummary> SummaryAsync(int days, decimal dailyCapUsd, CancellationToken ct)
+    public async Task<decimal> SpentMonthUsdAsync(CancellationToken ct)
+    {
+        var first = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        return (await ReadSinceAsync(first, ct)).Sum(r => r.Usd);
+    }
+
+    public async Task<UsageSummary> SummaryAsync(int days, Budget budget, CancellationToken ct)
     {
         var since = DateTime.UtcNow.Date.AddDays(-(days - 1));
-        var rows = await ReadSinceAsync(since, ct);
-        return Summarise(rows, days, since, dailyCapUsd);
+        var first = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var rows = await ReadSinceAsync(since < first ? since : first, ct);
+        return Summarise(rows, days, since, budget);
     }
 
     private async Task<List<UsageRecord>> ReadSinceAsync(DateTime since, CancellationToken ct)
@@ -84,9 +98,11 @@ public sealed class JsonFileUsageStore(string dataDir) : IUsageStore
     }
 
     // Shared by every store implementation.
-    public static UsageSummary Summarise(IReadOnlyCollection<UsageRecord> rows, int days, DateTime since, decimal cap)
+    public static UsageSummary Summarise(IReadOnlyCollection<UsageRecord> allRows, int days, DateTime since, Budget budget)
     {
         var today = DateTime.UtcNow.Date;
+        var first = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var rows = allRows.Where(r => r.Ts >= since).ToList();
         var perDay = Enumerable.Range(0, days)
             .Select(i => since.AddDays(i))
             .Select(d =>
@@ -102,8 +118,11 @@ public sealed class JsonFileUsageStore(string dataDir) : IUsageStore
             .ToList();
         return new UsageSummary(
             days,
-            rows.Where(r => r.Ts.Date == today).Sum(r => r.Usd),
-            cap,
+            allRows.Where(r => r.Ts.Date == today).Sum(r => r.Usd),
+            budget.DailyCapUsd,
+            allRows.Where(r => r.Ts >= first).Sum(r => r.Usd),
+            budget.MonthlyCapUsd,
+            budget.Mode,
             rows.Sum(r => r.Usd),
             rows.Sum(r => r.InputTokens),
             rows.Sum(r => r.OutputTokens),

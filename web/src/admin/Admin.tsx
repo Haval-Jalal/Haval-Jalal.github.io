@@ -210,6 +210,9 @@ type UsageSummary = {
   days: number;
   spentTodayUsd: number;
   dailyCapUsd: number;
+  spentMonthUsd: number;
+  monthlyCapUsd: number;
+  mode: "full" | "eco" | "stopped";
   totalUsd: number;
   inputTokens: number;
   outputTokens: number;
@@ -239,8 +242,11 @@ function AiUsage() {
   if (!data) return <p className="text-fg-muted">Hämtar…</p>;
 
   const share = data.dailyCapUsd > 0 ? data.spentTodayUsd / data.dailyCapUsd : 0;
-  const warn = share >= 0.8;
+  const monthShare = data.monthlyCapUsd > 0 ? data.spentMonthUsd / data.monthlyCapUsd : 0;
+  const warn = share >= 0.7;
+  const monthWarn = monthShare >= 0.8;
   const max = Math.max(0.001, ...data.perDay.map((d) => d.usd));
+  const modeLabel = { full: "Fullt läge: Opus bygger", eco: "Sparläge: Sonnet bygger", stopped: "Stoppat: endast lead-formulär" }[data.mode];
 
   return (
     <div className="space-y-8">
@@ -248,6 +254,9 @@ function AiUsage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">AI & kostnad</h1>
           <p className="text-sm text-fg-muted">Räknat från faktiska tokens per anrop (listpris). Facit finns i Anthropic Console.</p>
+          <p className={`mt-2 inline-block rounded-full border px-3 py-1 text-xs ${data.mode === "full" ? "border-emerald-400/30 text-emerald-200" : "border-amber-400/40 text-amber-200"}`}>
+            ● {modeLabel}
+          </p>
         </div>
         <div className="flex gap-1 rounded-full border border-white/10 p-1 text-xs">
           {[7, 30, 90].map((d) => (
@@ -270,7 +279,21 @@ function AiUsage() {
         <div className="mt-3 h-2 rounded-full bg-white/5">
           <div className={`h-2 rounded-full ${warn ? "bg-amber-400" : "bg-ember-400"}`} style={{ width: `${Math.min(100, share * 100)}%` }} />
         </div>
-        <p className="mt-2 text-xs text-fg-faint">När taket nås svarar Build Lab och chatten "dagens AI-budget är slut" tills midnatt UTC. Ändra taket med AGENT_DAILY_CAP_USD.</p>
+        <p className="mt-2 text-xs text-fg-faint">Från 70 % går Build Lab i sparläge (Sonnet). Vid 100 % stoppas AI:t till midnatt UTC och besökare får skicka idén till dig i stället. Ändra med AGENT_DAILY_CAP_USD / AGENT_ECO_THRESHOLD.</p>
+      </section>
+
+      <section className={`rounded-2xl border p-5 ${monthWarn ? "border-amber-400/40 bg-amber-400/10" : "panel-tile"}`}>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-sm font-medium">Den här månaden</p>
+          <p className="text-xs text-fg-muted">
+            {usd(data.spentMonthUsd)} av {data.monthlyCapUsd} USD ({Math.round(monthShare * 100)} %)
+            {monthWarn && <span className="ml-2 font-medium text-amber-200">⚠ Nära månadstaket</span>}
+          </p>
+        </div>
+        <div className="mt-3 h-2 rounded-full bg-white/5">
+          <div className={`h-2 rounded-full ${monthWarn ? "bg-amber-400" : "bg-ember-400"}`} style={{ width: `${Math.min(100, monthShare * 100)}%` }} />
+        </div>
+        <p className="mt-2 text-xs text-fg-faint">Hård gräns: när månadstaket nås stoppas alla AI-anrop till den 1:a. Ändra med AGENT_MONTHLY_CAP_USD (Max-planen ger 100 USD/mån).</p>
       </section>
 
       <div className="grid gap-3 sm:grid-cols-4">
