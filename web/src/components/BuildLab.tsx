@@ -31,7 +31,7 @@ export default function BuildLab() {
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
           variants={stagger}
-          className="flex flex-col gap-4"
+          className="flex min-w-0 flex-col gap-4"
         >
           <DigitalHaval />
           <motion.div variants={reveal} className="panel-tile rounded-3xl p-6">
@@ -69,6 +69,8 @@ function Lab() {
   const html = markerAt >= 0 ? raw.slice(0, markerAt) : raw;
   const plan = markerAt >= 0 ? raw.slice(markerAt + PLAN_MARKER.length).trim() : "";
   const isHtml = html.trimStart().toLowerCase().startsWith("<!doctype") || html.trimStart().startsWith("<html");
+  // Only mount the sandbox once the document is complete; before that, show the code streaming in.
+  const htmlReady = isHtml && (html.includes("</body>") || markerAt >= 0 || state.status !== "running");
 
   // Re-render the sandbox at most every 400 ms while streaming, then once more when finished.
   useEffect(() => {
@@ -106,12 +108,12 @@ function Lab() {
       whileInView="show"
       viewport={{ once: true, margin: "-60px" }}
       variants={stagger}
-      className="panel-glass rounded-3xl p-2"
+      className="panel-glass min-w-0 rounded-3xl p-2"
     >
       <motion.div variants={reveal} className="rounded-[1.25rem] border border-white/5 bg-night-950/60 p-5 md:p-7">
         <div className="flex flex-wrap items-center gap-2 text-xs text-fg-faint">
           <Sparkles className="size-3.5 text-ember-300" />
-          Build Lab · drivs av Claude {mode === "eco" ? "Sonnet" : "Opus"}
+          Build Lab · AI-agent byggd på Claude
           {mode === "eco" && (
             <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-amber-200" title="Dagens budget är nästan slut, så prototyperna byggs med en snabbare modell.">
               Sparläge
@@ -174,22 +176,23 @@ function Lab() {
         )}
       </motion.div>
 
-      {(shownHtml || plan || (state.status !== "idle" && raw)) && (
+      {(state.status === "running" || shownHtml || plan || raw) && (
         <div className="mt-2 space-y-2">
-          {isHtml ? (
-            <div className="overflow-hidden rounded-[1.25rem] border border-white/5 bg-white">
-              <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#111] px-3 py-2">
+          {state.status === "running" || isHtml ? (
+            <div className="overflow-hidden rounded-[1.25rem] border border-white/5 bg-night-950">
+              <div className="flex items-center gap-1.5 border-b border-white/5 bg-[#111] px-3 py-2">
                 <span className="size-2.5 rounded-full bg-[#ff5f57]" />
                 <span className="size-2.5 rounded-full bg-[#febc2e]" />
                 <span className="size-2.5 rounded-full bg-[#28c840]" />
-                <span className="ml-3 font-mono text-[11px] text-white/50">prototyp.html · sandlåda</span>
+                <span className="ml-3 font-mono text-[11px] text-white/50">
+                  prototyp.html · {htmlReady ? "sandlåda" : state.status === "running" ? "bygger…" : "sandlåda"}
+                </span>
               </div>
-              <iframe
-                title="Prototyp"
-                sandbox="allow-scripts"
-                srcDoc={shownHtml}
-                className="h-[520px] w-full bg-white"
-              />
+              {htmlReady ? (
+                <iframe title="Prototyp" sandbox="allow-scripts" srcDoc={shownHtml || html} className="h-[520px] w-full bg-night-950" />
+              ) : (
+                <BuildProgress raw={html} />
+              )}
             </div>
           ) : (
             raw && <p className="rounded-[1.25rem] border border-white/5 bg-night-950/60 p-5 text-sm text-fg-muted">{raw}</p>
@@ -204,6 +207,44 @@ function Lab() {
         </div>
       )}
     </motion.div>
+  );
+}
+
+// What the visitor sees while the agent thinks and the code streams in: a dark terminal with the
+// tail of the document, so the wait feels like work happening rather than a blank frame.
+function BuildProgress({ raw }: { raw: string }) {
+  const thinking = raw.length === 0;
+  const lines = raw.split("\n");
+  const tail = lines.slice(-14);
+  const phase = thinking
+    ? "Agenten läser idén och planerar prototypen"
+    : raw.includes("<script") ? "Skriver logiken" : raw.includes("<body") ? "Bygger gränssnittet" : "Sätter struktur och stil";
+  return (
+    <div className="flex h-[520px] flex-col">
+      <div className="flex items-center gap-3 border-b border-white/5 px-5 py-3 text-xs text-fg-muted">
+        <Loader2 className="size-3.5 animate-spin text-ember-300" />
+        <span className="text-fg">{phase}…</span>
+        {!thinking && (
+          <span className="ml-auto font-mono text-fg-faint">
+            {lines.length} rader · {raw.length.toLocaleString("sv-SE")} tecken
+          </span>
+        )}
+      </div>
+      <pre className="flex min-h-0 flex-1 flex-col justify-end overflow-hidden whitespace-pre-wrap break-all px-5 py-4 font-mono text-[11px] leading-relaxed text-fg-muted">
+        {thinking ? (
+          <span className="text-fg-faint">
+            {"// Första raderna dyker upp om några sekunder.\n// Prototypen körs här i en sandlåda när den är komplett."}
+          </span>
+        ) : (
+          tail.map((l, i) => (
+            <div key={i} className={i === tail.length - 1 ? "text-fg" : ""}>
+              {l || " "}
+            </div>
+          ))
+        )}
+        {!thinking && <span className="inline-block h-3 w-1.5 animate-pulse bg-ember-400 align-middle" />}
+      </pre>
+    </div>
   );
 }
 
