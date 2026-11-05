@@ -1,16 +1,13 @@
 using System.Collections.Concurrent;
+using HavalApi.Data;
 
 namespace HavalApi.Agent;
 
 // Keeps the AI features from being abused or draining the credits: a per-IP sliding window per
-// feature, and a daily spend cap computed from real token usage. In-memory for now (per instance);
-// moves to Cosmos with the other stores.
-public sealed class AgentGuard
+// feature (in memory) and a daily spend cap read from the persisted usage records.
+public sealed class AgentGuard(IUsageStore usage)
 {
     private readonly ConcurrentDictionary<string, List<DateTime>> _windows = new();
-    private readonly object _spendLock = new();
-    private DateOnly _spendDay = DateOnly.FromDateTime(DateTime.UtcNow);
-    private decimal _spentUsd;
 
     public int BuildPerHour { get; } = Env("AGENT_BUILD_PER_HOUR", 3);
     public int ChatPerHour { get; } = Env("AGENT_CHAT_PER_HOUR", 20);
@@ -30,22 +27,28 @@ public sealed class AgentGuard
         }
     }
 
-    public bool OverDailyCap()
+    public async Task<bool> OverDailyCapAsync(CancellationToken ct) =>
+        await usage.SpentTodayUsdAsync(ct) >= DailyCapUsd;
+
+    // Records a finished call and returns what it cost.
+    public async Task<decimal> RecordAsync(string feature, string model, long inputTokens, long outputTokens, long cacheReadTokens, CancellationToken ct)
     {
-        lock (_spendLock)
-        {
-            RollDay();
-            return _spentUsd >= DailyCapUsd;
-        }
+        var usd = Pricing.Usd(model, inputTokens, outputTokens, cacheReadTokens);
+        await usage.AppendAsync(new UsageRecord(DateTime.UtcNow, feature, model, inputTokens, outputTokens, cacheReadTokens, usd), ct);
+        return usd;
     }
 
-    public decimal SpentTodayUsd
-    {
-        get { lock (_spendLock) { RollDay(); return _spentUsd; } }
-    }
+    private static int Env(string name, int fallback) =>
+        int.TryParse(Environment.GetEnvironmentVariable(name), out var v) ? v : fallback;
 
-    // Prices per million tokens (Claude API list prices).
-    public void Record(string model, long inputTokens, long outputTokens, long cacheReadTokens = 0)
+    private static decimal Env(string name, decimal fallback) =>
+        decimal.TryParse(Environment.GetEnvironmentVariable(name), System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : fallback;
+}
+
+// Claude API list prices per million tokens.
+public static class Pricing
+{
+    public static decimal Usd(string model, long inputTokens, long outputTokens, long cacheReadTokens)
     {
         var (inPrice, outPrice, cachePrice) = model switch
         {
@@ -54,27 +57,6 @@ public sealed class AgentGuard
             var m when m.StartsWith("claude-opus-4-8") => (5m, 25m, 0.50m),
             _ => (5m, 25m, 0.50m),
         };
-        var usd = (inputTokens * inPrice + outputTokens * outPrice + cacheReadTokens * cachePrice) / 1_000_000m;
-        lock (_spendLock)
-        {
-            RollDay();
-            _spentUsd += usd;
-        }
+        return (inputTokens * inPrice + outputTokens * outPrice + cacheReadTokens * cachePrice) / 1_000_000m;
     }
-
-    private void RollDay()
-    {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        if (today != _spendDay)
-        {
-            _spendDay = today;
-            _spentUsd = 0;
-        }
-    }
-
-    private static int Env(string name, int fallback) =>
-        int.TryParse(Environment.GetEnvironmentVariable(name), out var v) ? v : fallback;
-
-    private static decimal Env(string name, decimal fallback) =>
-        decimal.TryParse(Environment.GetEnvironmentVariable(name), System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : fallback;
 }

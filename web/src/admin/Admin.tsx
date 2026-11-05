@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { BarChart3, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
 import type { JourneyStep, SiteContent } from "../data/content";
 
-type Tab = "overview" | "content" | "leads" | "settings";
+type Tab = "overview" | "content" | "leads" | "ai" | "settings";
 
 export default function Admin() {
   const auth = useAuth();
@@ -31,6 +31,7 @@ export default function Admin() {
     { key: "overview", label: "Översikt", icon: BarChart3 },
     { key: "content", label: "Innehåll", icon: FileText },
     { key: "leads", label: "Leads", icon: Inbox },
+    { key: "ai", label: "AI & kostnad", icon: Cpu },
     { key: "settings", label: "Inställningar", icon: SettingsIcon },
   ];
 
@@ -70,6 +71,7 @@ export default function Admin() {
           {tab === "overview" && <Overview />}
           {tab === "content" && <ContentEditor />}
           {tab === "leads" && <Leads />}
+          {tab === "ai" && <AiUsage />}
           {tab === "settings" && <SettingsEditor />}
         </main>
       </div>
@@ -167,11 +169,11 @@ function Overview() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value, format }: { label: string; value: number; format?: (n: number) => string }) {
   return (
     <div className="panel-tile rounded-2xl p-5">
       <p className="text-xs text-fg-muted">{label}</p>
-      <p className="mt-2 text-3xl font-semibold tracking-tight">{value.toLocaleString("sv-SE")}</p>
+      <p className="mt-2 text-3xl font-semibold tracking-tight">{format ? format(value) : value.toLocaleString("sv-SE")}</p>
     </div>
   );
 }
@@ -199,6 +201,136 @@ function TopList({ title, items, empty = "Inget ännu" }: { title: string; items
         </ul>
       )}
     </section>
+  );
+}
+
+/* ---------- AI & kostnad ---------- */
+
+type UsageSummary = {
+  days: number;
+  spentTodayUsd: number;
+  dailyCapUsd: number;
+  totalUsd: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  perDay: { day: string; usd: number; inputTokens: number; outputTokens: number; calls: number }[];
+  byFeature: { feature: string; calls: number; usd: number; inputTokens: number; outputTokens: number; avgUsd: number }[];
+};
+
+const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)" };
+const usd = (n: number) => `${n.toFixed(n < 1 ? 3 : 2)} USD`;
+const tok = (n: number) => n.toLocaleString("sv-SE");
+
+function AiUsage() {
+  const [days, setDays] = useState(30);
+  const [data, setData] = useState<UsageSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setData(null);
+    fetch(`/api/manage/ai?days=${days}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(setData)
+      .catch((e: Error) => setError(e.message));
+  }, [days]);
+
+  if (error) return <p className="text-red-300">Kunde inte hämta AI-statistik: {error}</p>;
+  if (!data) return <p className="text-fg-muted">Hämtar…</p>;
+
+  const share = data.dailyCapUsd > 0 ? data.spentTodayUsd / data.dailyCapUsd : 0;
+  const warn = share >= 0.8;
+  const max = Math.max(0.001, ...data.perDay.map((d) => d.usd));
+
+  return (
+    <div className="space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">AI & kostnad</h1>
+          <p className="text-sm text-fg-muted">Räknat från faktiska tokens per anrop (listpris). Facit finns i Anthropic Console.</p>
+        </div>
+        <div className="flex gap-1 rounded-full border border-white/10 p-1 text-xs">
+          {[7, 30, 90].map((d) => (
+            <button key={d} onClick={() => setDays(d)} className={`rounded-full px-3 py-1.5 ${days === d ? "bg-white text-night-950" : "text-fg-muted hover:text-fg"}`}>
+              {d} dagar
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* Today vs cap: a meter, with the warning in words and an icon, never colour alone. */}
+      <section className={`rounded-2xl border p-5 ${warn ? "border-amber-400/40 bg-amber-400/10" : "panel-tile"}`}>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-sm font-medium">Idag</p>
+          <p className="text-xs text-fg-muted">
+            {usd(data.spentTodayUsd)} av {data.dailyCapUsd} USD ({Math.round(share * 100)} %)
+            {warn && <span className="ml-2 font-medium text-amber-200">⚠ Nära dagstaket</span>}
+          </p>
+        </div>
+        <div className="mt-3 h-2 rounded-full bg-white/5">
+          <div className={`h-2 rounded-full ${warn ? "bg-amber-400" : "bg-ember-400"}`} style={{ width: `${Math.min(100, share * 100)}%` }} />
+        </div>
+        <p className="mt-2 text-xs text-fg-faint">När taket nås svarar Build Lab och chatten "dagens AI-budget är slut" tills midnatt UTC. Ändra taket med AGENT_DAILY_CAP_USD.</p>
+      </section>
+
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Stat label={`Kostnad, ${days} dagar`} value={data.totalUsd} format={usd} />
+        <Stat label="Anrop" value={data.perDay.reduce((n, d) => n + d.calls, 0)} />
+        <Stat label="Input-tokens" value={data.inputTokens} />
+        <Stat label="Output-tokens" value={data.outputTokens} />
+      </div>
+
+      <section className="panel-tile rounded-2xl p-5">
+        <h2 className="text-sm font-medium">Kostnad per dag</h2>
+        <div className="mt-5 flex h-40 gap-[3px]" role="img" aria-label="Kostnad per dag">
+          {data.perDay.map((d) => (
+            <div key={d.day} className="group flex h-full flex-1 flex-col justify-end" title={`${d.day}: ${usd(d.usd)}, ${d.calls} anrop, ${tok(d.inputTokens)} in / ${tok(d.outputTokens)} ut`}>
+              <div
+                className="rounded-t-[3px] bg-ember-400 transition-opacity group-hover:opacity-80"
+                style={{ height: `${Math.max(d.usd > 0 ? 3 : 1, (d.usd / max) * 100)}%`, opacity: d.usd > 0 ? 1 : 0.25 }}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex justify-between font-mono text-[10px] text-fg-faint">
+          <span>{data.perDay[0]?.day}</span>
+          <span>{data.perDay.at(-1)?.day}</span>
+        </div>
+      </section>
+
+      <section className="panel-tile rounded-2xl p-5">
+        <h2 className="text-sm font-medium">Per funktion</h2>
+        {data.byFeature.length === 0 ? (
+          <p className="mt-3 text-xs text-fg-faint">Inga AI-anrop under perioden.</p>
+        ) : (
+          <table className="mt-3 w-full text-left text-xs">
+            <thead className="text-fg-faint">
+              <tr>
+                <th className="py-1 font-medium">Funktion</th>
+                <th className="py-1 text-right font-medium">Anrop</th>
+                <th className="py-1 text-right font-medium">Tokens in</th>
+                <th className="py-1 text-right font-medium">Tokens ut</th>
+                <th className="py-1 text-right font-medium">Snitt/anrop</th>
+                <th className="py-1 text-right font-medium">Kostnad</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.byFeature.map((f) => (
+                <tr key={f.feature} className="border-t border-white/5">
+                  <td className="py-2 text-fg">{FEATURE_LABEL[f.feature] ?? f.feature}</td>
+                  <td className="py-2 text-right font-mono">{f.calls}</td>
+                  <td className="py-2 text-right font-mono">{tok(f.inputTokens)}</td>
+                  <td className="py-2 text-right font-mono">{tok(f.outputTokens)}</td>
+                  <td className="py-2 text-right font-mono">{usd(f.avgUsd)}</td>
+                  <td className="py-2 text-right font-mono text-fg">{usd(f.usd)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <p className="mt-3 text-xs text-fg-faint">Cache-lästa tokens under perioden: {tok(data.cacheReadTokens)} (systemprompten cachas, så upprepade anrop blir billigare).</p>
+      </section>
+    </div>
   );
 }
 

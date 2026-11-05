@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HavalApi.Functions;
 
-public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore leads, ILogger<AgentFunction> log)
+public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore leads, IUsageStore usage, ILogger<AgentFunction> log)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -23,7 +23,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         CancellationToken ct)
     {
         if (!Configured()) return Unavailable("not_configured");
-        if (guard.OverDailyCap()) return Unavailable("daily_cap");
+        if (await guard.OverDailyCapAsync(ct)) return Unavailable("daily_cap");
         if (!guard.TryTake("chat", ClientIp(req), guard.ChatPerHour)) return TooMany();
 
         var dto = await ReadAsync<ChatDto>(req, ct);
@@ -50,7 +50,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         CancellationToken ct)
     {
         if (!Configured()) return Unavailable("not_configured");
-        if (guard.OverDailyCap()) return Unavailable("daily_cap");
+        if (await guard.OverDailyCapAsync(ct)) return Unavailable("daily_cap");
 
         var dto = await ReadAsync<BuildDto>(req, ct);
         var idea = dto?.Idea?.Trim();
@@ -114,7 +114,18 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         CancellationToken ct)
     {
         if (ClientPrincipal.From(req) is not { IsAdmin: true }) return new UnauthorizedResult();
-        return new OkObjectResult(new { leads = await leads.ListAsync(100, ct), spentTodayUsd = guard.SpentTodayUsd, dailyCapUsd = guard.DailyCapUsd });
+        return new OkObjectResult(new { leads = await leads.ListAsync(100, ct), spentTodayUsd = await usage.SpentTodayUsdAsync(ct), dailyCapUsd = guard.DailyCapUsd });
+    }
+
+    // Admin: token and cost history for the AI features.
+    [Function("ManageAi")]
+    public async Task<IActionResult> ManageAi(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/ai")] HttpRequest req,
+        CancellationToken ct)
+    {
+        if (ClientPrincipal.From(req) is not { IsAdmin: true }) return new UnauthorizedResult();
+        var days = int.TryParse(req.Query["days"], out var d) ? Math.Clamp(d, 1, 365) : 30;
+        return new OkObjectResult(await usage.SummaryAsync(days, guard.DailyCapUsd, ct));
     }
 
     private static bool Configured() => !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY"));

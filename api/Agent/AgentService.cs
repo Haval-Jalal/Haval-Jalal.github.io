@@ -35,7 +35,7 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
             Messages = messages,
         }, cancellationToken: ct);
 
-        guard.Record(ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens, response.Usage.CacheReadInputTokens ?? 0);
+        await guard.RecordAsync("chat", ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens, response.Usage.CacheReadInputTokens ?? 0, ct);
 
         if (response.StopReason == "refusal")
             return new ChatReply("Den frågan kan jag tyvärr inte svara på här. Hör gärna av dig till Haval direkt.", ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens, true);
@@ -81,8 +81,8 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
             }
         }
 
-        guard.Record(model, inputTokens, outputTokens, cacheRead);
-        log.LogInformation("Build Lab run: {Model} in={In} out={Out} cache={Cache} spentToday={Spent:F3} USD", model, inputTokens, outputTokens, cacheRead, guard.SpentTodayUsd);
+        var usd = await guard.RecordAsync("build", model, inputTokens, outputTokens, cacheRead, CancellationToken.None);
+        log.LogInformation("Build Lab run: {Model} in={In} out={Out} cache={Cache} cost={Usd:F4} USD", model, inputTokens, outputTokens, cacheRead, usd);
         onDone(new Usage(model, inputTokens, outputTokens, cacheRead));
     }
 }

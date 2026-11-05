@@ -30,6 +30,7 @@ var dataDir = Environment.GetEnvironmentVariable("DATA_DIR")
 builder.Services.AddSingleton<IContentStore>(new JsonFileContentStore(dataDir));
 builder.Services.AddSingleton<IAnalyticsStore>(new JsonFileAnalyticsStore(dataDir));
 builder.Services.AddSingleton<ILeadStore>(new JsonFileLeadStore(dataDir));
+builder.Services.AddSingleton<IUsageStore>(new JsonFileUsageStore(dataDir));
 
 // AI features. AnthropicClient reads ANTHROPIC_API_KEY from the environment (local.settings.json
 // locally, app settings in Azure); AgentFunction answers 503 when it is missing.
