@@ -21,6 +21,10 @@ public sealed record UsageSummary(
     decimal SpentMonthUsd,
     decimal MonthlyCapUsd,
     string Mode,          // "full" | "eco" | "stopped"
+    int ActiveCalls,
+    long TodayInputTokens,
+    long TodayOutputTokens,
+    int TodayCalls,
     decimal TotalUsd,
     long InputTokens,
     long OutputTokens,
@@ -40,8 +44,8 @@ public interface IUsageStore
     Task<UsageSummary> SummaryAsync(int days, Budget budget, CancellationToken ct);
 }
 
-// Caps and the current mode, computed by AgentGuard and passed into the summary.
-public sealed record Budget(decimal DailyCapUsd, decimal MonthlyCapUsd, string Mode);
+// Caps, the current mode and in-flight calls, computed by AgentGuard and passed into the summary.
+public sealed record Budget(decimal DailyCapUsd, decimal MonthlyCapUsd, string Mode, int ActiveCalls = 0);
 
 public sealed class JsonFileUsageStore(string dataDir) : IUsageStore
 {
@@ -119,13 +123,18 @@ public sealed class JsonFileUsageStore(string dataDir) : IUsageStore
             .Select(g => new UsageFeature(g.Key, g.Count(), g.Sum(r => r.Usd), g.Sum(r => r.InputTokens), g.Sum(r => r.OutputTokens), g.Count() == 0 ? 0 : g.Sum(r => r.Usd) / g.Count()))
             .OrderByDescending(f => f.Usd)
             .ToList();
+        var todayRows = allRows.Where(r => r.Ts.Date == today).ToList();
         return new UsageSummary(
             days,
-            allRows.Where(r => r.Ts.Date == today).Sum(r => r.Usd),
+            todayRows.Sum(r => r.Usd),
             budget.DailyCapUsd,
             allRows.Where(r => r.Ts >= first).Sum(r => r.Usd),
             budget.MonthlyCapUsd,
             budget.Mode,
+            budget.ActiveCalls,
+            todayRows.Sum(r => r.InputTokens + r.CacheReadTokens + r.CacheWriteTokens),
+            todayRows.Sum(r => r.OutputTokens),
+            todayRows.Count,
             rows.Sum(r => r.Usd),
             rows.Sum(r => r.InputTokens),
             rows.Sum(r => r.OutputTokens),

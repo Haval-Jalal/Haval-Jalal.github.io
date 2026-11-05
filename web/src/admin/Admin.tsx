@@ -213,6 +213,10 @@ type UsageSummary = {
   spentMonthUsd: number;
   monthlyCapUsd: number;
   mode: "full" | "eco" | "stopped";
+  activeCalls: number;
+  todayInputTokens: number;
+  todayOutputTokens: number;
+  todayCalls: number;
   totalUsd: number;
   inputTokens: number;
   outputTokens: number;
@@ -230,16 +234,32 @@ function AiUsage() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<UsageSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
+  // Live: refetch every 5 s while the tab is visible, so a running Build Lab shows up as it lands.
   useEffect(() => {
-    setData(null);
-    fetch(`/api/manage/ai?days=${days}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then(setData)
-      .catch((e: Error) => setError(e.message));
+    let cancelled = false;
+    const load = () =>
+      fetch(`/api/manage/ai?days=${days}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+        .then((d: UsageSummary) => {
+          if (cancelled) return;
+          setData(d);
+          setUpdatedAt(new Date());
+          setError(null);
+        })
+        .catch((e: Error) => !cancelled && setError(e.message));
+    void load();
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, [days]);
 
-  if (error) return <p className="text-red-300">Kunde inte hämta AI-statistik: {error}</p>;
+  if (error && !data) return <p className="text-red-300">Kunde inte hämta AI-statistik: {error}</p>;
   if (!data) return <p className="text-fg-muted">Hämtar…</p>;
 
   const share = data.dailyCapUsd > 0 ? data.spentTodayUsd / data.dailyCapUsd : 0;
@@ -255,9 +275,15 @@ function AiUsage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">AI & kostnad</h1>
           <p className="text-sm text-fg-muted">Räknat från faktiska tokens per anrop (listpris). Facit finns i Anthropic Console.</p>
-          <p className={`mt-2 inline-block rounded-full border px-3 py-1 text-xs ${data.mode === "full" ? "border-emerald-400/30 text-emerald-200" : "border-amber-400/40 text-amber-200"}`}>
-            ● {modeLabel}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className={`rounded-full border px-3 py-1 ${data.mode === "full" ? "border-emerald-400/30 text-emerald-200" : "border-amber-400/40 text-amber-200"}`}>
+              ● {modeLabel}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-fg-muted">
+              <span className={`size-1.5 rounded-full ${data.activeCalls > 0 ? "animate-pulse bg-ember-400" : "bg-emerald-400"}`} />
+              Live · {data.activeCalls > 0 ? `${data.activeCalls} anrop pågår` : "inget pågår"} · uppdaterad {updatedAt?.toLocaleTimeString("sv-SE") ?? "…"}
+            </span>
+          </div>
         </div>
         <div className="flex gap-1 rounded-full border border-white/10 p-1 text-xs">
           {[7, 30, 90].map((d) => (
@@ -280,7 +306,13 @@ function AiUsage() {
         <div className="mt-3 h-2 rounded-full bg-white/5">
           <div className={`h-2 rounded-full ${warn ? "bg-amber-400" : "bg-ember-400"}`} style={{ width: `${Math.min(100, share * 100)}%` }} />
         </div>
-        <p className="mt-2 text-xs text-fg-faint">Från 70 % går Build Lab i sparläge (Sonnet). Vid 100 % stoppas AI:t till midnatt UTC och besökare får skicka idén till dig i stället. Ändra med AGENT_DAILY_CAP_USD / AGENT_ECO_THRESHOLD.</p>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div><p className="text-[11px] text-fg-faint">Kostnad idag</p><p className="font-mono text-lg text-fg">{usd(data.spentTodayUsd)}</p></div>
+          <div><p className="text-[11px] text-fg-faint">Tokens in (inkl. cache)</p><p className="font-mono text-lg text-fg">{tok(data.todayInputTokens)}</p></div>
+          <div><p className="text-[11px] text-fg-faint">Tokens ut</p><p className="font-mono text-lg text-fg">{tok(data.todayOutputTokens)}</p></div>
+          <div><p className="text-[11px] text-fg-faint">Anrop idag</p><p className="font-mono text-lg text-fg">{data.todayCalls}</p></div>
+        </div>
+        <p className="mt-3 text-xs text-fg-faint">Från 70 % går Build Lab i sparläge (Sonnet). Vid 100 % stoppas AI:t till midnatt UTC och besökare får skicka idén till dig i stället. Ändra med AGENT_DAILY_CAP_USD / AGENT_ECO_THRESHOLD.</p>
       </section>
 
       <section className={`rounded-2xl border p-5 ${monthWarn ? "border-amber-400/40 bg-amber-400/10" : "panel-tile"}`}>

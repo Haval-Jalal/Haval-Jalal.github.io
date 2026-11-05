@@ -65,7 +65,10 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
         {
             Model = requested,
             MaxTokens = eco ? 4500 : 8000,
-            OutputConfig = new OutputConfig { Effort = eco ? Effort.Low : Effort.Medium },
+            OutputConfig = new OutputConfig
+            {
+                Effort = eco ? Effort.Low : guard.BuildEffort switch { "low" => Effort.Low, "high" => Effort.High, _ => Effort.Medium },
+            },
             System = new List<TextBlockParam> { new() { Text = Prompts.Build(site, eco), CacheControl = new CacheControlEphemeral() } },
             Messages = [new UserMessageParam { Content = $"Idé: {idea}" }],
         }, cancellationToken: ct);

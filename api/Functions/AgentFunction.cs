@@ -43,6 +43,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         if (dto?.Messages is not { Count: > 0 } || dto.Messages.Any(m => string.IsNullOrWhiteSpace(m.Text) || m.Text.Length > 2000))
             return new BadRequestObjectResult(new { error = "invalid_messages" });
 
+        using var _ = guard.TrackCall();
         try
         {
             var turns = dto.Messages.Select(m => new ChatTurn(m.Role == "assistant" ? "assistant" : "user", m.Text.Trim())).ToList();
@@ -81,6 +82,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         res.Headers.CacheControl = "no-cache";
         res.Headers["X-Accel-Buffering"] = "no";
 
+        using var _ = guard.TrackCall();
         try
         {
             var eco = mode == BudgetMode.Eco;

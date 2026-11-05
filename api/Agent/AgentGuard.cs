@@ -15,6 +15,19 @@ public enum BudgetMode
 public sealed class AgentGuard(IUsageStore usage)
 {
     private readonly ConcurrentDictionary<string, List<DateTime>> _windows = new();
+    private int _active;
+
+    // Calls in flight right now (for the live view in admin).
+    public int ActiveCalls => Volatile.Read(ref _active);
+    public IDisposable TrackCall()
+    {
+        Interlocked.Increment(ref _active);
+        return new CallScope(() => Interlocked.Decrement(ref _active));
+    }
+    private sealed class CallScope(Action onDispose) : IDisposable { public void Dispose() => onDispose(); }
+
+    // "low" | "medium" | "high": how hard Opus thinks before writing a prototype. Lower = cheaper.
+    public string BuildEffort { get; } = (Environment.GetEnvironmentVariable("AGENT_BUILD_EFFORT") ?? "medium").ToLowerInvariant();
 
     public int BuildPerHour { get; } = Env("AGENT_BUILD_PER_HOUR", 3);
     public int BuildPerDay { get; } = Env("AGENT_BUILD_PER_DAY", 5);
@@ -47,7 +60,7 @@ public sealed class AgentGuard(IUsageStore usage)
     }
 
     public async Task<Budget> BudgetAsync(CancellationToken ct) =>
-        new(DailyCapUsd, MonthlyCapUsd, ModeName(await ModeAsync(ct)));
+        new(DailyCapUsd, MonthlyCapUsd, ModeName(await ModeAsync(ct)), ActiveCalls);
 
     public static string ModeName(BudgetMode m) => m switch
     {
