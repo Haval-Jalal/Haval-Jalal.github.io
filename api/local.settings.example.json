@@ -13,7 +13,11 @@
     "AGENT_BUILD_PER_HOUR": "3",
     "AGENT_BUILD_PER_DAY": "5",
     "AGENT_CHAT_PER_HOUR": "20",
-    "ANALYTICS_SALT": "<any random string>"
+    "ANALYTICS_SALT": "<any random string>",
+    "RESEND_API_KEY": "<from resend.com, free tier; enables lead e-mails>",
+    "LEAD_NOTIFY_EMAIL": "<the address that should receive lead e-mails>",
+    "MAIL_FROM": "Build Lab <onboarding@resend.dev>",
+    "SITE_URL": "https://havaljalal.se"
   },
   "Host": {
     "CORS": "*"

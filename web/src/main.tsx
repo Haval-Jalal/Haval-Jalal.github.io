@@ -4,20 +4,20 @@ import "./index.css";
 import App from "./App";
 import { ContentProvider } from "./lib/content";
 
-// Two entry points share one bundle: the public site and the admin panel. No router needed
-// (yet): Static Web Apps rewrites every path to index.html and we branch on the pathname.
+// Three entry points share one bundle: the public site, the admin panel and the stand-alone
+// prototype page. No router needed (yet): Static Web Apps rewrites every path to index.html.
 const Admin = lazy(() => import("./admin/Admin"));
-const isAdmin = window.location.pathname.startsWith("/admin");
+const LabPage = lazy(() => import("./pages/LabPage"));
+const path = window.location.pathname;
+const page = path.startsWith("/admin") ? "admin" : path.startsWith("/lab/") ? "lab" : "site";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ContentProvider>
-      {isAdmin ? (
-        <Suspense fallback={<div className="min-h-screen bg-night-950" />}>
-          <Admin />
-        </Suspense>
-      ) : (
+      {page === "site" ? (
         <App />
+      ) : (
+        <Suspense fallback={<div className="min-h-screen bg-night-950" />}>{page === "admin" ? <Admin /> : <LabPage />}</Suspense>
       )}
     </ContentProvider>
   </StrictMode>,

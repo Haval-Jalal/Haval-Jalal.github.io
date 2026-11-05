@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HavalApi.Functions;
 
-public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore leads, IUsageStore usage, ILogger<AgentFunction> log)
+public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore leads, IUsageStore usage, IBuildStore builds, ILogger<AgentFunction> log)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan Hour = TimeSpan.FromHours(1);
@@ -71,6 +71,9 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         var idea = dto?.Idea?.Trim();
         if (string.IsNullOrEmpty(idea) || idea.Length < 8 || idea.Length > 800)
             return new BadRequestObjectResult(new { error = "invalid_idea" });
+        var visitor = dto?.Visitor ?? "";
+        if (visitor.Length is < 16 or > 64 || !visitor.All(c => char.IsLetterOrDigit(c) || c == '-'))
+            return new BadRequestObjectResult(new { error = "invalid_visitor" });
 
         var ip = ClientIp(req);
         if (!guard.TryTake("build", ip, guard.BuildPerHour, Hour) || !guard.TryTake("build", ip, guard.BuildPerDay, Day))
@@ -88,9 +91,29 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
             var eco = mode == BudgetMode.Eco;
             await WriteEvent(res, "mode", new { mode = AgentGuard.ModeName(mode) }, ct);
             Usage? usageInfo = null;
+            var full = new StringBuilder();
             await foreach (var delta in agent.BuildStreamAsync(idea, eco, u => usageInfo = u, ct))
+            {
+                full.Append(delta);
                 await WriteEvent(res, "delta", new { t = delta }, ct);
-            await WriteEvent(res, "done", new { usage = usageInfo, truncated = usageInfo?.Truncated ?? false }, ct);
+            }
+
+            // Persist the prototype so the visitor finds it again (and can share/download it).
+            string? savedId = null;
+            var text = full.ToString();
+            var markerAt = text.IndexOf(Prompts.PlanMarker, StringComparison.Ordinal);
+            var html = markerAt >= 0 ? text[..markerAt] : text;
+            if (html.TrimStart().StartsWith("<!doctype", StringComparison.OrdinalIgnoreCase) || html.TrimStart().StartsWith("<html", StringComparison.OrdinalIgnoreCase))
+            {
+                var plan = markerAt >= 0 ? text[(markerAt + Prompts.PlanMarker.Length)..].Trim() : "";
+                var record = new BuildRecord(
+                    Guid.NewGuid().ToString("N")[..12], DateTime.UtcNow, visitor, idea,
+                    JsonFileBuildStore.TitleOf(html, idea), html.Trim(), plan,
+                    usageInfo?.Model ?? "", usageInfo?.Truncated ?? false);
+                await builds.SaveAsync(record, CancellationToken.None);
+                savedId = record.Id;
+            }
+            await WriteEvent(res, "done", new { usage = usageInfo, truncated = usageInfo?.Truncated ?? false, id = savedId }, ct);
         }
         catch (AnthropicApiException ex)
         {
@@ -187,7 +210,11 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         [JsonPropertyName("role")] public string Role { get; set; } = "user";
         [JsonPropertyName("text")] public string Text { get; set; } = "";
     }
-    private sealed class BuildDto { [JsonPropertyName("idea")] public string? Idea { get; set; } }
+    private sealed class BuildDto
+    {
+        [JsonPropertyName("idea")] public string? Idea { get; set; }
+        [JsonPropertyName("visitor")] public string? Visitor { get; set; }
+    }
     private sealed class LeadDto
     {
         [JsonPropertyName("name")] public string? Name { get; set; }

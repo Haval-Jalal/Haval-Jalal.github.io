@@ -61,15 +61,16 @@ export async function chat(messages: ChatMsg[]): Promise<{ reply: string; refuse
 // Reads the server-sent event stream from /api/agent/build and forwards text deltas.
 export async function streamBuild(
   idea: string,
+  visitor: string,
   onDelta: (text: string) => void,
   signal?: AbortSignal,
   onMode?: (mode: BudgetMode) => void,
-  onDone?: (info: { truncated: boolean }) => void,
+  onDone?: (info: { truncated: boolean; id: string | null }) => void,
 ): Promise<void> {
   const r = await fetch("/api/agent/build", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idea }),
+    body: JSON.stringify({ idea, visitor }),
     signal,
   });
   if (!r.ok || !r.body) throw new AgentError(await codeOf(r));
@@ -93,7 +94,10 @@ export async function streamBuild(
       }
       if (event === "delta") onDelta((JSON.parse(data) as { t: string }).t);
       else if (event === "mode") onMode?.((JSON.parse(data) as { mode: BudgetMode }).mode);
-      else if (event === "done") onDone?.({ truncated: (JSON.parse(data) as { truncated?: boolean }).truncated === true });
+      else if (event === "done") {
+        const d = JSON.parse(data) as { truncated?: boolean; id?: string | null };
+        onDone?.({ truncated: d.truncated === true, id: d.id ?? null });
+      }
       else if (event === "error") throw new AgentError((JSON.parse(data) as { error: string }).error);
     }
   }

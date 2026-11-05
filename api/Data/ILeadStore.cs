@@ -11,7 +11,9 @@ public sealed record Lead(
     string Message,
     string? Idea,
     string? Plan,
-    string Source);
+    string Source,
+    string? Phone = null,
+    string? BuildId = null);
 
 public interface ILeadStore
 {
