@@ -12,6 +12,7 @@ import Contact from "./components/Contact";
 import { BACKGROUNDS, currentBackground, type BackgroundKey } from "./components/backgrounds";
 import { profile } from "./data/content";
 import { attachGlobalSfx, setSoundEnabled } from "./lib/sound";
+import { trackView } from "./lib/beacon";
 
 // Accent colour for the italic headline word, per background.
 const ACCENT: Record<string, string> = {
@@ -60,6 +61,7 @@ export default function App() {
   }, []);
 
   useEffect(() => attachGlobalSfx(), []);
+  useEffect(() => trackView(), []);
 
   const toggleSound = () => {
     const next = !soundOn;

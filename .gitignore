@@ -2,6 +2,7 @@
 api/bin/
 api/obj/
 api/local.settings.json
+api/.data/
 .vs/
 *.user
 
