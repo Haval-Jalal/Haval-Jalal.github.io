@@ -17,6 +17,7 @@
     "AGENT_BUILD_DEADLINE_SEC": "0",
     "COSMOS_CONNECTION": "<optional locally; in Azure: the Cosmos DB connection string. Empty = JSON files in api/.data>",
     "COSMOS_DATABASE": "haval",
+    "MEDIA_CONNECTION": "<optional locally; in Azure: the Blob Storage connection string. Empty = files in api/.data/media>",
     "AGENT_BUILD_PER_HOUR": "3",
     "AGENT_BUILD_PER_DAY": "5",
     "AGENT_CHAT_PER_HOUR": "20",

@@ -19,19 +19,32 @@ export const profile = {
   },
 };
 
+export type ProjectStatus = "live" | "delivered" | "pilot" | "wip" | "concept" | "school" | "";
+
+export type ProjectLink = { label: string; url: string };
+
+// Presented like a product: screenshots, a one-line tagline, the story, what it does and where
+// to go. Repo is optional and only used as a fallback link in the CV.
 export type Project = {
   slug: string;
   title: string;
+  status?: ProjectStatus;
+  tagline?: string;
   summary: string;
+  highlights?: string[];
   tags: string[];
+  images?: string[];
+  links?: ProjectLink[];
   repo: string;
   year: string;
+  hidden?: boolean;
 };
 
 export const projects: Project[] = [
   {
     slug: "presync",
     title: "PreSync",
+    status: "pilot",
     summary: "Beskrivning kommer. (Platshållare: fyll i vad PreSync gör, vilket problem det löser och vilken stack.)", // TODO
     tags: [".NET", "React"], // TODO
     repo: "https://github.com/Haval-Jalal", // TODO: repo-länk
@@ -40,6 +53,7 @@ export const projects: Project[] = [
   {
     slug: "dojo-lms",
     title: "DOJO LMS",
+    status: "wip",
     summary: "Learning Management System. (Platshållare: fyll i omfattning, roller, kurser, uppföljning och stack.)", // TODO
     tags: [".NET", "SQL Server", "React"], // TODO
     repo: "https://github.com/Haval-Jalal", // TODO: repo-länk
@@ -47,6 +61,7 @@ export const projects: Project[] = [
   },
   {
     slug: "eventify",
+    status: "school",
     title: "Eventify",
     summary: "Fullstack eventhanteringsapplikation med .NET-backend, CQRS-arkitektur och modern React-frontend.",
     tags: [".NET", "CQRS", "MediatR", "EF Core", "React", "Tailwind"],
@@ -55,6 +70,7 @@ export const projects: Project[] = [
   },
   {
     slug: "job-application-tracker",
+    status: "school",
     title: "JobApplicationTracker",
     summary: "Verktyg för att spåra och hantera jobbansökningar med statusuppdateringar och påminnelser.",
     tags: [".NET", "Clean Architecture", "JWT", "React", "TypeScript"],
@@ -63,6 +79,7 @@ export const projects: Project[] = [
   },
   {
     slug: "autocompare",
+    status: "school",
     title: "AutoCompare",
     summary: "Applikation för att jämföra bilar sida vid sida, byggd med .NET och React.", // TODO: verifiera beskrivning
     tags: [".NET", "REST API", "React"],
@@ -71,6 +88,7 @@ export const projects: Project[] = [
   },
   {
     slug: "mini-ecommerce-db",
+    status: "school",
     title: "MiniECommerceDB",
     summary: "E-handelsdatabas med optimerade SQL-frågor och relationella datamodeller.",
     tags: ["SQL Server", "T-SQL", "Relational Modelling"],

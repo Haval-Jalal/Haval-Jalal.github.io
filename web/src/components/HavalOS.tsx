@@ -21,10 +21,10 @@ type Props = {
 };
 
 // Shown while the API loads or if it is unreachable, so the panel always has a shape.
-function demoActivity(projects: { title: string; summary: string; repo: string }[]): GitHubActivity {
+function demoActivity(): GitHubActivity {
   return {
     user: "Haval-Jalal",
-    repos: projects.map((p) => ({ name: p.title, description: p.summary, url: p.repo, language: null, stars: 0, pushedAt: null })),
+    repos: [],
     weeklyCommits: [3, 5, 2, 8, 6, 4, 9, 7, 11, 6, 10, 12],
     commits90d: 83,
     updatedAt: new Date().toISOString(),
@@ -38,8 +38,8 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
   const rotateX = useTransform(mouseY, [-1, 1], [3, -3]);
   const rotateY = useTransform(mouseX, [-1, 1], [-4, 4]);
   const gh = useGitHub();
-  const { projects } = useSiteContent().content;
-  const data = gh.status === "ok" ? gh.data : demoActivity(projects);
+  const projects = useSiteContent().content.projects.filter((p) => !p.hidden);
+  const data = gh.status === "ok" ? gh.data : demoActivity();
   const live = gh.status === "ok";
 
   return (
@@ -55,8 +55,8 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
         className="panel-glass overflow-hidden rounded-2xl text-fg"
       >
         <div className="grid grid-cols-[180px_1fr] max-md:grid-cols-1">
-          <Sidebar repoCount={data.repos.length} />
-          <Main data={data} live={live} />
+          <Sidebar repoCount={projects.length} />
+          <Main data={data} live={live} projects={projects} />
         </div>
       </motion.div>
     </motion.div>
@@ -104,8 +104,12 @@ function Sidebar({ repoCount }: { repoCount: number }) {
   );
 }
 
-function Main({ data, live }: { data: GitHubActivity; live: boolean }) {
-  const latest = data.repos[0];
+type PanelProject = { slug: string; title: string; status?: string; year: string };
+
+const STATUS: Record<string, string> = { live: "live", delivered: "levererad", pilot: "pilot", wip: "pågår", concept: "koncept", school: "skola" };
+
+function Main({ data, live, projects }: { data: GitHubActivity; live: boolean; projects: PanelProject[] }) {
+  const latest = projects[0];
   return (
     <div className="min-w-0">
       {/* Top bar */}
@@ -139,21 +143,16 @@ function Main({ data, live }: { data: GitHubActivity; live: boolean }) {
           </div>
           <div className="flex gap-2 text-xs">
             <span className="rounded-full border border-white/10 px-3 py-1.5 text-fg-muted">Senaste 90 dagarna</span>
-            <a
-              href={`https://github.com/${data.user}`}
-              target="_blank"
-              rel="noreferrer"
-              className="pointer-events-auto rounded-full bg-ember-500 px-3 py-1.5 font-medium text-night-950"
-            >
-              Öppna GitHub
+            <a href="#projekt" className="pointer-events-auto rounded-full bg-ember-500 px-3 py-1.5 font-medium text-night-950">
+              Se projekten
             </a>
           </div>
         </div>
 
         {/* KPI tiles */}
         <div className="grid grid-cols-4 gap-3 max-md:grid-cols-2">
-          <Kpi icon={FolderGit2} label="Publika repos" value={String(data.repos.length)} delta={latest ? `senast: ${latest.name}` : "—"} />
-          <Kpi icon={GitCommitHorizontal} label="Commits · 90 d" value={String(data.commits90d)} delta={latest?.pushedAt ? `push ${relativeTime(latest.pushedAt)}` : "publika events"} />
+          <Kpi icon={FolderGit2} label="Projekt" value={String(projects.length)} delta={latest ? `senast: ${latest.title}` : "—"} />
+          <Kpi icon={GitCommitHorizontal} label="Commits · 90 d" value={String(data.commits90d)} delta={live ? "live från GitHub" : "demo"} />
           <Kpi icon={Activity} label="År på Volvo Cars" value="10+" delta="teamledarskap" />
           <div className="rounded-xl bg-gradient-to-br from-ember-400 to-ember-600 p-4 text-night-950">
             <div className="flex items-center justify-between text-xs font-medium">
@@ -171,7 +170,7 @@ function Main({ data, live }: { data: GitHubActivity; live: boolean }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-fg">Commits per vecka</p>
-                <p className="text-[11px] text-fg-faint">Senaste 12 veckorna, publika repos</p>
+                <p className="text-[11px] text-fg-faint">Senaste 12 veckorna</p>
               </div>
               <div className="flex gap-1 text-[11px]">
                 <span className="rounded-full bg-ember-500 px-2 py-0.5 text-night-950">.NET</span>
@@ -182,15 +181,13 @@ function Main({ data, live }: { data: GitHubActivity; live: boolean }) {
             <Bars values={data.weeklyCommits} />
           </div>
           <div className="panel-tile rounded-xl p-4">
-            <p className="text-sm font-medium text-fg">Senast uppdaterade repos</p>
+            <p className="text-sm font-medium text-fg">Projekt</p>
             <ul className="mt-3 space-y-2">
-              {data.repos.slice(0, 4).map((r) => (
-                <li key={r.name} className="flex items-center gap-2 text-xs">
-                  <span className="size-1.5 shrink-0 rounded-full bg-ember-400" />
-                  <span className="truncate text-fg">{r.name}</span>
-                  <span className="ml-auto shrink-0 font-mono text-[10px] text-fg-faint">
-                    {r.language ?? (r.pushedAt ? relativeTime(r.pushedAt) : "")}
-                  </span>
+              {projects.slice(0, 4).map((p) => (
+                <li key={p.slug} className="flex items-center gap-2 text-xs">
+                  <span className={`size-1.5 shrink-0 rounded-full ${p.status === "live" || p.status === "delivered" ? "bg-emerald-400" : "bg-ember-400"}`} />
+                  <span className="truncate text-fg">{p.title}</span>
+                  <span className="ml-auto shrink-0 font-mono text-[10px] text-fg-faint">{p.status ? STATUS[p.status] ?? p.status : p.year}</span>
                 </li>
               ))}
             </ul>

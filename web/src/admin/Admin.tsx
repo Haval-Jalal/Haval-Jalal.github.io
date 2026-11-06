@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff } from "lucide-react";
+import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
-import type { JourneyStep, SiteContent } from "../data/content";
+import type { JourneyStep, Project, SiteContent } from "../data/content";
+import { STATUS_LABEL } from "../components/Projects";
 
 type Tab = "overview" | "content" | "leads" | "ai" | "security" | "settings";
 
@@ -653,6 +654,84 @@ function Security({ me }: { me: string }) {
   );
 }
 
+/* ---------- Bilder (uppladdning) ---------- */
+
+type UploadResult = { files: { name: string; url: string; contentType: string; size: number }[]; errors: { file: string; error: string }[] };
+
+async function uploadFiles(files: FileList | File[]): Promise<UploadResult> {
+  const body = new FormData();
+  for (const f of Array.from(files)) body.append("file", f, f.name);
+  const r = await fetch("/api/manage/upload", { method: "POST", body });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+// Thumbnails for a project: the first image is the cover. Drop files or pick them; images are
+// converted to WebP on the server, so phone screenshots are fine.
+function ImagesEditor({ images, onChange }: { images: string[]; onChange: (images: string[]) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [over, setOver] = useState(false);
+
+  const add = async (files: FileList | File[]) => {
+    if (!files.length) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await uploadFiles(files);
+      onChange([...images, ...result.files.map((f) => f.url)]);
+      if (result.errors.length) setError(result.errors.map((e) => `${e.file}: ${e.error}`).join(", "));
+    } catch (e) {
+      setError(`Uppladdningen misslyckades (${(e as Error).message})`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const move = (i: number, j: number) => {
+    if (j < 0 || j >= images.length) return;
+    const next = [...images];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+
+  return (
+    <div>
+      <span className="mb-1 block text-xs text-fg-muted">Bilder (första är omslag)</span>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {images.map((url, i) => (
+          <div key={url} className="group relative aspect-[16/10] overflow-hidden rounded-lg border border-white/10 bg-night-950/60">
+            <img src={url} alt="" className="size-full object-cover" />
+            {i === 0 && <span className="absolute left-1.5 top-1.5 rounded-full bg-ember-500 px-1.5 py-0.5 text-[10px] font-medium text-night-950">Omslag</span>}
+            <div className="absolute inset-x-0 bottom-0 flex justify-end gap-1 bg-gradient-to-t from-night-950/90 to-transparent p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+              {i > 0 && (
+                <button type="button" onClick={() => move(i, 0)} title="Gör till omslag" className="grid size-6 place-items-center rounded-md bg-white/10 text-fg hover:bg-white/20">
+                  <Star className="size-3" />
+                </button>
+              )}
+              <button type="button" onClick={() => move(i, i - 1)} title="Flytta vänster" className="grid size-6 place-items-center rounded-md bg-white/10 text-fg hover:bg-white/20"><ChevronUp className="size-3 -rotate-90" /></button>
+              <button type="button" onClick={() => move(i, i + 1)} title="Flytta höger" className="grid size-6 place-items-center rounded-md bg-white/10 text-fg hover:bg-white/20"><ChevronDown className="size-3 -rotate-90" /></button>
+              <button type="button" onClick={() => onChange(images.filter((_, k) => k !== i))} title="Ta bort" className="grid size-6 place-items-center rounded-md bg-red-500/30 text-fg hover:bg-red-500/50"><X className="size-3" /></button>
+            </div>
+          </div>
+        ))}
+        <label
+          onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+          onDragLeave={() => setOver(false)}
+          onDrop={(e) => { e.preventDefault(); setOver(false); void add(e.dataTransfer.files); }}
+          className={`flex aspect-[16/10] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-center text-[11px] transition-colors ${
+            over ? "border-ember-400 bg-ember-500/10 text-fg" : "border-white/15 text-fg-muted hover:border-ember-400/50 hover:text-fg"
+          }`}
+        >
+          <Upload className="size-4" />
+          {busy ? "Laddar upp…" : "Släpp bilder här eller klicka"}
+          <input type="file" accept="image/*,.pdf" multiple className="hidden" disabled={busy} onChange={(e) => { if (e.target.files) void add(e.target.files); e.target.value = ""; }} />
+        </label>
+      </div>
+      {error && <p className="mt-1 text-xs text-red-300">{error}</p>}
+    </div>
+  );
+}
+
 /* ---------- Innehåll ---------- */
 
 function useDraft() {
@@ -730,26 +809,60 @@ function ContentEditor() {
         <Area label="Intro (under rubriken)" value={p.intro} onChange={(v) => setProfile({ intro: v })} />
         <Area label="Om mig (Resan)" value={p.about} onChange={(v) => setProfile({ about: v })} />
         <Area label="Tagline (Kontakt)" value={p.tagline} onChange={(v) => setProfile({ tagline: v })} />
-        <Field label="GitHub" value={p.links.github} onChange={(v) => setProfile({ links: { ...p.links, github: v } })} />
+        <Field label="GitHub (visas inte publikt, bara för CV-länkar)" value={p.links.github} onChange={(v) => setProfile({ links: { ...p.links, github: v } })} />
         <Field label="LinkedIn" value={p.links.linkedin} onChange={(v) => setProfile({ links: { ...p.links, linkedin: v } })} />
         <Field label="E-post (publik)" value={p.links.email} onChange={(v) => setProfile({ links: { ...p.links, email: v } })} />
       </Group>
 
       <Group title="Projekt">
-        <ListEditor
+        <p className="mb-3 text-xs text-fg-muted">Visas som produkter: bild, status, en rad om vad det är, berättelsen, vad det gör och var man hittar det.</p>
+        <ListEditor<Project>
           items={draft.projects}
           onChange={(projects) => update((d) => ({ ...d, projects }))}
-          create={() => ({ slug: `projekt-${Date.now()}`, title: "Nytt projekt", summary: "", tags: [], repo: "", year: String(new Date().getFullYear()) })}
+          create={() => ({ slug: `projekt-${Date.now()}`, title: "Nytt projekt", status: "", tagline: "", summary: "", highlights: [], tags: [], images: [], links: [], repo: "", year: String(new Date().getFullYear()) })}
           label={(x) => x.title}
           render={(x, set) => (
             <>
-              <Field label="Titel" value={x.title} onChange={(v) => set({ ...x, title: v })} />
-              <Area label="Beskrivning" value={x.summary} onChange={(v) => set({ ...x, summary: v })} />
-              <Field label="Taggar (kommaseparerade)" value={x.tags.join(", ")} onChange={(v) => set({ ...x, tags: v.split(",").map((t) => t.trim()).filter(Boolean) })} />
-              <div className="grid grid-cols-[1fr_100px] gap-3">
-                <Field label="Repo-URL" value={x.repo} onChange={(v) => set({ ...x, repo: v })} />
+              <ImagesEditor images={x.images ?? []} onChange={(images) => set({ ...x, images })} />
+              <div className="grid grid-cols-[1fr_160px_90px] gap-3 max-sm:grid-cols-1">
+                <Field label="Titel" value={x.title} onChange={(v) => set({ ...x, title: v })} />
+                <label className="block">
+                  <span className="mb-1 block text-xs text-fg-muted">Status</span>
+                  <select
+                    value={x.status ?? ""}
+                    onChange={(e) => set({ ...x, status: e.target.value as Project["status"] })}
+                    className="w-full rounded-lg border border-white/10 bg-night-950/60 px-3 py-2 text-sm text-fg"
+                  >
+                    <option value="">(ingen)</option>
+                    {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </label>
                 <Field label="År" value={x.year} onChange={(v) => set({ ...x, year: v })} />
               </div>
+              <Field label="Tagline (en rad, visas i fetstil)" value={x.tagline ?? ""} onChange={(v) => set({ ...x, tagline: v })} />
+              <Area label="Berättelsen (vad det är, för vem, vilket problem det löser)" value={x.summary} onChange={(v) => set({ ...x, summary: v })} />
+              <Area label="Vad det gör (en punkt per rad, visas med bock)" value={(x.highlights ?? []).join("\n")} onChange={(v) => set({ ...x, highlights: v.split("\n").map((t) => t.trim()).filter(Boolean) })} />
+              <Field label="Taggar (kommaseparerade)" value={x.tags.join(", ")} onChange={(v) => set({ ...x, tags: v.split(",").map((t) => t.trim()).filter(Boolean) })} />
+              <Area
+                label="Länkar (en per rad: Etikett | https://…)"
+                value={(x.links ?? []).map((l) => `${l.label} | ${l.url}`).join("\n")}
+                onChange={(v) =>
+                  set({
+                    ...x,
+                    links: v
+                      .split("\n")
+                      .map((line) => line.trim())
+                      .filter(Boolean)
+                      .map((line) => {
+                        const [label, url] = line.includes("|") ? line.split("|").map((t) => t.trim()) : ["Besök", line];
+                        return { label: label || "Besök", url: url || "" };
+                      }),
+                  })
+                }
+              />
+              <Field label="Repo-URL (valfri, används bara som länk i CV:t)" value={x.repo} onChange={(v) => set({ ...x, repo: v })} />
               <label className="flex items-center gap-2 text-xs text-fg-muted">
                 <input type="checkbox" checked={!!x.hidden} onChange={(e) => set({ ...x, hidden: e.target.checked })} /> Dölj på sajten
               </label>

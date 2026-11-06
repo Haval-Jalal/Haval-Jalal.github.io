@@ -5,46 +5,282 @@
     "tagline": "Systemutvecklare med industriell precision och kreativ ambition, en bro mellan struktur och innovation.",
     "location": "Göteborg",
     "availability": "Öppen för uppdrag i Göteborg och remote",
-    "headline": { "lead": "Bygger digitala produkter med", "accent": "industriell precision." },
+    "headline": {
+      "lead": "Bygger digitala produkter med",
+      "accent": "industriell precision."
+    },
     "intro": "Tio år av teamledarskap på Volvo Cars, nu systemutvecklare inom .NET, React och Clean Architecture. Jag bygger produktion-klara applikationer från databas till UI.",
     "about": "Tränad att bygga produktion-klara applikationer end-to-end: från databasdesign och säkra .NET-API:er till moderna React-gränssnitt och molndeploy. Starkt fokus på clean code, clean architecture, säkerhet, validering och teamleverans.",
-    "links": { "github": "https://github.com/Haval-Jalal", "linkedin": "", "email": "" }
+    "links": {
+      "github": "https://github.com/Haval-Jalal",
+      "linkedin": "",
+      "email": ""
+    }
   },
   "projects": [
-    { "slug": "presync", "title": "PreSync", "summary": "Beskrivning kommer.", "tags": [".NET", "React"], "repo": "https://github.com/Haval-Jalal", "year": "2026" },
-    { "slug": "dojo-lms", "title": "DOJO LMS", "summary": "Learning Management System. Beskrivning kommer.", "tags": [".NET", "SQL Server", "React"], "repo": "https://github.com/Haval-Jalal", "year": "2026" },
-    { "slug": "eventify", "title": "Eventify", "summary": "Fullstack eventhanteringsapplikation med .NET-backend, CQRS-arkitektur och modern React-frontend.", "tags": [".NET", "CQRS", "MediatR", "EF Core", "React", "Tailwind"], "repo": "https://github.com/Haval-Jalal/Eventify", "year": "2026" },
-    { "slug": "job-application-tracker", "title": "JobApplicationTracker", "summary": "Verktyg för att spåra och hantera jobbansökningar med statusuppdateringar och påminnelser.", "tags": [".NET", "Clean Architecture", "JWT", "React", "TypeScript"], "repo": "https://github.com/Haval-Jalal/JobApplicationTracker", "year": "2025" },
-    { "slug": "autocompare", "title": "AutoCompare", "summary": "Applikation för att jämföra bilar sida vid sida, byggd med .NET och React.", "tags": [".NET", "REST API", "React"], "repo": "https://github.com/Haval-Jalal/AutoCompare", "year": "2026" },
-    { "slug": "mini-ecommerce-db", "title": "MiniECommerceDB", "summary": "E-handelsdatabas med optimerade SQL-frågor och relationella datamodeller.", "tags": ["SQL Server", "T-SQL", "Relational Modelling"], "repo": "https://github.com/Haval-Jalal/MiniECommerceDB", "year": "2025" }
+    {
+      "slug": "presync",
+      "title": "PreSync",
+      "summary": "Beskrivning kommer.",
+      "tags": [
+        ".NET",
+        "React"
+      ],
+      "repo": "https://github.com/Haval-Jalal",
+      "year": "2026",
+      "status": "",
+      "tagline": "",
+      "highlights": [],
+      "images": [],
+      "links": []
+    },
+    {
+      "slug": "dojo-lms",
+      "title": "DOJO LMS",
+      "summary": "Learning Management System. Beskrivning kommer.",
+      "tags": [
+        ".NET",
+        "SQL Server",
+        "React"
+      ],
+      "repo": "https://github.com/Haval-Jalal",
+      "year": "2026",
+      "status": "",
+      "tagline": "",
+      "highlights": [],
+      "images": [],
+      "links": []
+    },
+    {
+      "slug": "eventify",
+      "title": "Eventify",
+      "summary": "Fullstack eventhanteringsapplikation med .NET-backend, CQRS-arkitektur och modern React-frontend.",
+      "tags": [
+        ".NET",
+        "CQRS",
+        "MediatR",
+        "EF Core",
+        "React",
+        "Tailwind"
+      ],
+      "repo": "https://github.com/Haval-Jalal/Eventify",
+      "year": "2026",
+      "status": "",
+      "tagline": "",
+      "highlights": [],
+      "images": [],
+      "links": []
+    },
+    {
+      "slug": "job-application-tracker",
+      "title": "JobApplicationTracker",
+      "summary": "Verktyg för att spåra och hantera jobbansökningar med statusuppdateringar och påminnelser.",
+      "tags": [
+        ".NET",
+        "Clean Architecture",
+        "JWT",
+        "React",
+        "TypeScript"
+      ],
+      "repo": "https://github.com/Haval-Jalal/JobApplicationTracker",
+      "year": "2025",
+      "status": "",
+      "tagline": "",
+      "highlights": [],
+      "images": [],
+      "links": []
+    },
+    {
+      "slug": "autocompare",
+      "title": "AutoCompare",
+      "summary": "Applikation för att jämföra bilar sida vid sida, byggd med .NET och React.",
+      "tags": [
+        ".NET",
+        "REST API",
+        "React"
+      ],
+      "repo": "https://github.com/Haval-Jalal/AutoCompare",
+      "year": "2026",
+      "status": "",
+      "tagline": "",
+      "highlights": [],
+      "images": [],
+      "links": []
+    },
+    {
+      "slug": "mini-ecommerce-db",
+      "title": "MiniECommerceDB",
+      "summary": "E-handelsdatabas med optimerade SQL-frågor och relationella datamodeller.",
+      "tags": [
+        "SQL Server",
+        "T-SQL",
+        "Relational Modelling"
+      ],
+      "repo": "https://github.com/Haval-Jalal/MiniECommerceDB",
+      "year": "2025",
+      "status": "",
+      "tagline": "",
+      "highlights": [],
+      "images": [],
+      "links": []
+    }
   ],
   "journey": [
-    { "period": "10+ år", "title": "Teamledare, produktion & kvalitet", "org": "Volvo Cars, Göteborg", "text": "Över tio år på Volvo Cars med arbete inom produktion, kvalitetssäkring och teamledarskap. Att lära sig strukturera arbete, motivera människor och leverera under press.", "bullets": ["Leder produktionsteam med fokus på kvalitet, säkerhet och leverans", "Coachar, utbildar och utvecklar teammedlemmar", "Driver ständiga förbättringsinitiativ", "Processoptimering och effektivisering av arbetsflöden"] },
-    { "period": "Vändpunkten", "title": "Från maskiner till mjukvara", "org": "Egen utforskning", "text": "Min fascination för teknik, automation och digitala system växte sig starkare. Jag blev fängslad av hur mjukvara kunde forma produkter och skapa nya användarupplevelser." },
-    { "period": "Studier", "title": "Systemutvecklare .NET", "org": "NBI Handelsakademin, Göteborg", "text": "Studerar systemutveckling på NBI Handelsakademin. Kombinerar industriellt tänkande med modern utveckling för att bygga skalbara, eleganta applikationer." },
-    { "period": "Praktik", "title": "DevOps-praktikant", "org": "Volvo Cars, Göteborg", "text": "Praktik inom DevOps på Volvo Cars. Beskrivning kommer.", "bullets": ["CI/CD-pipelines", "Automatisering", "Infrastruktur", "Samarbete med utvecklingsteam"] },
-    { "period": "Nu", "title": "Bygger produktion-klara applikationer", "org": "Göteborg · remote", "text": "Öppen för uppdrag. Bygger fullstack-lösningar i .NET och React, med AI-agenter som en naturlig del av verktygslådan." }
+    {
+      "period": "10+ år",
+      "title": "Teamledare, produktion & kvalitet",
+      "org": "Volvo Cars, Göteborg",
+      "text": "Över tio år på Volvo Cars med arbete inom produktion, kvalitetssäkring och teamledarskap. Att lära sig strukturera arbete, motivera människor och leverera under press.",
+      "bullets": [
+        "Leder produktionsteam med fokus på kvalitet, säkerhet och leverans",
+        "Coachar, utbildar och utvecklar teammedlemmar",
+        "Driver ständiga förbättringsinitiativ",
+        "Processoptimering och effektivisering av arbetsflöden"
+      ]
+    },
+    {
+      "period": "Vändpunkten",
+      "title": "Från maskiner till mjukvara",
+      "org": "Egen utforskning",
+      "text": "Min fascination för teknik, automation och digitala system växte sig starkare. Jag blev fängslad av hur mjukvara kunde forma produkter och skapa nya användarupplevelser."
+    },
+    {
+      "period": "Studier",
+      "title": "Systemutvecklare .NET",
+      "org": "NBI Handelsakademin, Göteborg",
+      "text": "Studerar systemutveckling på NBI Handelsakademin. Kombinerar industriellt tänkande med modern utveckling för att bygga skalbara, eleganta applikationer."
+    },
+    {
+      "period": "Praktik",
+      "title": "DevOps-praktikant",
+      "org": "Volvo Cars, Göteborg",
+      "text": "Praktik inom DevOps på Volvo Cars. Beskrivning kommer.",
+      "bullets": [
+        "CI/CD-pipelines",
+        "Automatisering",
+        "Infrastruktur",
+        "Samarbete med utvecklingsteam"
+      ]
+    },
+    {
+      "period": "Nu",
+      "title": "Bygger produktion-klara applikationer",
+      "org": "Göteborg · remote",
+      "text": "Öppen för uppdrag. Bygger fullstack-lösningar i .NET och React, med AI-agenter som en naturlig del av verktygslådan."
+    }
   ],
   "education": [
-    { "school": "NBI Handelsakademin, Göteborg", "program": "Systemutvecklare .NET" },
-    { "school": "Framtidsgymnasiet, Göteborg", "program": "Gymnasieutbildning" }
+    {
+      "school": "NBI Handelsakademin, Göteborg",
+      "program": "Systemutvecklare .NET"
+    },
+    {
+      "school": "Framtidsgymnasiet, Göteborg",
+      "program": "Gymnasieutbildning"
+    }
   ],
   "skills": [
-    { "title": "Backend", "items": [".NET Core", "ASP.NET", "Clean Architecture", "CQRS", "MediatR", "Entity Framework"], "accent": true },
-    { "title": "Säkerhet & Identitet", "items": ["JWT", "Claims-based Access", "Validering", "Auth-aware UI"] },
-    { "title": "Databaser & Data Access", "items": ["SQL Server", "Relational Modelling", "EF Core", "T-SQL"] },
-    { "title": "Frontend", "items": ["React", "TypeScript", "Tailwind CSS", "Framer Motion", "Vite"] },
-    { "title": "Fullstack Integrationer", "items": ["REST API", "Azure", "GitHub Actions", "CI/CD"] },
-    { "title": "AI & Moderna Verktyg", "items": ["AI-powered Apps", "Claude API", "Agenter", "Prompt-design"] },
-    { "title": "Projektledning", "items": ["GitHub Projects", "GitHub flow", "Scrum", "Teamleverans"] }
+    {
+      "title": "Backend",
+      "items": [
+        ".NET Core",
+        "ASP.NET",
+        "Clean Architecture",
+        "CQRS",
+        "MediatR",
+        "Entity Framework"
+      ],
+      "accent": true
+    },
+    {
+      "title": "Säkerhet & Identitet",
+      "items": [
+        "JWT",
+        "Claims-based Access",
+        "Validering",
+        "Auth-aware UI"
+      ]
+    },
+    {
+      "title": "Databaser & Data Access",
+      "items": [
+        "SQL Server",
+        "Relational Modelling",
+        "EF Core",
+        "T-SQL"
+      ]
+    },
+    {
+      "title": "Frontend",
+      "items": [
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "Framer Motion",
+        "Vite"
+      ]
+    },
+    {
+      "title": "Fullstack Integrationer",
+      "items": [
+        "REST API",
+        "Azure",
+        "GitHub Actions",
+        "CI/CD"
+      ]
+    },
+    {
+      "title": "AI & Moderna Verktyg",
+      "items": [
+        "AI-powered Apps",
+        "Claude API",
+        "Agenter",
+        "Prompt-design"
+      ]
+    },
+    {
+      "title": "Projektledning",
+      "items": [
+        "GitHub Projects",
+        "GitHub flow",
+        "Scrum",
+        "Teamleverans"
+      ]
+    }
   ],
   "nav": [
-    { "label": "Projekt", "href": "#projekt" },
-    { "label": "Resan", "href": "#resan" },
-    { "label": "Stack", "href": "#stack" },
-    { "label": "Build Lab", "href": "#build-lab" },
-    { "label": "Kontakt", "href": "#kontakt" }
+    {
+      "label": "Projekt",
+      "href": "#projekt"
+    },
+    {
+      "label": "Resan",
+      "href": "#resan"
+    },
+    {
+      "label": "Stack",
+      "href": "#stack"
+    },
+    {
+      "label": "Build Lab",
+      "href": "#build-lab"
+    },
+    {
+      "label": "Kontakt",
+      "href": "#kontakt"
+    }
   ],
-  "settings": { "background": "terrain", "soundDefault": false, "openForWork": true, "sectionOrder": ["projekt", "resan", "stack", "build-lab", "kontakt"] },
+  "settings": {
+    "background": "terrain",
+    "soundDefault": false,
+    "openForWork": true,
+    "sectionOrder": [
+      "projekt",
+      "resan",
+      "stack",
+      "build-lab",
+      "kontakt"
+    ]
+  },
   "updatedAt": "2026-11-05T18:00:00Z"
 }

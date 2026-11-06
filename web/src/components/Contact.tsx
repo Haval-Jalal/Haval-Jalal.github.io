@@ -1,14 +1,14 @@
 import { motion } from "motion/react";
-import { ArrowUpRight, FileDown, Github, Linkedin, Mail } from "lucide-react";
+import { ArrowUpRight, FileDown, Linkedin, Mail, MessageSquare } from "lucide-react";
 import { reveal, stagger } from "./Section";
 import { useSiteContent } from "../lib/content";
 
 export default function Contact() {
   const { profile } = useSiteContent().content;
   const links = [
-    { icon: Github, label: "GitHub", href: profile.links.github, sub: "Haval-Jalal" },
-    { icon: Linkedin, label: "LinkedIn", href: profile.links.linkedin || "#", sub: "Kommer" },
-    { icon: Mail, label: "E-post", href: profile.links.email ? `mailto:${profile.links.email}` : "#", sub: "Kommer" },
+    { icon: Linkedin, label: "LinkedIn", href: profile.links.linkedin || "#", sub: profile.links.linkedin ? "Säg hej" : "Kommer" },
+    { icon: Mail, label: "E-post", href: profile.links.email ? `mailto:${profile.links.email}` : "#", sub: profile.links.email || "Kommer" },
+    { icon: MessageSquare, label: "Digital Haval", href: "#build-lab", sub: "Fråga AI-agenten" },
     { icon: FileDown, label: "CV som PDF", href: "/api/cv.pdf", sub: "Alltid uppdaterat" },
   ];
   const tool = { label: "Skapa ditt eget CV", href: "/cv", sub: "Gratis verktyg med samma mall, och AI som vässar texten" };

@@ -27,6 +27,8 @@ public sealed record Headline(string Lead, string Accent);
 
 public sealed record Links(string Github, string Linkedin, string Email);
 
+// A project is presented like a product: screenshots, a one-line tagline, the story and what it
+// does, plus optional links (live site, app store, demo). Repo stays optional and is never required.
 public sealed record Project(
     string Slug,
     string Title,
@@ -34,7 +36,14 @@ public sealed record Project(
     List<string> Tags,
     string Repo,
     string Year,
-    bool Hidden = false);
+    bool Hidden = false,
+    string Status = "",
+    string Tagline = "",
+    List<string>? Highlights = null,
+    List<string>? Images = null,
+    List<ProjectLink>? Links = null);
+
+public sealed record ProjectLink(string Label, string Url);
 
 public sealed record JourneyStep(
     string Period,

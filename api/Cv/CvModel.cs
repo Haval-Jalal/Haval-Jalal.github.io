@@ -41,7 +41,7 @@ public static class CvMapper
             p.About,
             contacts,
             c.Journey.Select(j => new CvExperience(j.Period, j.Title, j.Org, j.Text, j.Bullets ?? [])).ToList(),
-            c.Projects.Where(x => !x.Hidden).Select(x => new CvProject(x.Title, x.Summary, x.Tags, x.Repo, x.Year)).ToList(),
+            c.Projects.Where(x => !x.Hidden).Select(x => new CvProject(x.Title, string.IsNullOrWhiteSpace(x.Tagline) ? x.Summary : x.Tagline + " " + x.Summary, x.Tags, x.Links?.FirstOrDefault()?.Url ?? (string.IsNullOrWhiteSpace(x.Repo) ? null : x.Repo), x.Year)).ToList(),
             c.Skills.Select(s => new CvSkillGroup(s.Title, s.Items)).ToList(),
             c.Education.Select(e => new CvEducation(e.School, e.Program)).ToList(),
             $"Genererat från havaljalal.se {DateTime.UtcNow:yyyy-MM-dd}. Innehållet hålls uppdaterat på sajten.");

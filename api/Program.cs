@@ -4,6 +4,7 @@ using HavalApi.Auth;
 using HavalApi.Data;
 using HavalApi.Data.Cosmos;
 using HavalApi.Mail;
+using HavalApi.Media;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -53,6 +54,14 @@ else
     builder.Services.AddSingleton<IBuildStore>(new JsonFileBuildStore(dataDir));
     builder.Services.AddSingleton<ISecurityStore>(new JsonFileSecurityStore(dataDir));
 }
+
+// Uploads: Blob Storage when MEDIA_CONNECTION is set (Azure), otherwise api/.data/media.
+var mediaConnection = Environment.GetEnvironmentVariable("MEDIA_CONNECTION");
+if (!string.IsNullOrWhiteSpace(mediaConnection))
+    builder.Services.AddSingleton<IMediaStore>(new BlobMediaStore(mediaConnection));
+else
+    builder.Services.AddSingleton<IMediaStore>(new LocalMediaStore(
+        Environment.GetEnvironmentVariable("DATA_DIR") ?? Path.Combine(AppContext.BaseDirectory, "..", "..", ".data")));
 
 // Lead notifications by e-mail (Resend). Logs instead of sending until RESEND_API_KEY + LEAD_NOTIFY_EMAIL exist.
 builder.Services.AddHttpClient("resend", client =>

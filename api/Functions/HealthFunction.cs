@@ -4,7 +4,7 @@ using Microsoft.Azure.Functions.Worker;
 
 namespace HavalApi.Functions;
 
-public class HealthFunction(HavalApi.Data.IContentStore content)
+public class HealthFunction(HavalApi.Data.IContentStore content, HavalApi.Media.IMediaStore media)
 {
     [Function("Health")]
     public IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "health")] HttpRequest req)
@@ -14,6 +14,7 @@ public class HealthFunction(HavalApi.Data.IContentStore content)
             utc = DateTime.UtcNow,
             runtime = Environment.Version.ToString(),
             store = content.GetType().Name.Replace("ContentStore", "").ToLowerInvariant(),
+            media = media.GetType().Name.Replace("MediaStore", "").ToLowerInvariant(),
             ai = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")),
         });
 }
