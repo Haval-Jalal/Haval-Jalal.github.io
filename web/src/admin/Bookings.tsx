@@ -4,6 +4,7 @@ import { cancelBooking, getBookingSettings, listBookings, saveBookingSettings, t
 
 const DAYS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 const field = "w-full rounded-lg border border-white/10 bg-night-950/60 px-3 py-2 text-sm text-fg";
+const inline = "rounded-lg border border-white/10 bg-night-950/60 px-3 py-2 text-sm text-fg";
 
 // Availability (weekly windows, slot length, horizon, blocked dates) and the booking list.
 export default function Bookings() {
@@ -81,12 +82,12 @@ export default function Bookings() {
             <ul className="space-y-2">
               {settings.weekly.map((w, i) => (
                 <li key={i} className="flex flex-wrap items-center gap-2">
-                  <select value={w.day} onChange={(e) => set({ weekly: settings.weekly.map((x, k) => (k === i ? { ...x, day: Number(e.target.value) } : x)) })} className={`${field} w-24`}>
+                  <select value={w.day} onChange={(e) => set({ weekly: settings.weekly.map((x, k) => (k === i ? { ...x, day: Number(e.target.value) } : x)) })} className={`${inline} w-24`}>
                     {DAYS.map((d, k) => <option key={d} value={k + 1}>{d}</option>)}
                   </select>
-                  <input type="time" value={w.start} onChange={(e) => set({ weekly: settings.weekly.map((x, k) => (k === i ? { ...x, start: e.target.value } : x)) })} className={`${field} w-32`} />
+                  <input type="time" value={w.start} onChange={(e) => set({ weekly: settings.weekly.map((x, k) => (k === i ? { ...x, start: e.target.value } : x)) })} className={`${inline} w-32`} />
                   <span className="text-fg-faint">–</span>
-                  <input type="time" value={w.end} onChange={(e) => set({ weekly: settings.weekly.map((x, k) => (k === i ? { ...x, end: e.target.value } : x)) })} className={`${field} w-32`} />
+                  <input type="time" value={w.end} onChange={(e) => set({ weekly: settings.weekly.map((x, k) => (k === i ? { ...x, end: e.target.value } : x)) })} className={`${inline} w-32`} />
                   <button onClick={() => set({ weekly: settings.weekly.filter((_, k) => k !== i) })} className="text-fg-faint hover:text-red-300" aria-label="Ta bort"><Trash2 className="size-4" /></button>
                 </li>
               ))}
