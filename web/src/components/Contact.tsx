@@ -9,7 +9,7 @@ export default function Contact() {
     { icon: Github, label: "GitHub", href: profile.links.github, sub: "Haval-Jalal" },
     { icon: Linkedin, label: "LinkedIn", href: profile.links.linkedin || "#", sub: "Kommer" },
     { icon: Mail, label: "E-post", href: profile.links.email ? `mailto:${profile.links.email}` : "#", sub: "Kommer" },
-    { icon: FileDown, label: "CV som PDF", href: "#", sub: "Genereras snart" },
+    { icon: FileDown, label: "CV som PDF", href: "/api/cv.pdf", sub: "Alltid uppdaterat" },
   ];
   return (
     <section id="kontakt" className="surface-a relative text-fg">
@@ -51,7 +51,7 @@ export default function Contact() {
             <motion.li key={label} variants={reveal}>
               <a
                 href={href}
-                target={href.startsWith("http") ? "_blank" : undefined}
+                target={href.startsWith("http") || href.endsWith(".pdf") ? "_blank" : undefined}
                 rel="noreferrer"
                 className="panel-tile group flex items-center gap-3 rounded-2xl p-4 transition-all hover:-translate-y-0.5 hover:border-ember-400/40"
               >
