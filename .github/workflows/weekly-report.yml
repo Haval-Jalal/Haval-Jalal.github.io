@@ -1,0 +1,18 @@
+name: Weekly report
+
+# Every Monday at 06:00 UTC (07:00/08:00 in Stockholm) the API mails Haval the week in numbers.
+# The key lives in the repository secret REPORT_KEY and as the app setting REPORT_KEY in Azure.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the API to send the report
+        run: |
+          curl -fsS -X POST "https://havaljalal.se/api/report/weekly" \
+            -H "X-Report-Key: ${{ secrets.REPORT_KEY }}" \
+            -o /dev/null -w "HTTP %{http_code}\n"

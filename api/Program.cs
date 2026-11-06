@@ -44,6 +44,7 @@ if (!string.IsNullOrWhiteSpace(cosmosConnection))
     builder.Services.AddSingleton<ISecurityStore, CosmosSecurityStore>();
     builder.Services.AddSingleton<IPitchStore, CosmosPitchStore>();
     builder.Services.AddSingleton<IBookingStore, CosmosBookingStore>();
+    builder.Services.AddSingleton<IPostStore, CosmosPostStore>();
 }
 else
 {
@@ -57,6 +58,7 @@ else
     builder.Services.AddSingleton<ISecurityStore>(new JsonFileSecurityStore(dataDir));
     builder.Services.AddSingleton<IPitchStore>(new JsonFilePitchStore(dataDir));
     builder.Services.AddSingleton<IBookingStore>(new JsonFileBookingStore(dataDir));
+    builder.Services.AddSingleton<IPostStore>(new JsonFilePostStore(dataDir));
 }
 
 // Uploads: Blob Storage when MEDIA_CONNECTION is set (Azure), otherwise api/.data/media.

@@ -11,6 +11,7 @@ export const sitePath = locale === "en" ? rawPath.replace(/^\/en/, "") || "/" : 
 // Localised link: L("/cv") -> "/cv" or "/en/cv"; L("/") -> "/" or "/en"; anchors pass through.
 export function L(path: string): string {
   if (path === "/boka") return locale === "en" ? "/en/book" : "/boka";
+  if (path === "/nu") return locale === "en" ? "/en/now" : "/nu";
   if (locale === "sv" || !path.startsWith("/")) return path;
   if (path === "/") return "/en";
   if (path.startsWith("/#")) return "/en" + path.slice(1);
@@ -300,6 +301,28 @@ const sv = {
   "pitch.lab_title": "Beskriv något ni behöver. AI-agenten på min sajt bygger ett utkast på 20 sekunder.",
   "pitch.lab_sub": "Build Lab är byggt av mig, i .NET och React på Azure. Prototypen får ni behålla.",
   "pitch.lab_cta": "Testa AI Build Lab",
+
+  // Nu + changelog
+  "now.eyebrow": "Just nu",
+  "now.title": "Vad jag gör nu",
+  "now.updated": "Uppdaterad",
+  "now.sv_only": "visas på svenska",
+  "changelog.eyebrow": "Changelog",
+  "changelog.title": "Nytt på sajten",
+  "changelog.lede": "Den här sajten är ett levande projekt. Här skriver jag vad som har ändrats, och varför.",
+  "changelog.empty": "Inget publicerat ännu.",
+
+  // Contact form
+  "form.title": "Skriv direkt här",
+  "form.sub": "Hamnar i min inkorg på en gång. Jag svarar oftast samma dag.",
+  "form.message": "Vad vill du prata om?",
+  "form.send": "Skicka",
+  "form.sending": "Skickar…",
+  "form.done": "Tack! Jag hör av mig.",
+  "form.done_sub": "Vill du hellre boka en tid direkt kan du göra det här.",
+  "form.again": "Skriv ett till",
+  "form.footer_now": "Vad jag gör nu",
+  "form.footer_log": "Nytt på sajten",
 };
 
 const en: Record<keyof typeof sv, string> = {
@@ -563,6 +586,26 @@ const en: Record<keyof typeof sv, string> = {
   "pitch.lab_title": "Describe something you need. The AI agent on my site builds a draft in 20 seconds.",
   "pitch.lab_sub": "Build Lab is built by me, in .NET and React on Azure. The prototype is yours to keep.",
   "pitch.lab_cta": "Try the AI Build Lab",
+
+  "now.eyebrow": "Right now",
+  "now.title": "What I'm doing now",
+  "now.updated": "Updated",
+  "now.sv_only": "shown in Swedish",
+  "changelog.eyebrow": "Changelog",
+  "changelog.title": "What's new",
+  "changelog.lede": "This site is a living project. Here I write down what changed, and why.",
+  "changelog.empty": "Nothing published yet.",
+
+  "form.title": "Write to me here",
+  "form.sub": "Lands straight in my inbox. I usually reply the same day.",
+  "form.message": "What would you like to talk about?",
+  "form.send": "Send",
+  "form.sending": "Sending…",
+  "form.done": "Thanks! I'll get back to you.",
+  "form.done_sub": "Prefer to book a time right away? You can do that here.",
+  "form.again": "Write another",
+  "form.footer_now": "What I'm doing now",
+  "form.footer_log": "What's new",
 };
 
 export type Key = keyof typeof sv;

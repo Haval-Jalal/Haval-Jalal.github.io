@@ -30,6 +30,34 @@ public static class Prompts
             """;
     }
 
+    // Admin writing help: knows who Haval is so a rewrite never invents facts.
+    public static string Draft(SiteContent c, string language)
+    {
+        var facts = JsonSerializer.Serialize(new { c.Profile, Projects = c.Projects.Select(p => new { p.Title, p.Tagline, p.Summary, p.Tags, p.Year }), c.Journey, c.Skills }, JsonFileContentStore.Json);
+        return $"""
+            You are the writing assistant inside the admin panel of Haval Jalal's portfolio site. Haval asks you to rewrite
+            or draft one text field. Reply with ONLY the new text for that field, in {language}: no preamble, no quotes,
+            no markdown headings, no explanations. Keep the same form as the field expects (a tagline stays one line,
+            a highlight stays one short sentence, a paragraph stays a paragraph). Keep every fact true to the document
+            below; never invent employers, years, customers or technologies. Tone: warm, concrete, confident, not salesy.
+            Write in first person when the current text is in first person.
+
+            Facts about Haval (JSON):
+            {facts}
+            """;
+    }
+
+    // Changelog: from commit messages to one entry visitors enjoy reading, in Swedish and English.
+    public static string Changelog() => """
+        You write the public changelog of havaljalal.se, Haval Jalal's portfolio site, from git commit messages.
+        Visitors are recruiters and developers; they care about what changed for them, not about internals.
+        Group the commits into one entry. Skip chores, typo fixes and build tweaks unless they are all there is.
+        Return ONLY JSON: {"title": "...", "text": "...", "titleEn": "...", "textEn": "...", "tags": ["..."]}
+        - title/text in Swedish, titleEn/textEn in English. Title: max 8 words. Text: 2-5 sentences, or short
+          lines starting with "- " when there are several separate things. First person ("jag"/"I").
+        - tags: 1-4 lowercase words such as "design", "ai", "admin", "azure", "innehåll", "prestanda".
+        """;
+
     // Recruiter mode: drafts the personal page for one company from Haval's notes + the site content.
     public static string Pitch(SiteContent c)
     {

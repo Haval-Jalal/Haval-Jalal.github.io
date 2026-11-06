@@ -5,6 +5,7 @@ using Anthropic.Exceptions;
 using HavalApi.Agent;
 using HavalApi.Auth;
 using HavalApi.Data;
+using HavalApi.Mail;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HavalApi.Functions;
 
-public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate, ILeadStore leads, IUsageStore usage, IBuildStore builds, ILogger<AgentFunction> log)
+public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate, ILeadStore leads, IUsageStore usage, IBuildStore builds, IMailer mailer, ILogger<AgentFunction> log)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan Hour = TimeSpan.FromHours(1);
@@ -152,7 +153,25 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
             Clip(dto.Source, 40) ?? "build-lab");
         await leads.AddAsync(lead, ct);
         log.LogInformation("New lead from {Source}", lead.Source);
-        return new OkObjectResult(new { ok = true });
+
+        // Tell Haval right away (logs only until Resend is configured).
+        var siteUrl = Environment.GetEnvironmentVariable("SITE_URL") ?? "https://havaljalal.se";
+        var subject = lead.Source == "contact"
+            ? $"Nytt meddelande från {(lead.Name.Length > 0 ? lead.Name : lead.Email)}"
+            : $"Ny lead från Build Lab: {(lead.Name.Length > 0 ? lead.Name : lead.Email)}";
+        await mailer.SendAsync(subject, $"""
+            {(lead.Source == "contact" ? "Nytt meddelande via kontaktformuläret på havaljalal.se" : "Ny lead via Build Lab på havaljalal.se")}
+
+            Namn:    {(lead.Name.Length > 0 ? lead.Name : "-")}
+            E-post:  {lead.Email}
+            {(lead.Idea is { Length: > 0 } ? $"Idé:     {lead.Idea}\n" : "")}
+            Meddelande:
+            {(lead.Message.Length > 0 ? lead.Message : "-")}
+
+            Svara: mailto:{lead.Email}
+            Admin: {siteUrl}/admin
+            """, ct);
+        return new OkObjectResult(new { ok = true, mailed = mailer.Enabled });
     }
 
     [Function("ManageLeads")]

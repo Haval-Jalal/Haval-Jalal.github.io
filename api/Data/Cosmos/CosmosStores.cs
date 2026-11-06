@@ -351,3 +351,57 @@ public sealed class CosmosBookingStore(CosmosDb db) : IBookingStore
         await container.UpsertItemAsync(new CosmosDoc<Booking>(booking.Id, BookingPk, booking.Ts, booking), new PartitionKey(BookingPk), cancellationToken: ct);
     }
 }
+
+// Changelog entries (pk "changelog") and the Nu page per language (pk "now", id "now-{lang}").
+public sealed class CosmosPostStore(CosmosDb db) : IPostStore
+{
+    private const string ChangelogPk = "changelog";
+    private const string NowPk = "now";
+
+    public async Task<List<ChangelogEntry>> ListChangelogAsync(bool publishedOnly, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Posts);
+        var rows = await CosmosDb.QueryAsync<CosmosDoc<ChangelogEntry>>(container, new QueryDefinition("SELECT * FROM c ORDER BY c.ts DESC"), ct, ChangelogPk);
+        return rows.Select(r => r.Data).Where(e => !publishedOnly || e.Published).OrderByDescending(e => e.Date).ThenByDescending(e => e.Ts).ToList();
+    }
+
+    public async Task SaveChangelogAsync(ChangelogEntry entry, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Posts);
+        await container.UpsertItemAsync(new CosmosDoc<ChangelogEntry>(entry.Id, ChangelogPk, entry.Ts, entry), new PartitionKey(ChangelogPk), cancellationToken: ct);
+    }
+
+    public async Task<bool> DeleteChangelogAsync(string id, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Posts);
+        try
+        {
+            await container.DeleteItemAsync<CosmosDoc<ChangelogEntry>>(id, new PartitionKey(ChangelogPk), cancellationToken: ct);
+            return true;
+        }
+        catch (CosmosException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+    }
+
+    public async Task<NowPage?> GetNowAsync(string lang, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Posts);
+        try
+        {
+            var response = await container.ReadItemAsync<CosmosDoc<NowPage>>($"now-{lang}", new PartitionKey(NowPk), cancellationToken: ct);
+            return response.Resource.Data;
+        }
+        catch (CosmosException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task SaveNowAsync(NowPage now, string lang, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Posts);
+        await container.UpsertItemAsync(new CosmosDoc<NowPage>($"now-{lang}", NowPk, now.UpdatedAt, now), new PartitionKey(NowPk), cancellationToken: ct);
+    }
+}

@@ -117,6 +117,87 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
             e.TryGetProperty(name, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String ? v.GetString() ?? "" : "";
     }
 
+    // Admin writing help: rewrites one text field according to an instruction. Plain text in, plain text out.
+    public async Task<string> DraftTextAsync(string instruction, string text, string context, string lang, CancellationToken ct)
+    {
+        var site = await content.GetAsync(ct);
+        var language = lang == "en" ? "English" : "Swedish";
+        var response = await client.Messages.Create(new MessageCreateParams
+        {
+            Model = ChatModel,
+            MaxTokens = 1500,
+            OutputConfig = new OutputConfig { Effort = Effort.Medium },
+            System = new List<TextBlockParam> { new() { Text = Prompts.Draft(site, language) } },
+            Messages = [new UserMessageParam { Content = $"Field: {context}\nInstruction: {instruction}\n\nCurrent text:\n{(string.IsNullOrWhiteSpace(text) ? "(empty)" : text)}" }],
+        }, cancellationToken: ct);
+        await guard.RecordAsync("draft", ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens,
+            response.Usage.CacheReadInputTokens ?? 0, response.Usage.CacheCreationInputTokens ?? 0, response.StopReason == "max_tokens", ct);
+        return string.Concat(response.Content.Select(b => b.Value).OfType<TextBlock>().Select(t => t.Text)).Trim();
+    }
+
+    public sealed record ChangelogDraft(string Title, string Text, string TitleEn, string TextEn, List<string> Tags);
+
+    // Turns a list of commit messages into one visitor-friendly changelog entry in both languages.
+    public async Task<ChangelogDraft> ChangelogDraftAsync(IReadOnlyList<string> commits, string hint, CancellationToken ct)
+    {
+        var response = await client.Messages.Create(new MessageCreateParams
+        {
+            Model = ChatModel,
+            MaxTokens = 1500,
+            OutputConfig = new OutputConfig { Effort = Effort.Medium },
+            System = new List<TextBlockParam> { new() { Text = Prompts.Changelog() } },
+            Messages = [new UserMessageParam { Content = $"Haval's note: {(string.IsNullOrWhiteSpace(hint) ? "(none)" : hint)}\n\nCommits (newest first):\n- {string.Join("\n- ", commits)}" }],
+        }, cancellationToken: ct);
+        await guard.RecordAsync("draft", ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens,
+            response.Usage.CacheReadInputTokens ?? 0, response.Usage.CacheCreationInputTokens ?? 0, response.StopReason == "max_tokens", ct);
+        var json = ParseJson(response);
+        return new ChangelogDraft(Str(json, "title"), Str(json, "text"), Str(json, "titleEn"), Str(json, "textEn"), StrList(json, "tags"));
+    }
+
+    // Generic JSON translation for the small documents (the Nu page). Same rules as the site content.
+    public async Task<T> TranslateJsonAsync<T>(T source, string lang, CancellationToken ct)
+    {
+        var language = lang == "en" ? "English" : lang;
+        var json = System.Text.Json.JsonSerializer.Serialize(source, JsonFileContentStore.Json);
+        var response = await client.Messages.Create(new MessageCreateParams
+        {
+            Model = ChatModel,
+            MaxTokens = 4000,
+            OutputConfig = new OutputConfig { Effort = Effort.Low },
+            System = new List<TextBlockParam> { new() { Text = $"""
+                You translate a small JSON document from Haval Jalal's portfolio site from Swedish to {language}.
+                Return ONLY the translated JSON (no code fences, no commentary) with exactly the same structure and keys.
+                Translate every human-readable string; keep dates, URLs and technology names unchanged. Natural {language}, first person where the source is.
+                """ } },
+            Messages = [new UserMessageParam { Content = json }],
+        }, cancellationToken: ct);
+        await guard.RecordAsync("translate", ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens,
+            response.Usage.CacheReadInputTokens ?? 0, response.Usage.CacheCreationInputTokens ?? 0, response.StopReason == "max_tokens", ct);
+        var text = string.Concat(response.Content.Select(b => b.Value).OfType<TextBlock>().Select(t => t.Text));
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+        if (start < 0 || end <= start) throw new InvalidOperationException("Translation was not JSON");
+        return System.Text.Json.JsonSerializer.Deserialize<T>(text[start..(end + 1)], JsonFileContentStore.Json)
+               ?? throw new InvalidOperationException("Translation was empty");
+    }
+
+    private static System.Text.Json.JsonElement ParseJson(Message response)
+    {
+        var text = string.Concat(response.Content.Select(b => b.Value).OfType<TextBlock>().Select(t => t.Text));
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+        if (start < 0 || end <= start) throw new InvalidOperationException("Draft was not JSON");
+        return System.Text.Json.JsonDocument.Parse(text[start..(end + 1)]).RootElement;
+    }
+
+    private static string Str(System.Text.Json.JsonElement e, string name) =>
+        e.TryGetProperty(name, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String ? v.GetString() ?? "" : "";
+
+    private static List<string> StrList(System.Text.Json.JsonElement e, string name) =>
+        e.TryGetProperty(name, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.Array
+            ? v.EnumerateArray().Select(x => x.GetString() ?? "").Where(x => x.Length > 0).ToList()
+            : [];
+
     // Streams text deltas; the final Usage is reported through the callback after the stream ends.
     // Eco mode (past the daily eco threshold) swaps to Sonnet with a shorter prototype. A deadline
     // (AGENT_BUILD_DEADLINE_SEC) ends the stream early and marks the build truncated.

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical, CalendarDays } from "lucide-react";
+import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical, CalendarDays, Newspaper, Mail, Loader2 } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
 import type { JourneyStep, Project, SiteContent } from "../data/content";
@@ -7,8 +7,11 @@ import { STATUS_LABEL } from "../components/Projects";
 import Pitches from "./Pitches";
 import Builds from "./Builds";
 import Bookings from "./Bookings";
+import Posts from "./Posts";
+import { AdminLangContext, AiButton } from "./AiHelp";
+import { sendWeeklyReport } from "../lib/posts";
 
-type Tab = "overview" | "content" | "pitches" | "lab" | "bookings" | "leads" | "ai" | "security" | "settings";
+type Tab = "overview" | "content" | "posts" | "pitches" | "lab" | "bookings" | "leads" | "ai" | "security" | "settings";
 
 export default function Admin() {
   const auth = useAuth();
@@ -42,6 +45,7 @@ export default function Admin() {
   const tabs: { key: Tab; label: string; icon: typeof BarChart3 }[] = [
     { key: "overview", label: "Översikt", icon: BarChart3 },
     { key: "content", label: "Innehåll", icon: FileText },
+    { key: "posts", label: "Nu & changelog", icon: Newspaper },
     { key: "pitches", label: "Rekryterare", icon: Target },
     { key: "lab", label: "Build Lab", icon: FlaskConical },
     { key: "bookings", label: "Bokning", icon: CalendarDays },
@@ -86,6 +90,7 @@ export default function Admin() {
         <main className="p-6 md:p-10">
           {tab === "overview" && <Overview />}
           {tab === "content" && <ContentEditor />}
+          {tab === "posts" && <Posts />}
           {tab === "pitches" && <Pitches />}
           {tab === "lab" && <Builds />}
           {tab === "bookings" && <Bookings />}
@@ -153,6 +158,8 @@ function Overview() {
           <h1 className="text-2xl font-semibold tracking-tight">Trafik</h1>
           <p className="text-sm text-fg-muted">Cookie-fri mätning, besökare räknas unikt per dag.</p>
         </div>
+        <div className="flex items-center gap-2">
+        <WeeklyReportButton />
         <div className="flex gap-1 rounded-full border border-white/10 p-1 text-xs">
           {[7, 30, 90].map((d) => (
             <button
@@ -163,6 +170,7 @@ function Overview() {
               {d} dagar
             </button>
           ))}
+        </div>
         </div>
       </header>
 
@@ -198,6 +206,42 @@ function Overview() {
         <TopList title="Händelser" items={data.events} empty="Inga händelser ännu" />
       </div>
     </div>
+  );
+}
+
+// Sends the same e-mail the Monday cron sends, right now, and shows the text.
+function WeeklyReportButton() {
+  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [result, setResult] = useState<{ mailed: boolean; text: string } | null>(null);
+  const run = async () => {
+    setState("sending");
+    try {
+      const r = await sendWeeklyReport();
+      setResult({ mailed: r.mailed, text: r.text });
+      setState("done");
+    } catch {
+      setState("error");
+    }
+  };
+  return (
+    <>
+      <button onClick={() => void run()} disabled={state === "sending"} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs text-fg-muted hover:text-fg disabled:opacity-50" title="Skickar veckorapporten till din e-post nu">
+        {state === "sending" ? <Loader2 className="size-3.5 animate-spin" /> : <Mail className="size-3.5" />} Veckorapport
+      </button>
+      {state === "error" && <span className="text-xs text-red-300">Kunde inte skicka.</span>}
+      {state === "done" && result && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={() => setState("idle")}>
+          <div className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-2xl border border-white/10 bg-night-900 p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium">{result.mailed ? "Veckorapporten är skickad till din e-post." : "E-post är inte konfigurerad; här är rapporten."}</h2>
+              <button onClick={() => setState("idle")} className="text-fg-faint hover:text-fg" aria-label="Stäng"><X className="size-4" /></button>
+            </div>
+            <pre className="mt-4 whitespace-pre-wrap font-mono text-xs leading-relaxed text-fg-muted">{result.text}</pre>
+            <p className="mt-4 text-[11px] text-fg-faint">Skickas automatiskt varje måndag kl 07 via GitHub Actions.</p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -258,7 +302,7 @@ type UsageSummary = {
   recent: { ts: string; feature: string; model: string; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; usd: number; truncated: boolean }[];
 };
 
-const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)", pitch: "Rekryterarläge, utkast (Sonnet 5.5)", translate: "Översättning av innehåll (Sonnet 5.5)" };
+const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)", pitch: "Rekryterarläge, utkast (Sonnet 5.5)", translate: "Översättning av innehåll (Sonnet 5.5)", draft: "Skrivhjälp i admin (Sonnet 5.5)" };
 const usd = (n: number) => `${n.toFixed(n < 1 ? 3 : 2)} USD`;
 const tok = (n: number) => n.toLocaleString("sv-SE");
 
@@ -479,7 +523,7 @@ function Leads() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
-          <p className="text-sm text-fg-muted">Idéer som besökare skickat från Build Lab.</p>
+          <p className="text-sm text-fg-muted">Meddelanden från kontaktformuläret och idéer från Build Lab. Du får också ett mejl per lead.</p>
         </div>
         <div className="panel-tile rounded-xl px-4 py-2 text-xs text-fg-muted">
           AI-kostnad idag: <span className="font-mono text-fg">{data.spentTodayUsd.toFixed(3)} USD</span> av {data.dailyCapUsd} USD
@@ -495,6 +539,7 @@ function Leads() {
                 <span>
                   <span className="text-sm font-medium text-fg">{l.name || "(utan namn)"}</span>
                   <span className="ml-2 text-xs text-fg-muted">{l.email}</span>
+                  <span className="ml-2 rounded-full border border-white/10 px-1.5 font-mono text-[10px] text-fg-faint">{l.source === "contact" ? "kontakt" : l.source}</span>
                 </span>
                 <span className="font-mono text-[11px] text-fg-faint">{new Date(l.ts).toLocaleString("sv-SE")}</span>
               </button>
@@ -882,6 +927,7 @@ function ContentEditor() {
   const setProfile = (patch: Partial<typeof p>) => update((d) => ({ ...d, profile: { ...d.profile, ...patch } }));
 
   return (
+    <AdminLangContext.Provider value={lang}>
     <div className="max-w-3xl">
       <h1 className="text-2xl font-semibold tracking-tight">Innehåll</h1>
       <p className="text-sm text-fg-muted">
@@ -1015,6 +1061,7 @@ function ContentEditor() {
 
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </div>
+    </AdminLangContext.Provider>
   );
 }
 
@@ -1083,7 +1130,10 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
 function Area({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block text-xs text-fg-muted">
-      {label}
+      <span className="flex items-center justify-between gap-2">
+        {label}
+        <AiButton value={value} onChange={onChange} context={label} />
+      </span>
       <textarea
         value={value}
         rows={3}
