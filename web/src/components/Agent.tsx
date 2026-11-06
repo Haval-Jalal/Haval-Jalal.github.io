@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Loader2, Send, Trash2, X } from "lucide-react";
 import { onAgentOpen, openAgent, useDigitalHaval } from "../lib/chat";
+import Agent3D from "./Agent3D";
 import { t } from "../lib/i18n";
 
 /* ---------- The face ---------- */
@@ -221,6 +222,7 @@ export default function AgentWidget() {
   }, [open]);
 
   const mood: Mood = busy ? "thinking" : speaking ? "speaking" : hover || open ? "happy" : "idle";
+  const [pop, setPop] = useState(0);
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] sm:inset-x-auto sm:bottom-5 sm:right-5">
@@ -237,7 +239,7 @@ export default function AgentWidget() {
             className="panel-glass pointer-events-auto mx-3 mb-3 flex max-h-[min(70vh,560px)] flex-col overflow-hidden rounded-3xl text-fg shadow-2xl shadow-black/60 sm:mx-0 sm:mb-4 sm:w-[380px]"
           >
             <header className="flex items-center gap-3 border-b border-white/5 px-4 py-3">
-              <AgentFace mood={mood} size={40} />
+              <span className="relative grid place-items-center"><span className="absolute inset-[5px] rounded-full bg-[#0b0908]" aria-hidden="true" /><Agent3D mood={mood} size={44} className="relative" /></span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">Digital Haval</p>
                 <p className="truncate text-[11px] text-fg-muted">{busy ? t("chat.thinking") : t("agent.sub")}</p>
@@ -321,8 +323,8 @@ export default function AgentWidget() {
           )}
         </AnimatePresence>
         <motion.button
-          onClick={() => { setOpen((o) => !o); setBubble(false); }}
-          onMouseEnter={() => setHover(true)}
+          onClick={() => { setOpen((o) => !o); setBubble(false); setPop((n) => n + 1); }}
+          onMouseEnter={() => { setHover(true); setPop((n) => n + 1); }}
           onMouseLeave={() => setHover(false)}
           whileTap={{ scale: 0.96 }}
           animate={open ? { y: 0 } : { y: [0, -3, 0] }}
@@ -345,13 +347,11 @@ export default function AgentWidget() {
               </motion.span>
             )}
           </AnimatePresence>
-          <motion.span
-            className="grid size-[68px] place-items-center rounded-full"
-            animate={{ scale: hover ? 1.06 : 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 18 }}
-          >
-            <AgentFace mood={mood} size={68} />
-          </motion.span>
+          <span className="relative grid size-[84px] place-items-center rounded-full">
+            <span className="absolute inset-3 rounded-full bg-ember-500/40 blur-xl" aria-hidden="true" />
+            <span className="absolute inset-[9px] rounded-full bg-[#0b0908]" aria-hidden="true" />
+            <Agent3D mood={mood} size={84} bounce={pop} className="relative" />
+          </span>
           {messages.length === 0 && !open && <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-emerald-400 ring-2 ring-night-950" />}
         </motion.button>
       </div>
@@ -365,8 +365,10 @@ export function AgentTeaser() {
   return (
     <div className="panel-tile min-w-0 rounded-3xl p-6" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div className="flex items-center gap-4">
-        <button onClick={() => openAgent()} className="shrink-0 rounded-full shadow-[0_0_30px_-8px_rgba(232,147,58,0.8)]" aria-label={t("agent.open")}>
-          <AgentFace mood={hover ? "happy" : "idle"} size={64} />
+        <button onClick={() => openAgent()} className="relative shrink-0 rounded-full" aria-label={t("agent.open")}>
+          <span className="absolute inset-2 rounded-full bg-ember-500/35 blur-xl" aria-hidden="true" />
+          <span className="absolute inset-[9px] rounded-full bg-[#0b0908]" aria-hidden="true" />
+          <Agent3D mood={hover ? "happy" : "idle"} size={88} className="relative" />
         </button>
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-fg">Digital Haval</p>
