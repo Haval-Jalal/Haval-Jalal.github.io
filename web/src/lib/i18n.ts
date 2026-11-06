@@ -141,6 +141,14 @@ const sv = {
   "chat.aria": "Fråga Digital Haval",
   "chat.send": "Skicka",
 
+  // Gallery
+  "gallery.eyebrow": "Galleri",
+  "gallery.title": "Byggt av",
+  "gallery.title_accent": "besökare.",
+  "gallery.lede": "Riktiga prototyper som besökare beskrivit och AI-agenten byggt här på sajten. Klicka för att prova dem i full storlek.",
+  "gallery.built_by": "Byggt i Build Lab",
+  "gallery.open": "Öppna prototypen",
+
   // Lab viewer / page
   "viewer.sandbox": "sandlåda",
   "viewer.download_html": "Ladda ner HTML",
@@ -376,6 +384,13 @@ const en: Record<keyof typeof sv, string> = {
   "chat.placeholder": "Ask a question…",
   "chat.aria": "Ask Digital Haval",
   "chat.send": "Send",
+
+  "gallery.eyebrow": "Gallery",
+  "gallery.title": "Built by",
+  "gallery.title_accent": "visitors.",
+  "gallery.lede": "Real prototypes that visitors described and the AI agent built right here on the site. Click to try them full size.",
+  "gallery.built_by": "Built in Build Lab",
+  "gallery.open": "Open the prototype",
 
   "viewer.sandbox": "sandbox",
   "viewer.download_html": "Download HTML",

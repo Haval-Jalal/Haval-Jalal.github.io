@@ -174,6 +174,26 @@ public sealed class CosmosBuildStore(CosmosDb db) : IBuildStore
         var rows = await CosmosDb.QueryAsync<Row>(container, query, ct, visitorId);
         return rows.Select(r => new BuildSummary(r.Id, r.Ts, r.Idea, r.Title, r.Contact is not null)).ToList();
     }
+
+    public async Task<List<BuildAdminRow>> ListRecentAsync(int take, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Builds);
+        var query = new QueryDefinition(
+                "SELECT TOP @take c.id, c.ts, c.data.idea AS idea, c.data.title AS title, c.data.model AS model, c.data.truncated AS truncated, c.data.contact AS contact, c.data.featured AS featured FROM c ORDER BY c.ts DESC")
+            .WithParameter("@take", take);
+        var rows = await CosmosDb.QueryAsync<AdminRowDoc>(container, query, ct);
+        return rows.Select(r => new BuildAdminRow(r.Id, r.Ts, r.Idea, r.Title, r.Model ?? "", r.Truncated, r.Contact is not null, r.Contact?.Name, r.Featured)).ToList();
+    }
+
+    public async Task<List<GalleryItem>> ListFeaturedAsync(int take, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Builds);
+        var query = new QueryDefinition("SELECT TOP @take * FROM c WHERE c.data.featured = true ORDER BY c.ts DESC").WithParameter("@take", take);
+        var rows = await CosmosDb.QueryAsync<CosmosDoc<BuildRecord>>(container, query, ct);
+        return rows.Select(r => BuildRows.Item(r.Data)).ToList();
+    }
+
+    private sealed record AdminRowDoc(string Id, DateTime Ts, string Idea, string Title, string? Model, bool Truncated, BuildContact? Contact, bool Featured);
 }
 
 public sealed class CosmosSecurityStore(CosmosDb db) : ISecurityStore

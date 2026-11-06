@@ -66,5 +66,46 @@ export async function unlockBuild(id: string, contact: { name: string; email: st
   return (await r.json()) as { ok: boolean; mailed: boolean };
 }
 
+export type GalleryItem = { id: string; ts: string; idea: string; title: string; html: string };
+
+export async function listGallery(): Promise<GalleryItem[]> {
+  try {
+    const r = await fetch("/api/gallery");
+    if (!r.ok) return [];
+    return ((await r.json()) as { builds: GalleryItem[] }).builds;
+  } catch {
+    return [];
+  }
+}
+
+/* ---- admin ---- */
+
+export type AdminBuild = {
+  id: string;
+  ts: string;
+  idea: string;
+  title: string;
+  model: string;
+  truncated: boolean;
+  unlocked: boolean;
+  contactName: string | null;
+  featured: boolean;
+};
+
+export async function listRecentBuilds(): Promise<AdminBuild[]> {
+  const r = await fetch("/api/manage/builds", { cache: "no-store" });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return ((await r.json()) as { builds: AdminBuild[] }).builds;
+}
+
+export async function setFeatured(id: string, featured: boolean): Promise<void> {
+  const r = await fetch(`/api/manage/builds/${encodeURIComponent(id)}/feature`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ featured }),
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+}
+
 export const downloadUrl = (id: string) => `/api/lab/${encodeURIComponent(id)}/download`;
 export const shareUrl = (id: string) => `${location.origin}/lab/${id}`;

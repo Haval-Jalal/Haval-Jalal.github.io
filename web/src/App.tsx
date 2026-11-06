@@ -8,6 +8,7 @@ import Projects from "./components/Projects";
 import Journey from "./components/Journey";
 import Stack from "./components/Stack";
 import BuildLab from "./components/BuildLab";
+import Gallery from "./components/Gallery";
 import Contact from "./components/Contact";
 import { BACKGROUNDS, currentBackground, type BackgroundKey } from "./components/backgrounds";
 import { useSiteContent } from "./lib/content";
@@ -150,6 +151,7 @@ export default function App() {
         <Journey />
         <Stack />
         <BuildLab />
+        <Gallery />
         <Contact />
       </div>
 

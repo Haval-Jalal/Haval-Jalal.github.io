@@ -13,7 +13,7 @@ namespace HavalApi.Functions;
 
 // Saved prototypes: a visitor's own list, a shareable page, and the gated download that doubles as
 // the lead capture ("fill in your details to download, and Haval gets a copy").
-public class LabFunction(IBuildStore builds, ILeadStore leads, IMailer mailer, AgentGuard guard, ILogger<LabFunction> log)
+public class LabFunction(IBuildStore builds, ILeadStore leads, IMailer mailer, AgentGuard guard, HavalApi.Auth.AdminGate gate, ILogger<LabFunction> log)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly string SiteUrl = Environment.GetEnvironmentVariable("SITE_URL") ?? "https://havaljalal.se";
@@ -27,6 +27,41 @@ public class LabFunction(IBuildStore builds, ILeadStore leads, IMailer mailer, A
         if (!ValidVisitor(visitor)) return new BadRequestObjectResult(new { error = "invalid_visitor" });
         req.HttpContext.Response.Headers.CacheControl = "no-store";
         return new OkObjectResult(new { builds = await builds.ListByVisitorAsync(visitor, 12, ct) });
+    }
+
+    // Public gallery: prototypes Haval has starred in admin.
+    [Function("LabGallery")]
+    public async Task<IActionResult> Gallery(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "gallery")] HttpRequest req,
+        CancellationToken ct)
+    {
+        req.HttpContext.Response.Headers.CacheControl = "public, max-age=120";
+        return new OkObjectResult(new { builds = await builds.ListFeaturedAsync(9, ct) });
+    }
+
+    [Function("ManageBuilds")]
+    public async Task<IActionResult> ManageList(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/builds")] HttpRequest req,
+        CancellationToken ct)
+    {
+        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
+        return new OkObjectResult(new { builds = await builds.ListRecentAsync(80, ct) });
+    }
+
+    [Function("ManageBuildFeature")]
+    public async Task<IActionResult> Feature(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "manage/builds/{id}/feature")] HttpRequest req,
+        string id,
+        CancellationToken ct)
+    {
+        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
+        FeatureDto? dto;
+        try { dto = await JsonSerializer.DeserializeAsync<FeatureDto>(req.Body, Json, ct); }
+        catch (JsonException) { dto = null; }
+        var b = await builds.GetAsync(id, ct);
+        if (b is null) return new NotFoundResult();
+        await builds.SaveAsync(b with { Featured = dto?.Featured ?? !b.Featured }, ct);
+        return new OkObjectResult(new { id, featured = dto?.Featured ?? !b.Featured });
     }
 
     [Function("LabGet")]
@@ -122,6 +157,8 @@ public class LabFunction(IBuildStore builds, ILeadStore leads, IMailer mailer, A
     }
 
     private static string? Clip(string? s, int max) => string.IsNullOrWhiteSpace(s) ? null : s.Trim()[..Math.Min(s.Trim().Length, max)];
+
+    private sealed class FeatureDto { [JsonPropertyName("featured")] public bool? Featured { get; set; } }
 
     private sealed class UnlockDto
     {
