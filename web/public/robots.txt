@@ -3,3 +3,7 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 Disallow: /for/
+Allow: /api/og.png
+Allow: /api/cv.pdf
+
+Sitemap: https://havaljalal.se/sitemap.xml
