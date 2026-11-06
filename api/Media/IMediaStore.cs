@@ -2,9 +2,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 
 namespace HavalApi.Media;
 
@@ -41,12 +39,40 @@ public static class MediaProcessing
             return (ms.ToArray(), contentType, contentType == "application/pdf" ? ".pdf" : ".svg");
         }
 
-        using var image = await Image.LoadAsync(data, ct);
-        if (image.Width > MaxWidth)
-            image.Mutate(x => x.Resize(MaxWidth, 0));
-        using var output = new MemoryStream();
-        await image.SaveAsync(output, new WebpEncoder { Quality = 82 }, ct);
-        return (output.ToArray(), "image/webp", ".webp");
+        using var buffer = new MemoryStream();
+        await data.CopyToAsync(buffer, ct);
+        buffer.Position = 0;
+        using var codec = SKCodec.Create(buffer) ?? throw new InvalidOperationException("Unreadable image");
+        using var decoded = SKBitmap.Decode(codec) ?? throw new InvalidOperationException("Unreadable image");
+        using var upright = Upright(decoded, codec.EncodedOrigin);
+
+        var scale = Math.Min(1.0, (double)MaxWidth / upright.Width);
+        var size = new SKImageInfo((int)Math.Round(upright.Width * scale), (int)Math.Round(upright.Height * scale), SKColorType.Rgba8888, SKAlphaType.Premul);
+        using var resized = scale < 1 ? upright.Resize(size, new SKSamplingOptions(SKCubicResampler.Mitchell)) : upright.Copy();
+        using var image = SKImage.FromBitmap(resized);
+        using var encoded = image.Encode(SKEncodedImageFormat.Webp, 82);
+        return (encoded.ToArray(), "image/webp", ".webp");
+    }
+
+    // Phone photos carry an EXIF orientation; bake it in so the stored image is upright.
+    private static SKBitmap Upright(SKBitmap bitmap, SKEncodedOrigin origin)
+    {
+        if (origin == SKEncodedOrigin.TopLeft) return bitmap.Copy();
+        var swap = origin is SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightTop or SKEncodedOrigin.RightBottom or SKEncodedOrigin.LeftBottom;
+        var result = new SKBitmap(swap ? bitmap.Height : bitmap.Width, swap ? bitmap.Width : bitmap.Height);
+        using var canvas = new SKCanvas(result);
+        switch (origin)
+        {
+            case SKEncodedOrigin.TopRight: canvas.Scale(-1, 1, bitmap.Width / 2f, 0); break;
+            case SKEncodedOrigin.BottomRight: canvas.RotateDegrees(180, bitmap.Width / 2f, bitmap.Height / 2f); break;
+            case SKEncodedOrigin.BottomLeft: canvas.Scale(1, -1, 0, bitmap.Height / 2f); break;
+            case SKEncodedOrigin.LeftTop: canvas.RotateDegrees(90); canvas.Scale(1, -1); break;
+            case SKEncodedOrigin.RightTop: canvas.Translate(result.Width, 0); canvas.RotateDegrees(90); break;
+            case SKEncodedOrigin.RightBottom: canvas.Translate(result.Width, 0); canvas.RotateDegrees(90); canvas.Scale(1, -1, 0, bitmap.Height / 2f); break;
+            case SKEncodedOrigin.LeftBottom: canvas.Translate(0, result.Height); canvas.RotateDegrees(-90); break;
+        }
+        canvas.DrawBitmap(bitmap, 0, 0);
+        return result;
     }
 
     // "Skärmbild 2026-11-06 185458.png" -> "skarmbild-2026-11-06-185458-3f9a1c.webp"
