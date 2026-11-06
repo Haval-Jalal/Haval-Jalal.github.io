@@ -29,6 +29,15 @@ public sealed class AgentGuard(IUsageStore usage)
     // "low" | "medium" | "high": how hard Opus thinks before writing a prototype. Lower = cheaper.
     public string BuildEffort { get; } = (Environment.GetEnvironmentVariable("AGENT_BUILD_EFFORT") ?? "medium").ToLowerInvariant();
 
+    // Which models write prototypes, how long they may be and how long a build may run. Static Web
+    // Apps cuts every API request at 45 s, so in Azure AGENT_BUILD_DEADLINE_SEC=40 ends the stream
+    // cleanly (reported as truncated) instead of the proxy dropping the connection. 0 = no deadline.
+    public string BuildModel { get; } = Environment.GetEnvironmentVariable("AGENT_BUILD_MODEL") is { Length: > 0 } m ? m : "claude-opus-5-5";
+    public string EcoBuildModel { get; } = Environment.GetEnvironmentVariable("AGENT_ECO_BUILD_MODEL") is { Length: > 0 } e ? e : "claude-sonnet-5-5";
+    public int BuildMaxTokens { get; } = Env("AGENT_BUILD_MAX_TOKENS", 8000);
+    public int EcoBuildMaxTokens { get; } = Env("AGENT_ECO_BUILD_MAX_TOKENS", 4500);
+    public int BuildDeadlineSeconds { get; } = Env("AGENT_BUILD_DEADLINE_SEC", 0);
+
     public int BuildPerHour { get; } = Env("AGENT_BUILD_PER_HOUR", 3);
     public int BuildPerDay { get; } = Env("AGENT_BUILD_PER_DAY", 5);
     public int ChatPerHour { get; } = Env("AGENT_CHAT_PER_HOUR", 20);

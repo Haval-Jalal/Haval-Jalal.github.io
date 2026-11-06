@@ -4,9 +4,16 @@ using Microsoft.Azure.Functions.Worker;
 
 namespace HavalApi.Functions;
 
-public class HealthFunction
+public class HealthFunction(HavalApi.Data.IContentStore content)
 {
     [Function("Health")]
     public IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "health")] HttpRequest req)
-        => new OkObjectResult(new { ok = true, utc = DateTime.UtcNow, runtime = Environment.Version.ToString() });
+        => new OkObjectResult(new
+        {
+            ok = true,
+            utc = DateTime.UtcNow,
+            runtime = Environment.Version.ToString(),
+            store = content.GetType().Name.Replace("ContentStore", "").ToLowerInvariant(),
+            ai = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")),
+        });
 }

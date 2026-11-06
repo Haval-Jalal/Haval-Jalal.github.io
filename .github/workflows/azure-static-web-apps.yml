@@ -1,0 +1,52 @@
+name: Deploy to Azure Static Web Apps
+
+# Builds the site (web/) and the API (api/) here on GitHub, then uploads both to the Static Web
+# App. The upload token lives in the repository secret AZURE_STATIC_WEB_APPS_API_TOKEN.
+on:
+  push:
+    branches: [rebuild, main]
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+concurrency:
+  group: swa-deploy
+  cancel-in-progress: true
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    name: Build and deploy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build site
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build API
+        run: dotnet publish api/HavalApi.csproj -c Release -o api-publish
+
+      - name: Deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: web/dist
+          api_location: api-publish
+          skip_app_build: true
+          skip_api_build: true

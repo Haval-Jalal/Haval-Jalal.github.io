@@ -14,8 +14,6 @@ public sealed record Usage(string Model, long InputTokens, long OutputTokens, lo
 public sealed class AgentService(AnthropicClient client, IContentStore content, AgentGuard guard, ILogger<AgentService> log)
 {
     public const string ChatModel = "claude-sonnet-5-5";
-    public const string BuildModel = "claude-opus-5-5";
-    public const string EcoBuildModel = "claude-sonnet-5-5";
 
     public async Task<ChatReply> ChatAsync(IReadOnlyList<ChatTurn> turns, CancellationToken ct)
     {
@@ -47,55 +45,78 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
     }
 
     // Streams text deltas; the final Usage is reported through the callback after the stream ends.
-    // Eco mode (past the daily eco threshold) swaps to Sonnet with a shorter prototype.
+    // Eco mode (past the daily eco threshold) swaps to Sonnet with a shorter prototype. A deadline
+    // (AGENT_BUILD_DEADLINE_SEC) ends the stream early and marks the build truncated.
     public async IAsyncEnumerable<string> BuildStreamAsync(
         string idea,
         bool eco,
         Action<Usage> onDone,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
     {
+        var started = System.Diagnostics.Stopwatch.StartNew();
         var site = await content.GetAsync(ct);
-        long inputTokens = 0, outputTokens = 0, cacheRead = 0, cacheWrite = 0;
+        long inputTokens = 0, outputTokens = 0, cacheRead = 0, cacheWrite = 0, streamedChars = 0;
         var truncated = false;
-        var requested = eco ? EcoBuildModel : BuildModel;
+        var requested = eco ? guard.EcoBuildModel : guard.BuildModel;
         var model = requested;
+
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        if (guard.BuildDeadlineSeconds > 0)
+            deadline.CancelAfter(TimeSpan.FromSeconds(guard.BuildDeadlineSeconds) - started.Elapsed);
 
         // Output includes the model's thinking, so a full prototype + plan lands around 5-7K tokens.
         var stream = client.Messages.CreateStreaming(new MessageCreateParams
         {
             Model = requested,
-            MaxTokens = eco ? 4500 : 8000,
+            MaxTokens = eco ? guard.EcoBuildMaxTokens : guard.BuildMaxTokens,
             OutputConfig = new OutputConfig
             {
                 Effort = eco ? Effort.Low : guard.BuildEffort switch { "low" => Effort.Low, "high" => Effort.High, _ => Effort.Medium },
             },
             System = new List<TextBlockParam> { new() { Text = Prompts.Build(site, eco), CacheControl = new CacheControlEphemeral() } },
             Messages = [new UserMessageParam { Content = $"Idé: {idea}" }],
-        }, cancellationToken: ct);
+        }, cancellationToken: deadline.Token);
 
-        await foreach (var ev in stream.WithCancellation(ct))
+        await using var events = stream.GetAsyncEnumerator(deadline.Token);
+        while (true)
         {
-            if (ev.TryPickStart(out var start))
+            string? text = null;
+            try
             {
-                model = start.Message.Model.ToString()?.Trim('"') ?? requested;
-                inputTokens = start.Message.Usage.InputTokens;
-                cacheRead = start.Message.Usage.CacheReadInputTokens ?? 0;
-                cacheWrite = start.Message.Usage.CacheCreationInputTokens ?? 0;
+                if (!await events.MoveNextAsync()) break;
+                var ev = events.Current;
+                if (ev.TryPickStart(out var start))
+                {
+                    model = start.Message.Model.ToString()?.Trim('"') ?? requested;
+                    inputTokens = start.Message.Usage.InputTokens;
+                    cacheRead = start.Message.Usage.CacheReadInputTokens ?? 0;
+                    cacheWrite = start.Message.Usage.CacheCreationInputTokens ?? 0;
+                }
+                else if (ev.TryPickContentBlockDelta(out var delta) && delta.Delta.TryPickText(out var t))
+                {
+                    text = t.Text;
+                    streamedChars += text.Length;
+                }
+                else if (ev.TryPickDelta(out var msgDelta))
+                {
+                    outputTokens = msgDelta.Usage.OutputTokens;
+                    truncated = msgDelta.Delta.StopReason == "max_tokens";
+                }
             }
-            else if (ev.TryPickContentBlockDelta(out var delta) && delta.Delta.TryPickText(out var text))
+            catch (OperationCanceledException) when (deadline.IsCancellationRequested && !ct.IsCancellationRequested)
             {
-                yield return text.Text;
+                // Deadline hit: keep what was streamed, estimate the output tokens for the bill.
+                truncated = true;
+                log.LogWarning("Build Lab run hit the {Seconds}s deadline after {Chars} chars", guard.BuildDeadlineSeconds, streamedChars);
+                break;
             }
-            else if (ev.TryPickDelta(out var msgDelta))
-            {
-                outputTokens = msgDelta.Usage.OutputTokens;
-                truncated = msgDelta.Delta.StopReason == "max_tokens";
-            }
+            if (text is not null) yield return text;
         }
+        if (outputTokens == 0 && streamedChars > 0) outputTokens = streamedChars / 3; // conservative estimate
 
         var usd = await guard.RecordAsync("build", model, inputTokens, outputTokens, cacheRead, cacheWrite, truncated, CancellationToken.None);
-        log.LogInformation("Build Lab run: {Model} in={In} out={Out} cacheRead={CacheRead} cacheWrite={CacheWrite} truncated={Truncated} cost={Usd:F4} USD",
-            model, inputTokens, outputTokens, cacheRead, cacheWrite, truncated, usd);
+        log.LogInformation("Build Lab run: {Model} in={In} out={Out} cacheRead={CacheRead} cacheWrite={CacheWrite} truncated={Truncated} cost={Usd:F4} USD in {Elapsed:F1}s",
+            model, inputTokens, outputTokens, cacheRead, cacheWrite, truncated, usd, started.Elapsed.TotalSeconds);
         onDone(new Usage(model, inputTokens, outputTokens, cacheRead, cacheWrite, truncated));
     }
 }

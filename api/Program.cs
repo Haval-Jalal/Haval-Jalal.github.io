@@ -1,6 +1,7 @@
 using Anthropic;
 using HavalApi.Agent;
 using HavalApi.Data;
+using HavalApi.Data.Cosmos;
 using HavalApi.Mail;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,15 +28,28 @@ builder.Services.AddHttpClient("github", client =>
         client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 });
 
-// Storage: JSON files under api/.data for local development. When COSMOS_CONNECTION is set
-// (Azure), the Cosmos DB stores take over; they are added in the Azure step.
-var dataDir = Environment.GetEnvironmentVariable("DATA_DIR")
-              ?? Path.Combine(AppContext.BaseDirectory, "..", "..", ".data");
-builder.Services.AddSingleton<IContentStore>(new JsonFileContentStore(dataDir));
-builder.Services.AddSingleton<IAnalyticsStore>(new JsonFileAnalyticsStore(dataDir));
-builder.Services.AddSingleton<ILeadStore>(new JsonFileLeadStore(dataDir));
-builder.Services.AddSingleton<IUsageStore>(new JsonFileUsageStore(dataDir));
-builder.Services.AddSingleton<IBuildStore>(new JsonFileBuildStore(dataDir));
+// Storage: Cosmos DB when COSMOS_CONNECTION is set (Azure), otherwise JSON files under api/.data
+// for local development. Both implement the same store interfaces.
+var cosmosConnection = Environment.GetEnvironmentVariable("COSMOS_CONNECTION");
+if (!string.IsNullOrWhiteSpace(cosmosConnection))
+{
+    builder.Services.AddSingleton(new CosmosDb(cosmosConnection, Environment.GetEnvironmentVariable("COSMOS_DATABASE") ?? "haval"));
+    builder.Services.AddSingleton<IContentStore, CosmosContentStore>();
+    builder.Services.AddSingleton<IAnalyticsStore, CosmosAnalyticsStore>();
+    builder.Services.AddSingleton<ILeadStore, CosmosLeadStore>();
+    builder.Services.AddSingleton<IUsageStore, CosmosUsageStore>();
+    builder.Services.AddSingleton<IBuildStore, CosmosBuildStore>();
+}
+else
+{
+    var dataDir = Environment.GetEnvironmentVariable("DATA_DIR")
+                  ?? Path.Combine(AppContext.BaseDirectory, "..", "..", ".data");
+    builder.Services.AddSingleton<IContentStore>(new JsonFileContentStore(dataDir));
+    builder.Services.AddSingleton<IAnalyticsStore>(new JsonFileAnalyticsStore(dataDir));
+    builder.Services.AddSingleton<ILeadStore>(new JsonFileLeadStore(dataDir));
+    builder.Services.AddSingleton<IUsageStore>(new JsonFileUsageStore(dataDir));
+    builder.Services.AddSingleton<IBuildStore>(new JsonFileBuildStore(dataDir));
+}
 
 // Lead notifications by e-mail (Resend). Logs instead of sending until RESEND_API_KEY + LEAD_NOTIFY_EMAIL exist.
 builder.Services.AddHttpClient("resend", client =>
