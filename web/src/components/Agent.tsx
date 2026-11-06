@@ -54,7 +54,7 @@ export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?:
 
   const eyeY = mood === "thinking" ? look.y - 2 : look.y;
   const eyeX = mood === "thinking" ? look.x + 2 : look.x;
-  const eyeH = blink ? 0.6 : mood === "happy" ? 5.5 : 9;
+  const eyeH = blink ? 0.7 : 9.5;
   const eyeRadius = Math.min(3.5, eyeH / 2);
   const ids = {
     sphere: `hj-sphere-${uid}`, rim: `hj-rim-${uid}`, eye: `hj-eye-${uid}`, glow: `hj-glow-${uid}`, soft: `hj-soft-${uid}`, clip: `hj-clip-${uid}`,
@@ -99,15 +99,17 @@ export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?:
       <circle cx="32" cy="32" r="29" fill={`url(#${ids.sphere})`} />
       {/* ember plasma drifting inside */}
       <g clipPath={`url(#${ids.clip})`} opacity={0.9}>
-        <motion.ellipse cx="24" cy="46" rx="20" ry="12" fill="#c25a14" filter={`url(#${ids.soft})`} opacity={0.55}
-          animate={{ x: [0, 6, -4, 0], y: [0, -5, 3, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.ellipse cx="44" cy="40" rx="16" ry="10" fill="#e8933a" filter={`url(#${ids.soft})`} opacity={0.35}
-          animate={{ x: [0, -7, 3, 0], y: [0, 4, -4, 0] }} transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.ellipse cx="30" cy="20" rx="14" ry="8" fill="#ffb86b" filter={`url(#${ids.soft})`} opacity={0.14}
+        <motion.ellipse cx="22" cy="48" rx="22" ry="13" fill="#b4500f" filter={`url(#${ids.soft})`} opacity={0.75}
+          animate={{ x: [0, 7, -5, 0], y: [0, -6, 3, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }} />
+        <motion.ellipse cx="46" cy="42" rx="17" ry="11" fill="#e8933a" filter={`url(#${ids.soft})`} opacity={0.5}
+          animate={{ x: [0, -8, 4, 0], y: [0, 5, -4, 0] }} transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }} />
+        <motion.ellipse cx="32" cy="58" rx="20" ry="8" fill="#ff9f43" filter={`url(#${ids.soft})`} opacity={0.35}
+          animate={{ x: [0, 5, -5, 0] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} />
+        <motion.ellipse cx="30" cy="18" rx="14" ry="8" fill="#ffb86b" filter={`url(#${ids.soft})`} opacity={0.16}
           animate={{ x: [0, 4, -6, 0], y: [0, 3, -2, 0] }} transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }} />
       </g>
       {/* glass highlight */}
-      <ellipse cx="24" cy="17" rx="12" ry="6" fill="#ffffff" opacity={0.07} />
+      <ellipse cx="23" cy="15" rx="9" ry="4" fill="#ffffff" opacity={0.045} />
       {/* rim + slowly rotating light */}
       <circle cx="32" cy="32" r="29" fill="none" stroke={`url(#${ids.rim})`} strokeWidth="1.4" opacity={0.9} />
       <motion.circle
@@ -117,34 +119,40 @@ export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?:
         style={{ transformOrigin: "32px 32px" }}
       />
 
-      {/* eyes: soft glow behind, bright shape in front */}
+      {/* eyes: soft glow behind, bright shape in front; hover/open turns them into happy arcs */}
       {[21, 43].map((cx) => (
         <motion.g key={cx} animate={{ x: eyeX, y: eyeY }} transition={{ type: "spring", stiffness: 180, damping: 18 }}>
-          <rect x={cx - 3.5} y={28 - eyeH / 2} width={7} height={eyeH} rx={eyeRadius} fill="#ffb86b" opacity={0.8} filter={`url(#${ids.glow})`} />
-          <rect x={cx - 3.5} y={28 - eyeH / 2} width={7} height={eyeH} rx={eyeRadius} fill={`url(#${ids.eye})`} />
-          {!blink && mood !== "happy" && <rect x={cx - 2} y={25.5} width={2.2} height={2.2} rx={1} fill="#ffffff" opacity={0.85} />}
+          {mood === "happy" && !blink ? (
+            <>
+              <path d={`M${cx - 4.5} 32 Q${cx} 24.5 ${cx + 4.5} 32`} fill="none" stroke="#ffb86b" strokeWidth={4} strokeLinecap="round" opacity={0.6} filter={`url(#${ids.glow})`} />
+              <path d={`M${cx - 4.5} 32 Q${cx} 24.5 ${cx + 4.5} 32`} fill="none" stroke={`url(#${ids.eye})`} strokeWidth={3.2} strokeLinecap="round" />
+            </>
+          ) : (
+            <>
+              <rect x={cx - 3.6} y={30 - eyeH / 2} width={7.2} height={eyeH} rx={eyeRadius} fill="#ffb86b" opacity={0.75} filter={`url(#${ids.glow})`} />
+              <rect x={cx - 3.6} y={30 - eyeH / 2} width={7.2} height={eyeH} rx={eyeRadius} fill={`url(#${ids.eye})`} />
+              {!blink && <rect x={cx - 2.2} y={27} width={2.4} height={2.4} rx={1.2} fill="#ffffff" opacity={0.9} />}
+            </>
+          )}
         </motion.g>
       ))}
 
-      {/* mouth */}
-      {mood === "speaking" ? (
-        <motion.rect
-          x={26} y={41} width={12} rx={3} fill="#ffc27a"
-          animate={{ height: [2.5, 7, 3, 6.5, 2.5], y: [41.5, 39.5, 41, 39.8, 41.5] }}
-          transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
-        />
-      ) : mood === "thinking" ? (
+      {/* voice / thought indicator below the eyes */}
+      {mood === "speaking" && (
         <g fill="#ffc27a">
-          {[27, 32, 37].map((cx, i) => (
-            <motion.circle key={cx} cx={cx} cy={42.5} r={1.5} animate={{ opacity: [0.25, 1, 0.25], y: [0, -1, 0] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.18 }} />
+          {[26, 30, 34, 38].map((x, i) => (
+            <motion.rect key={x} x={x - 1.1} width={2.2} rx={1.1}
+              animate={{ height: [3, 8 - i * 1.2, 3, 7, 3], y: [43.5, 41 + i * 0.6, 43.5, 41.5, 43.5] }}
+              transition={{ duration: 0.8 + i * 0.1, repeat: Infinity, ease: "easeInOut" }} />
           ))}
         </g>
-      ) : (
-        <motion.path
-          fill="none" stroke="#ffc27a" strokeWidth={2} strokeLinecap="round" opacity={0.95}
-          animate={{ d: mood === "happy" ? "M24.5 40.5 Q32 48.5 39.5 40.5" : "M26 42 Q32 45.5 38 42" }}
-          transition={{ duration: 0.3 }}
-        />
+      )}
+      {mood === "thinking" && (
+        <g fill="#ffc27a">
+          {[27, 32, 37].map((cx, i) => (
+            <motion.circle key={cx} cx={cx} cy={44} r={1.5} animate={{ opacity: [0.2, 1, 0.2], y: [0, -1.2, 0] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.18 }} />
+          ))}
+        </g>
       )}
     </svg>
   );
