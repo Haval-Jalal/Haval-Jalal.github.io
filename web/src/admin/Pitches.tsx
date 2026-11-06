@@ -75,6 +75,7 @@ export default function Pitches() {
                 </span>
               </button>
               <CopyButton text={pitchUrl(p.slug)} />
+              <CopyButton text={`${window.location.origin}/api/share/for/${p.slug}`} label="Med förhandsvisning" title="Länk som visar titel och bild när den delas på LinkedIn, Slack eller Teams" />
               <a href={`/for/${p.slug}`} target="_blank" rel="noreferrer" title="Öppna" className="grid size-8 place-items-center rounded-lg text-fg-muted hover:bg-white/[0.06] hover:text-fg">
                 <ExternalLink className="size-4" />
               </a>
@@ -97,15 +98,15 @@ export default function Pitches() {
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label = "Länk", title = "Kopiera länk" }: { text: string; label?: string; title?: string }) {
   const [done, setDone] = useState(false);
   return (
     <button
       onClick={() => navigator.clipboard.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 1500); })}
-      title="Kopiera länk"
+      title={title}
       className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-fg-muted hover:bg-white/[0.06] hover:text-fg"
     >
-      <Copy className="size-3.5" /> {done ? "Kopierad" : "Länk"}
+      <Copy className="size-3.5" /> {done ? "Kopierad" : label}
     </button>
   );
 }

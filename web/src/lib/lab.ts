@@ -109,3 +109,6 @@ export async function setFeatured(id: string, featured: boolean): Promise<void> 
 
 export const downloadUrl = (id: string) => `/api/lab/${encodeURIComponent(id)}/download`;
 export const shareUrl = (id: string) => `${location.origin}/lab/${id}`;
+// Link with a page-specific preview card (title, idea, image) for LinkedIn/Slack/Teams.
+export const previewUrl = (id: string, lang: string) => `${location.origin}/api/share/lab/${id}${lang === "en" ? "?lang=en" : ""}`;
+export const linkedInShareUrl = (id: string, lang: string) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(previewUrl(id, lang))}`;

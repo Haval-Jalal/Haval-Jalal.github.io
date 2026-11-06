@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { Check, Copy, Download, ExternalLink, Send } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, Linkedin, Send } from "lucide-react";
 import { AgentError, friendlyError } from "../lib/agent";
-import { downloadUrl, shareUrl, unlockBuild, type Build } from "../lib/lab";
+import { downloadUrl, linkedInShareUrl, shareUrl, unlockBuild, type Build } from "../lib/lab";
 import { trackEvent } from "../lib/beacon";
-import { L, t } from "../lib/i18n";
+import { L, locale, t } from "../lib/i18n";
 
 const input = "rounded-xl border border-white/10 bg-night-900 px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:border-ember-400/60 focus:outline-none";
 
@@ -65,6 +65,15 @@ export function LabActions({ build, onUnlocked }: { build: Build; onUnlocked: ()
         </button>
         <a href={L(`/lab/${build.id}`)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-fg-muted hover:text-fg">
           <ExternalLink className="size-4" /> {t("viewer.fullscreen")}
+        </a>
+        <a
+          href={linkedInShareUrl(build.id, locale)}
+          target="_blank"
+          rel="noreferrer"
+          onClick={() => trackEvent("lab_share_linkedin")}
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-fg-muted hover:text-fg"
+        >
+          <Linkedin className="size-4" /> {t("viewer.linkedin")}
         </a>
       </div>
       {showForm && !build.unlocked && <UnlockForm build={build} onUnlocked={onUnlocked} />}
