@@ -38,8 +38,13 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # Managed Functions run on Windows x64 and the API package must stay under 100 MB:
+      # publish for that runtime only and drop the (huge) native debug symbols.
       - name: Build API
-        run: dotnet publish api/HavalApi.csproj -c Release -o api-publish
+        run: |
+          dotnet publish api/HavalApi.csproj -c Release -r win-x64 --self-contained false -o api-publish
+          find api-publish -name "*.pdb" -delete
+          du -sh api-publish
 
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
