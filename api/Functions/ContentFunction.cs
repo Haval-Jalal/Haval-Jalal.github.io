@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HavalApi.Functions;
 
-public class ContentFunction(IContentStore store, ILogger<ContentFunction> log)
+public class ContentFunction(IContentStore store, ILogger<ContentFunction> log, AdminGate gate)
 {
     // Public: what the site renders.
     [Function("GetContent")]
@@ -29,8 +29,8 @@ public class ContentFunction(IContentStore store, ILogger<ContentFunction> log)
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "manage/content")] HttpRequest req,
         CancellationToken ct)
     {
-        var user = ClientPrincipal.From(req);
-        if (user is not { IsAdmin: true })
+        var user = await gate.AdminAsync(req, ct);
+        if (user is null)
             return new UnauthorizedResult();
 
         SiteContent? incoming;

@@ -148,3 +148,52 @@ public sealed class CosmosBuildStore(CosmosDb db) : IBuildStore
         return rows.Select(r => new BuildSummary(r.Id, r.Ts, r.Idea, r.Title, r.Contact is not null)).ToList();
     }
 }
+
+public sealed class CosmosSecurityStore(CosmosDb db) : ISecurityStore
+{
+    private const string AttemptPk = "attempt";
+    private const string BanPk = "ban";
+
+    public async Task AppendAsync(AuthAttempt attempt, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Security);
+        await container.CreateItemAsync(new CosmosDoc<AuthAttempt>(attempt.Id, AttemptPk, attempt.Ts, attempt), new PartitionKey(AttemptPk), cancellationToken: ct);
+    }
+
+    public async Task<List<AuthAttempt>> AttemptsAsync(int take, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Security);
+        var query = new QueryDefinition("SELECT TOP @take * FROM c ORDER BY c.ts DESC").WithParameter("@take", take);
+        var rows = await CosmosDb.QueryAsync<CosmosDoc<AuthAttempt>>(container, query, ct, AttemptPk);
+        return rows.Select(r => r.Data).ToList();
+    }
+
+    public async Task<List<Ban>> BansAsync(CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Security);
+        var rows = await CosmosDb.QueryAsync<CosmosDoc<Ban>>(container, new QueryDefinition("SELECT * FROM c"), ct, BanPk);
+        return rows.Select(r => r.Data).ToList();
+    }
+
+    public async Task BanAsync(Ban ban, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Security);
+        await container.UpsertItemAsync(new CosmosDoc<Ban>(BanId(ban.UserId), BanPk, ban.Ts, ban), new PartitionKey(BanPk), cancellationToken: ct);
+    }
+
+    public async Task UnbanAsync(string userId, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Security);
+        try
+        {
+            await container.DeleteItemAsync<CosmosDoc<Ban>>(BanId(userId), new PartitionKey(BanPk), cancellationToken: ct);
+        }
+        catch (CosmosException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+        }
+    }
+
+    // Cosmos ids may not contain / \ ? #; identity provider ids are opaque strings, so hash them.
+    private static string BanId(string userId) =>
+        "ban-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(userId)))[..24].ToLowerInvariant();
+}

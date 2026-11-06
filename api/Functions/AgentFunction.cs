@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HavalApi.Functions;
 
-public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore leads, IUsageStore usage, IBuildStore builds, ILogger<AgentFunction> log)
+public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate, ILeadStore leads, IUsageStore usage, IBuildStore builds, ILogger<AgentFunction> log)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan Hour = TimeSpan.FromHours(1);
@@ -160,7 +160,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/leads")] HttpRequest req,
         CancellationToken ct)
     {
-        if (ClientPrincipal.From(req) is not { IsAdmin: true }) return new UnauthorizedResult();
+        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
         return new OkObjectResult(new { leads = await leads.ListAsync(100, ct), spentTodayUsd = await usage.SpentTodayUsdAsync(ct), dailyCapUsd = guard.DailyCapUsd });
     }
 
@@ -170,7 +170,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, ILeadStore lead
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/ai")] HttpRequest req,
         CancellationToken ct)
     {
-        if (ClientPrincipal.From(req) is not { IsAdmin: true }) return new UnauthorizedResult();
+        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
         var days = int.TryParse(req.Query["days"], out var d) ? Math.Clamp(d, 1, 365) : 30;
         return new OkObjectResult(await usage.SummaryAsync(days, await guard.BudgetAsync(ct), ct));
     }

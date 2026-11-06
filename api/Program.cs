@@ -1,5 +1,6 @@
 using Anthropic;
 using HavalApi.Agent;
+using HavalApi.Auth;
 using HavalApi.Data;
 using HavalApi.Data.Cosmos;
 using HavalApi.Mail;
@@ -39,6 +40,7 @@ if (!string.IsNullOrWhiteSpace(cosmosConnection))
     builder.Services.AddSingleton<ILeadStore, CosmosLeadStore>();
     builder.Services.AddSingleton<IUsageStore, CosmosUsageStore>();
     builder.Services.AddSingleton<IBuildStore, CosmosBuildStore>();
+    builder.Services.AddSingleton<ISecurityStore, CosmosSecurityStore>();
 }
 else
 {
@@ -49,6 +51,7 @@ else
     builder.Services.AddSingleton<ILeadStore>(new JsonFileLeadStore(dataDir));
     builder.Services.AddSingleton<IUsageStore>(new JsonFileUsageStore(dataDir));
     builder.Services.AddSingleton<IBuildStore>(new JsonFileBuildStore(dataDir));
+    builder.Services.AddSingleton<ISecurityStore>(new JsonFileSecurityStore(dataDir));
 }
 
 // Lead notifications by e-mail (Resend). Logs instead of sending until RESEND_API_KEY + LEAD_NOTIFY_EMAIL exist.
@@ -64,6 +67,7 @@ builder.Services.AddSingleton<IMailer, ResendMailer>();
 // AI features. AnthropicClient reads ANTHROPIC_API_KEY from the environment (local.settings.json
 // locally, app settings in Azure); AgentFunction answers 503 when it is missing.
 builder.Services.AddSingleton(new AnthropicClient());
+builder.Services.AddSingleton<AdminGate>();
 builder.Services.AddSingleton<AgentGuard>();
 builder.Services.AddSingleton<AgentService>();
 

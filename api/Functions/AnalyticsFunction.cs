@@ -10,7 +10,7 @@ using Microsoft.Azure.Functions.Worker;
 
 namespace HavalApi.Functions;
 
-public class AnalyticsFunction(IAnalyticsStore store)
+public class AnalyticsFunction(IAnalyticsStore store, AdminGate gate)
 {
     private static readonly string Salt = Environment.GetEnvironmentVariable("ANALYTICS_SALT") ?? "havaljalal-dev-salt";
 
@@ -53,7 +53,7 @@ public class AnalyticsFunction(IAnalyticsStore store)
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/analytics")] HttpRequest req,
         CancellationToken ct)
     {
-        if (ClientPrincipal.From(req) is not { IsAdmin: true })
+        if (await gate.AdminAsync(req, ct) is null)
             return new UnauthorizedResult();
 
         var days = int.TryParse(req.Query["days"], out var d) ? Math.Clamp(d, 1, 365) : 30;

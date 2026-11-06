@@ -24,7 +24,7 @@ export default defineConfig({
         changeOrigin: true,
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq, req) => {
-            if (req.url?.startsWith("/api/manage/")) proxyReq.setHeader("x-ms-client-principal", devPrincipal);
+            if (req.url?.startsWith("/api/manage/") || req.url?.startsWith("/api/auth/")) proxyReq.setHeader("x-ms-client-principal", devPrincipal);
           });
         },
       },

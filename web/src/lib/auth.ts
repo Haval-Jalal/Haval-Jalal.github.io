@@ -1,31 +1,46 @@
 import { useEffect, useState } from "react";
 
 export type Principal = {
-  identityProvider: string;
+  provider: string;
   userId: string;
   userDetails: string;
-  userRoles: string[];
 };
 
-type AuthState = { status: "loading" } | { status: "anonymous" } | { status: "signed-in"; user: Principal; isAdmin: boolean };
+export type AuthState =
+  | { status: "loading" }
+  | { status: "anonymous" }
+  | { status: "signed-in"; user: Principal; isAdmin: boolean; banned: boolean };
 
-// Static Web Apps exposes the current user at /.auth/me. In plain Vite dev there is no such
-// endpoint; the Vite proxy injects an admin principal for /api/manage/* instead, so we treat
-// a missing endpoint in DEV as "signed in as dev admin".
+type MeResponse = {
+  authenticated: boolean;
+  provider?: string;
+  user?: string;
+  userId?: string;
+  isAdmin?: boolean;
+  banned?: boolean;
+};
+
+// Asks the API who is signed in. Static Web Apps forwards the GitHub identity to the API on every
+// request, so the API (not the browser) is the source of truth, and it logs every account that
+// reaches the admin page. In plain Vite dev the proxy injects a dev admin identity.
 export function useAuth(): AuthState {
   const [state, setState] = useState<AuthState>({ status: "loading" });
   useEffect(() => {
-    fetch("/.auth/me")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((data: { clientPrincipal: Principal | null }) => {
-        const user = data.clientPrincipal;
-        if (!user) setState({ status: "anonymous" });
-        else setState({ status: "signed-in", user, isAdmin: user.userRoles.includes("admin") });
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((r) => (r.ok ? (r.json() as Promise<MeResponse>) : Promise.reject(new Error(String(r.status)))))
+      .then((me) => {
+        if (!me.authenticated) setState({ status: "anonymous" });
+        else
+          setState({
+            status: "signed-in",
+            user: { provider: me.provider ?? "github", userId: me.userId ?? "", userDetails: me.user ?? "" },
+            isAdmin: !!me.isAdmin,
+            banned: !!me.banned,
+          });
       })
       .catch(() => {
         if (import.meta.env.DEV) {
-          const user = { identityProvider: "dev", userId: "dev", userDetails: "Haval-Jalal (dev)", userRoles: ["admin"] };
-          setState({ status: "signed-in", user, isAdmin: true });
+          setState({ status: "signed-in", user: { provider: "dev", userId: "dev", userDetails: "Haval-Jalal (dev)" }, isAdmin: true, banned: false });
         } else {
           setState({ status: "anonymous" });
         }

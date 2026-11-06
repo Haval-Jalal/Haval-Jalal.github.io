@@ -1,29 +1,37 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
 import type { JourneyStep, SiteContent } from "../data/content";
 
-type Tab = "overview" | "content" | "leads" | "ai" | "settings";
+type Tab = "overview" | "content" | "leads" | "ai" | "security" | "settings";
 
 export default function Admin() {
   const auth = useAuth();
   const [tab, setTab] = useState<Tab>("overview");
 
   if (auth.status === "loading") return <Shell><p className="text-fg-muted">Kontrollerar inloggning…</p></Shell>;
-  if (auth.status === "anonymous" || !auth.isAdmin) {
+  if (auth.status === "anonymous") {
     return (
-      <Shell>
-        <div className="mx-auto mt-24 max-w-md text-center">
-          <h1 className="text-2xl font-semibold">Haval OS · Admin</h1>
-          <p className="mt-3 text-fg-muted">
-            {auth.status === "anonymous" ? "Du behöver logga in med GitHub." : "Ditt konto har inte admin-rollen."}
-          </p>
-          <a href={loginUrl} className="mt-6 inline-block rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950">
-            Logga in med GitHub
-          </a>
-        </div>
-      </Shell>
+      <Gate title="Haval OS · Admin" text="Den här delen är privat. Logga in med GitHub för att fortsätta.">
+        <a href={loginUrl} className="mt-6 inline-block rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950">
+          Logga in med GitHub
+        </a>
+      </Gate>
+    );
+  }
+  if (auth.banned) {
+    return (
+      <Gate title="Åtkomst blockerad" text={`Kontot ${auth.user.userDetails} är blockerat från den här sajten.`}>
+        <a href={logoutUrl} className="mt-6 inline-block rounded-full border border-white/10 px-5 py-2.5 text-sm text-fg">Logga ut</a>
+      </Gate>
+    );
+  }
+  if (!auth.isAdmin) {
+    return (
+      <Gate title="Ingen åtkomst" text={`${auth.user.userDetails} har inte behörighet till admin. Försöket har loggats.`}>
+        <a href={logoutUrl} className="mt-6 inline-block rounded-full border border-white/10 px-5 py-2.5 text-sm text-fg">Logga ut</a>
+      </Gate>
     );
   }
 
@@ -32,6 +40,7 @@ export default function Admin() {
     { key: "content", label: "Innehåll", icon: FileText },
     { key: "leads", label: "Leads", icon: Inbox },
     { key: "ai", label: "AI & kostnad", icon: Cpu },
+    { key: "security", label: "Säkerhet", icon: ShieldAlert },
     { key: "settings", label: "Inställningar", icon: SettingsIcon },
   ];
 
@@ -72,6 +81,7 @@ export default function Admin() {
           {tab === "content" && <ContentEditor />}
           {tab === "leads" && <Leads />}
           {tab === "ai" && <AiUsage />}
+          {tab === "security" && <Security me={auth.user.userId} />}
           {tab === "settings" && <SettingsEditor />}
         </main>
       </div>
@@ -81,6 +91,18 @@ export default function Admin() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return <div className="min-h-screen bg-night-950 text-fg">{children}</div>;
+}
+
+function Gate({ title, text, children }: { title: string; text: string; children: React.ReactNode }) {
+  return (
+    <Shell>
+      <div className="mx-auto mt-24 max-w-md px-5 text-center">
+        <h1 className="text-2xl font-semibold">{title}</h1>
+        <p className="mt-3 text-fg-muted">{text}</p>
+        {children}
+      </div>
+    </Shell>
+  );
 }
 
 /* ---------- Översikt (analytics) ---------- */
@@ -478,6 +500,155 @@ function Leads() {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/* ---------- Säkerhet ---------- */
+
+type SecurityUser = {
+  userId: string;
+  user: string;
+  provider: string;
+  attempts: number;
+  first: string;
+  last: string;
+  lastResult: "admin" | "denied" | "blocked";
+  banned: boolean;
+  note: string | null;
+};
+type AuthAttempt = { id: string; ts: string; provider: string; userId: string; user: string; result: string; path: string; ipHash: string };
+type SecurityData = { users: SecurityUser[]; recent: AuthAttempt[]; bans: number };
+
+const RESULT_LABEL: Record<string, { text: string; cls: string }> = {
+  admin: { text: "Admin", cls: "bg-emerald-500/15 text-emerald-300" },
+  denied: { text: "Nekad", cls: "bg-amber-500/15 text-amber-200" },
+  blocked: { text: "Blockerad", cls: "bg-red-500/15 text-red-300" },
+};
+
+function Security({ me }: { me: string }) {
+  const [data, setData] = useState<SecurityData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = () =>
+    fetch("/api/manage/security", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(setData)
+      .catch((e: Error) => setError(e.message));
+  useEffect(() => {
+    load();
+  }, []);
+
+  const toggle = async (u: SecurityUser) => {
+    const action = u.banned ? "unban" : "ban";
+    if (!u.banned && !window.confirm(`Blockera ${u.user}? Kontot nekas allt i admin tills du häver blockeringen.`)) return;
+    setBusy(u.userId);
+    const r = await fetch(`/api/manage/security/${action}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: u.userId, user: u.user, provider: u.provider }),
+    });
+    setBusy(null);
+    if (!r.ok) setError(`Kunde inte ${u.banned ? "häva blockeringen" : "blockera"} (HTTP ${r.status})`);
+    await load();
+  };
+
+  if (error) return <p className="text-red-300">{error}</p>;
+  if (!data) return <p className="text-fg-muted">Hämtar…</p>;
+
+  const others = data.users.filter((u) => u.userId !== me);
+  const denied = others.filter((u) => !u.banned && u.lastResult !== "admin").length;
+
+  return (
+    <div className="max-w-4xl space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Säkerhet</h1>
+          <p className="text-sm text-fg-muted">
+            Varje GitHub-konto som loggar in och försöker nå admin hamnar här. Blockerade konton stoppas i API:et även om de skulle få en roll.
+          </p>
+        </div>
+        <div className="flex gap-2 text-xs">
+          <span className="panel-tile rounded-xl px-3 py-2 text-fg-muted">Nekade: <span className="font-mono text-amber-200">{denied}</span></span>
+          <span className="panel-tile rounded-xl px-3 py-2 text-fg-muted">Blockerade: <span className="font-mono text-red-300">{data.bans}</span></span>
+        </div>
+      </header>
+
+      <section className="space-y-2">
+        <h2 className="text-xs font-medium uppercase tracking-[0.18em] text-fg-faint">Konton</h2>
+        {data.users.length === 0 ? (
+          <p className="text-sm text-fg-faint">Inga inloggningar loggade ännu.</p>
+        ) : (
+          <ul className="space-y-2">
+            {data.users.map((u) => {
+              const r = RESULT_LABEL[u.lastResult] ?? RESULT_LABEL.denied;
+              const self = u.userId === me;
+              return (
+                <li key={u.userId} className="panel-tile flex flex-wrap items-center gap-3 rounded-xl px-4 py-3">
+                  <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${u.banned ? "bg-red-500/15 text-red-300" : u.lastResult === "admin" ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-200"}`}>
+                    {u.banned ? <ShieldOff className="size-4" /> : u.lastResult === "admin" ? <ShieldCheck className="size-4" /> : <ShieldAlert className="size-4" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-fg">{u.user || "(okänt namn)"}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${r.cls}`}>{u.banned ? "Blockerad" : r.text}</span>
+                      {self && <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[11px] text-fg-muted">du</span>}
+                    </span>
+                    <span className="block truncate font-mono text-[11px] text-fg-faint">
+                      {u.provider} · id {u.userId} · {u.attempts} {u.attempts === 1 ? "försök" : "försök"} · senast {new Date(u.last).toLocaleString("sv-SE")}
+                    </span>
+                  </span>
+                  {!self && (
+                    <button
+                      onClick={() => toggle(u)}
+                      disabled={busy === u.userId}
+                      className={`rounded-full px-3 py-1.5 text-xs transition-colors disabled:opacity-50 ${
+                        u.banned ? "border border-white/10 text-fg hover:border-ember-400/50" : "bg-red-500/15 text-red-200 hover:bg-red-500/25"
+                      }`}
+                    >
+                      {busy === u.userId ? "…" : u.banned ? "Häv blockering" : "Blockera"}
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-xs font-medium uppercase tracking-[0.18em] text-fg-faint">Senaste händelser</h2>
+        {data.recent.length === 0 ? (
+          <p className="text-sm text-fg-faint">Inget loggat ännu.</p>
+        ) : (
+          <div className="panel-tile overflow-hidden rounded-xl">
+            <table className="w-full text-left text-xs">
+              <thead className="text-fg-faint">
+                <tr className="border-b border-white/5">
+                  <th className="px-4 py-2 font-medium">Tid</th>
+                  <th className="px-4 py-2 font-medium">Konto</th>
+                  <th className="px-4 py-2 font-medium">Resultat</th>
+                  <th className="px-4 py-2 font-medium max-sm:hidden">IP-hash</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recent.map((a) => {
+                  const r = RESULT_LABEL[a.result] ?? RESULT_LABEL.denied;
+                  return (
+                    <tr key={a.id} className="border-b border-white/5 last:border-0">
+                      <td className="px-4 py-2 font-mono text-fg-muted">{new Date(a.ts).toLocaleString("sv-SE")}</td>
+                      <td className="px-4 py-2 text-fg">{a.user}</td>
+                      <td className="px-4 py-2"><span className={`rounded-full px-2 py-0.5 ${r.cls}`}>{r.text}</span></td>
+                      <td className="px-4 py-2 font-mono text-fg-faint max-sm:hidden">{a.ipHash}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -19,6 +19,7 @@ public sealed class CosmosDb : IDisposable
     public const string Leads = "leads";
     public const string Usage = "usage";
     public const string Builds = "builds";
+    public const string Security = "security";
 
     private readonly CosmosClient _client;
     private readonly string _databaseName;
