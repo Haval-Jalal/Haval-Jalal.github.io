@@ -44,6 +44,45 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
         return new ChatReply(text, ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens, false);
     }
 
+    public sealed record PitchDraft(string Greeting, string Intro, List<PitchProject> Projects, List<string> Highlights, string Closing);
+
+    // Recruiter mode draft: Sonnet, JSON out. Admin-only, so no rate limit; still billed in the usage log.
+    public async Task<PitchDraft> PitchDraftAsync(string company, string role, string notes, CancellationToken ct)
+    {
+        var site = await content.GetAsync(ct);
+        var ask = $"Företag: {company}\nRoll: {(string.IsNullOrWhiteSpace(role) ? "(ej angiven)" : role)}\n\nHavals anteckningar:\n{(string.IsNullOrWhiteSpace(notes) ? "(inga)" : notes)}";
+        var response = await client.Messages.Create(new MessageCreateParams
+        {
+            Model = ChatModel,
+            MaxTokens = 2500,
+            OutputConfig = new OutputConfig { Effort = Effort.Medium },
+            System = new List<TextBlockParam> { new() { Text = Prompts.Pitch(site), CacheControl = new CacheControlEphemeral() } },
+            Messages = [new UserMessageParam { Content = ask }],
+        }, cancellationToken: ct);
+        await guard.RecordAsync("pitch", ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens,
+            response.Usage.CacheReadInputTokens ?? 0, response.Usage.CacheCreationInputTokens ?? 0, response.StopReason == "max_tokens", ct);
+
+        var text = string.Concat(response.Content.Select(b => b.Value).OfType<TextBlock>().Select(t => t.Text));
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+        if (start < 0 || end <= start) throw new InvalidOperationException("Draft was not JSON");
+        var json = System.Text.Json.JsonDocument.Parse(text[start..(end + 1)]).RootElement;
+        var known = site.Projects.Select(p => p.Slug).ToHashSet();
+        return new PitchDraft(
+            Str(json, "greeting"),
+            Str(json, "intro"),
+            json.TryGetProperty("projects", out var ps) && ps.ValueKind == System.Text.Json.JsonValueKind.Array
+                ? ps.EnumerateArray().Select(p => new PitchProject(Str(p, "slug"), Str(p, "why"))).Where(p => known.Contains(p.Slug)).ToList()
+                : [],
+            json.TryGetProperty("highlights", out var hs) && hs.ValueKind == System.Text.Json.JsonValueKind.Array
+                ? hs.EnumerateArray().Select(h => h.GetString() ?? "").Where(h => h.Length > 0).ToList()
+                : [],
+            Str(json, "closing"));
+
+        static string Str(System.Text.Json.JsonElement e, string name) =>
+            e.TryGetProperty(name, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String ? v.GetString() ?? "" : "";
+    }
+
     // Streams text deltas; the final Usage is reported through the callback after the stream ends.
     // Eco mode (past the daily eco threshold) swaps to Sonnet with a shorter prototype. A deadline
     // (AGENT_BUILD_DEADLINE_SEC) ends the stream early and marks the build truncated.

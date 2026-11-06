@@ -197,3 +197,56 @@ public sealed class CosmosSecurityStore(CosmosDb db) : ISecurityStore
     private static string BanId(string userId) =>
         "ban-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(userId)))[..24].ToLowerInvariant();
 }
+
+public sealed class CosmosPitchStore(CosmosDb db) : IPitchStore
+{
+    private const string Pk = "pitch";
+
+    public async Task SaveAsync(Pitch pitch, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Pitches);
+        await container.UpsertItemAsync(new CosmosDoc<Pitch>(pitch.Slug, Pk, pitch.UpdatedAt, pitch), new PartitionKey(Pk), cancellationToken: ct);
+    }
+
+    public async Task<Pitch?> GetAsync(string slug, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Pitches);
+        try
+        {
+            var response = await container.ReadItemAsync<CosmosDoc<Pitch>>(slug, new PartitionKey(Pk), cancellationToken: ct);
+            return response.Resource.Data;
+        }
+        catch (CosmosException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task<List<Pitch>> ListAsync(CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Pitches);
+        var rows = await CosmosDb.QueryAsync<CosmosDoc<Pitch>>(container, new QueryDefinition("SELECT * FROM c ORDER BY c.ts DESC"), ct, Pk);
+        return rows.Select(r => r.Data).ToList();
+    }
+
+    public async Task<bool> DeleteAsync(string slug, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Pitches);
+        try
+        {
+            await container.DeleteItemAsync<CosmosDoc<Pitch>>(slug, new PartitionKey(Pk), cancellationToken: ct);
+            return true;
+        }
+        catch (CosmosException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+    }
+
+    public async Task RecordEventAsync(string slug, string kind, string visitor, CancellationToken ct)
+    {
+        var pitch = await GetAsync(slug, ct);
+        if (pitch is null) return;
+        await SaveAsync(pitch with { Stats = pitch.Stats.With(kind, visitor, DateTime.UtcNow) }, ct);
+    }
+}

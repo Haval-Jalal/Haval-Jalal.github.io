@@ -60,13 +60,13 @@ public class AnalyticsFunction(IAnalyticsStore store, AdminGate gate)
         return new OkObjectResult(await store.SummaryAsync(days, ct));
     }
 
-    private static string VisitorHash(string ip, string ua)
+    internal static string VisitorHash(string ip, string ua)
     {
         var input = $"{ip}|{ua}|{DateTime.UtcNow:yyyy-MM-dd}|{Salt}";
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(input)))[..16];
     }
 
-    private static string ClientIp(HttpRequest req)
+    internal static string ClientIp(HttpRequest req)
     {
         var fwd = req.Headers["X-Forwarded-For"].ToString();
         if (!string.IsNullOrEmpty(fwd))

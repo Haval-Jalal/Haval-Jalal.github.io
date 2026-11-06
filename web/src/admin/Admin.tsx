@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star } from "lucide-react";
+import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
 import type { JourneyStep, Project, SiteContent } from "../data/content";
 import { STATUS_LABEL } from "../components/Projects";
+import Pitches from "./Pitches";
 
-type Tab = "overview" | "content" | "leads" | "ai" | "security" | "settings";
+type Tab = "overview" | "content" | "pitches" | "leads" | "ai" | "security" | "settings";
 
 export default function Admin() {
   const auth = useAuth();
@@ -39,6 +40,7 @@ export default function Admin() {
   const tabs: { key: Tab; label: string; icon: typeof BarChart3 }[] = [
     { key: "overview", label: "Översikt", icon: BarChart3 },
     { key: "content", label: "Innehåll", icon: FileText },
+    { key: "pitches", label: "Rekryterare", icon: Target },
     { key: "leads", label: "Leads", icon: Inbox },
     { key: "ai", label: "AI & kostnad", icon: Cpu },
     { key: "security", label: "Säkerhet", icon: ShieldAlert },
@@ -80,6 +82,7 @@ export default function Admin() {
         <main className="p-6 md:p-10">
           {tab === "overview" && <Overview />}
           {tab === "content" && <ContentEditor />}
+          {tab === "pitches" && <Pitches />}
           {tab === "leads" && <Leads />}
           {tab === "ai" && <AiUsage />}
           {tab === "security" && <Security me={auth.user.userId} />}
@@ -249,7 +252,7 @@ type UsageSummary = {
   recent: { ts: string; feature: string; model: string; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; usd: number; truncated: boolean }[];
 };
 
-const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)" };
+const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)", pitch: "Rekryterarläge, utkast (Sonnet 5.5)" };
 const usd = (n: number) => `${n.toFixed(n < 1 ? 3 : 2)} USD`;
 const tok = (n: number) => n.toLocaleString("sv-SE");
 
