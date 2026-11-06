@@ -9,6 +9,7 @@ import Journey from "./components/Journey";
 import Stack from "./components/Stack";
 import BuildLab from "./components/BuildLab";
 import Gallery from "./components/Gallery";
+import AgentWidget from "./components/Agent";
 import Contact from "./components/Contact";
 import { BACKGROUNDS, currentBackground, type BackgroundKey } from "./components/backgrounds";
 import { useSiteContent } from "./lib/content";
@@ -155,6 +156,7 @@ export default function App() {
         <Contact />
       </div>
 
+      <AgentWidget />
       {import.meta.env.DEV && <BackgroundSwitcher active={bgKey} />}
     </div>
   );

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { Bot, Clock, Loader2, Lock, LockOpen, Send, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { Clock, Loader2, Lock, LockOpen, Send, Sparkles, Wand2 } from "lucide-react";
 import Section, { reveal, stagger } from "./Section";
 import { LabActions, LabFrame, Plan } from "./LabViewer";
-import { AgentError, chat, friendlyError, getStatus, PLAN_MARKER, sendLead, streamBuild, type BudgetMode, type ChatMsg } from "../lib/agent";
+import { AgentError, friendlyError, getStatus, PLAN_MARKER, sendLead, streamBuild, type BudgetMode } from "../lib/agent";
+import { AgentTeaser } from "./Agent";
 import { getBuild, listBuilds, visitorId, type Build, type BuildSummary } from "../lib/lab";
 import { relativeTime } from "../lib/github";
 import { trackEvent } from "../lib/beacon";
@@ -31,7 +32,7 @@ export default function BuildLab() {
           variants={stagger}
           className="flex min-w-0 flex-col gap-4"
         >
-          <DigitalHaval />
+          <AgentTeaser />
           <motion.div variants={reveal} className="panel-tile rounded-3xl p-6">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-ember-300">{t("lab.how")}</p>
             <ol className="mt-3 space-y-2 text-sm text-fg-muted">
@@ -316,117 +317,5 @@ function IdeaForm({ idea }: { idea: string }) {
         </button>
       </div>
     </form>
-  );
-}
-
-const CHAT_KEY = "hj_chat";
-
-function DigitalHaval() {
-  const [messages, setMessages] = useState<ChatMsg[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(CHAT_KEY) ?? "[]") as ChatMsg[];
-    } catch {
-      return [];
-    }
-  });
-  const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const bottom = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(CHAT_KEY, JSON.stringify(messages.slice(-30)));
-    } catch {
-      /* storage blocked */
-    }
-    if (messages.length > 0) bottom.current?.scrollIntoView({ block: "nearest" });
-  }, [messages]);
-
-  const send = async (text: string) => {
-    const tx = text.trim();
-    if (!tx || busy) return;
-    const next: ChatMsg[] = [...messages, { role: "user", text: tx }];
-    setMessages(next);
-    setDraft("");
-    setBusy(true);
-    setError(null);
-    trackEvent("chat_message");
-    try {
-      const { reply } = await chat(next);
-      setMessages([...next, { role: "assistant", text: reply }]);
-    } catch (e) {
-      setError(friendlyError(e instanceof AgentError ? e.code : "unknown"));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }} variants={reveal} className="panel-tile min-w-0 rounded-3xl p-6">
-      <div className="flex items-center gap-3">
-        <span className="grid size-10 place-items-center rounded-full bg-ember-500 text-night-950">
-          <Bot className="size-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-fg">Digital Haval</p>
-          <p className="text-xs text-fg-muted">{t("chat.sub")}</p>
-        </div>
-        {messages.length > 0 && (
-          <button type="button" onClick={() => setMessages([])} className="text-fg-faint hover:text-fg" aria-label={t("chat.clear")} title={t("chat.clear")}>
-            <Trash2 className="size-4" />
-          </button>
-        )}
-      </div>
-
-      <div className="mt-5 max-h-72 space-y-3 overflow-y-auto pr-1 text-sm">
-        {messages.length === 0 && (
-          <div className="flex flex-wrap gap-2">
-            {[t("chat.q1"), t("chat.q2"), t("chat.q3")].map((q) => (
-              <button key={q} onClick={() => void send(q)} className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-fg-muted hover:border-ember-400/50 hover:text-fg">
-                {q}
-              </button>
-            ))}
-          </div>
-        )}
-        {messages.map((m, i) =>
-          m.role === "user" ? (
-            <p key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-ember-500 px-4 py-2.5 text-night-950">
-              {m.text}
-            </p>
-          ) : (
-            <p key={i} className="w-fit max-w-[90%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-white/10 bg-white/[0.04] px-4 py-2.5 text-fg">
-              {m.text}
-            </p>
-          ),
-        )}
-        {busy && (
-          <p className="flex w-fit items-center gap-2 rounded-2xl rounded-bl-sm border border-white/10 bg-white/[0.04] px-4 py-2.5 text-fg-muted">
-            <Loader2 className="size-3.5 animate-spin" /> {t("chat.thinking")}
-          </p>
-        )}
-        {error && <p className="text-xs text-red-300">{error}</p>}
-        <div ref={bottom} />
-      </div>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void send(draft);
-        }}
-        className="mt-4 flex gap-2"
-      >
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={t("chat.placeholder")}
-          className="min-w-0 flex-1 rounded-xl border border-white/10 bg-night-900 px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:border-ember-400/60 focus:outline-none"
-          aria-label={t("chat.aria")}
-        />
-        <button type="submit" disabled={busy || !draft.trim()} className="grid size-10 shrink-0 place-items-center rounded-xl bg-ember-500 text-night-950 disabled:opacity-40" aria-label={t("chat.send")}>
-          <Send className="size-4" />
-        </button>
-      </form>
-    </motion.div>
   );
 }

@@ -5,6 +5,7 @@ import { reveal, stagger } from "../components/Section";
 import { useSiteContent } from "../lib/content";
 import { getPitch, pitchEvent, type PublicPitch } from "../lib/pitch";
 import { getBookingInfo } from "../lib/booking";
+import AgentWidget from "../components/Agent";
 import { trackView } from "../lib/beacon";
 import type { Project } from "../data/content";
 import { L, locale, sitePath, t } from "../lib/i18n";
@@ -185,6 +186,7 @@ export default function PitchPage() {
           )}
         </main>
       </div>
+      <AgentWidget />
     </div>
   );
 }
