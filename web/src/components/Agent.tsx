@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Loader2, Send, Trash2, X } from "lucide-react";
 import { onAgentOpen, openAgent, useDigitalHaval } from "../lib/chat";
@@ -12,6 +12,7 @@ type Mood = "idle" | "thinking" | "speaking" | "happy";
 // changes with what the agent is doing. Pure SVG + motion, so it stays crisp at any size.
 export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?: Mood; size?: number; className?: string }) {
   const ref = useRef<SVGSVGElement>(null);
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const [look, setLook] = useState({ x: 0, y: 0 });
   const [blink, setBlink] = useState(false);
 
@@ -53,67 +54,95 @@ export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?:
 
   const eyeY = mood === "thinking" ? look.y - 2 : look.y;
   const eyeX = mood === "thinking" ? look.x + 2 : look.x;
+  const eyeH = blink ? 0.6 : mood === "happy" ? 5.5 : 9;
+  const eyeRadius = Math.min(3.5, eyeH / 2);
+  const ids = {
+    sphere: `hj-sphere-${uid}`, rim: `hj-rim-${uid}`, eye: `hj-eye-${uid}`, glow: `hj-glow-${uid}`, soft: `hj-soft-${uid}`, clip: `hj-clip-${uid}`,
+  };
 
   return (
-    <svg ref={ref} viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
+    <svg ref={ref} viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true" style={{ overflow: "visible" }}>
       <defs>
-        <radialGradient id="hj-face-bg" cx="35%" cy="30%" r="80%">
-          <stop offset="0%" stopColor="#2a1d14" />
-          <stop offset="60%" stopColor="#14110f" />
-          <stop offset="100%" stopColor="#0b0b0f" />
+        <radialGradient id={ids.sphere} cx="32%" cy="26%" r="78%">
+          <stop offset="0%" stopColor="#3b2416" />
+          <stop offset="45%" stopColor="#17120f" />
+          <stop offset="100%" stopColor="#09090c" />
         </radialGradient>
-        <linearGradient id="hj-face-ring" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#ffb86b" />
-          <stop offset="100%" stopColor="#d9772a" />
+        <linearGradient id={ids.rim} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ffc98a" />
+          <stop offset="50%" stopColor="#e8933a" />
+          <stop offset="100%" stopColor="#7a3f14" />
         </linearGradient>
+        <linearGradient id={ids.eye} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fff1dc" />
+          <stop offset="60%" stopColor="#ffc27a" />
+          <stop offset="100%" stopColor="#e8933a" />
+        </linearGradient>
+        <filter id={ids.glow} x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="1.6" />
+        </filter>
+        <filter id={ids.soft} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="5" />
+        </filter>
+        <clipPath id={ids.clip}>
+          <circle cx="32" cy="32" r="29" />
+        </clipPath>
       </defs>
-      {/* glow ring */}
-      <circle cx="32" cy="32" r="30" fill="url(#hj-face-bg)" stroke="url(#hj-face-ring)" strokeWidth="2" />
+
+      {/* halo */}
       <motion.circle
-        cx="32" cy="32" r="30" fill="none" stroke="#e8933a" strokeWidth="1"
-        animate={mood === "thinking" ? { opacity: [0.2, 0.9, 0.2], r: [30, 31, 30] } : { opacity: 0.25, r: 30 }}
-        transition={mood === "thinking" ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.4 }}
+        cx="32" cy="32" r="30" fill="#e8933a" filter={`url(#${ids.soft})`}
+        animate={mood === "thinking" ? { opacity: [0.25, 0.6, 0.25] } : { opacity: [0.18, 0.32, 0.18] }}
+        transition={{ duration: mood === "thinking" ? 1.2 : 4, repeat: Infinity, ease: "easeInOut" }}
       />
-      {/* eyes */}
-      <g>
-        <motion.ellipse
-          cx={22} cy={27} rx={4.2} ry={blink ? 0.4 : mood === "happy" ? 2.2 : 5}
-          fill="#ffb86b"
-          animate={{ x: eyeX, y: eyeY }}
-          transition={{ type: "spring", stiffness: 180, damping: 18 }}
-        />
-        <motion.ellipse
-          cx={42} cy={27} rx={4.2} ry={blink ? 0.4 : mood === "happy" ? 2.2 : 5}
-          fill="#ffb86b"
-          animate={{ x: eyeX, y: eyeY }}
-          transition={{ type: "spring", stiffness: 180, damping: 18 }}
-        />
-        {/* pupils */}
-        {!blink && mood !== "happy" && (
-          <>
-            <motion.circle cx={22} cy={28} r={1.6} fill="#0b0b0f" animate={{ x: eyeX * 1.4, y: eyeY * 1.4 }} transition={{ type: "spring", stiffness: 200, damping: 18 }} />
-            <motion.circle cx={42} cy={28} r={1.6} fill="#0b0b0f" animate={{ x: eyeX * 1.4, y: eyeY * 1.4 }} transition={{ type: "spring", stiffness: 200, damping: 18 }} />
-          </>
-        )}
+      {/* sphere */}
+      <circle cx="32" cy="32" r="29" fill={`url(#${ids.sphere})`} />
+      {/* ember plasma drifting inside */}
+      <g clipPath={`url(#${ids.clip})`} opacity={0.9}>
+        <motion.ellipse cx="24" cy="46" rx="20" ry="12" fill="#c25a14" filter={`url(#${ids.soft})`} opacity={0.55}
+          animate={{ x: [0, 6, -4, 0], y: [0, -5, 3, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }} />
+        <motion.ellipse cx="44" cy="40" rx="16" ry="10" fill="#e8933a" filter={`url(#${ids.soft})`} opacity={0.35}
+          animate={{ x: [0, -7, 3, 0], y: [0, 4, -4, 0] }} transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }} />
+        <motion.ellipse cx="30" cy="20" rx="14" ry="8" fill="#ffb86b" filter={`url(#${ids.soft})`} opacity={0.14}
+          animate={{ x: [0, 4, -6, 0], y: [0, 3, -2, 0] }} transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }} />
       </g>
+      {/* glass highlight */}
+      <ellipse cx="24" cy="17" rx="12" ry="6" fill="#ffffff" opacity={0.07} />
+      {/* rim + slowly rotating light */}
+      <circle cx="32" cy="32" r="29" fill="none" stroke={`url(#${ids.rim})`} strokeWidth="1.4" opacity={0.9} />
+      <motion.circle
+        cx="32" cy="32" r="29" fill="none" stroke="#ffd2a1" strokeWidth="1.6" strokeLinecap="round"
+        strokeDasharray="22 160" opacity={0.75}
+        animate={{ rotate: 360 }} transition={{ duration: mood === "thinking" ? 2.5 : 9, repeat: Infinity, ease: "linear" }}
+        style={{ transformOrigin: "32px 32px" }}
+      />
+
+      {/* eyes: soft glow behind, bright shape in front */}
+      {[21, 43].map((cx) => (
+        <motion.g key={cx} animate={{ x: eyeX, y: eyeY }} transition={{ type: "spring", stiffness: 180, damping: 18 }}>
+          <rect x={cx - 3.5} y={28 - eyeH / 2} width={7} height={eyeH} rx={eyeRadius} fill="#ffb86b" opacity={0.8} filter={`url(#${ids.glow})`} />
+          <rect x={cx - 3.5} y={28 - eyeH / 2} width={7} height={eyeH} rx={eyeRadius} fill={`url(#${ids.eye})`} />
+          {!blink && mood !== "happy" && <rect x={cx - 2} y={25.5} width={2.2} height={2.2} rx={1} fill="#ffffff" opacity={0.85} />}
+        </motion.g>
+      ))}
+
       {/* mouth */}
       {mood === "speaking" ? (
         <motion.rect
-          x={25} y={40} width={14} rx={4} fill="#ffb86b"
-          animate={{ height: [3, 9, 4, 8, 3], y: [41, 38, 40.5, 38.5, 41] }}
+          x={26} y={41} width={12} rx={3} fill="#ffc27a"
+          animate={{ height: [2.5, 7, 3, 6.5, 2.5], y: [41.5, 39.5, 41, 39.8, 41.5] }}
           transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
         />
       ) : mood === "thinking" ? (
-        <g fill="#ffb86b">
-          <motion.circle cx={26} cy={42} r={1.8} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: 0 }} />
-          <motion.circle cx={32} cy={42} r={1.8} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: 0.2 }} />
-          <motion.circle cx={38} cy={42} r={1.8} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: 0.4 }} />
+        <g fill="#ffc27a">
+          {[27, 32, 37].map((cx, i) => (
+            <motion.circle key={cx} cx={cx} cy={42.5} r={1.5} animate={{ opacity: [0.25, 1, 0.25], y: [0, -1, 0] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.18 }} />
+          ))}
         </g>
       ) : (
         <motion.path
-          d={mood === "happy" ? "M23 40 Q32 50 41 40" : "M24 41 Q32 46 40 41"}
-          fill="none" stroke="#ffb86b" strokeWidth={2.4} strokeLinecap="round"
-          animate={{ d: mood === "happy" ? "M23 40 Q32 50 41 40" : "M24 41 Q32 46 40 41" }}
+          fill="none" stroke="#ffc27a" strokeWidth={2} strokeLinecap="round" opacity={0.95}
+          animate={{ d: mood === "happy" ? "M24.5 40.5 Q32 48.5 39.5 40.5" : "M26 42 Q32 45.5 38 42" }}
           transition={{ duration: 0.3 }}
         />
       )}
@@ -287,16 +316,35 @@ export default function AgentWidget() {
           onClick={() => { setOpen((o) => !o); setBubble(false); }}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
-          whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.96 }}
-          animate={open ? { y: 0 } : { y: [0, -4, 0] }}
-          transition={open ? { duration: 0.2 } : { duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          animate={open ? { y: 0 } : { y: [0, -3, 0] }}
+          transition={open ? { duration: 0.2 } : { duration: 5, repeat: Infinity, ease: "easeInOut" }}
           aria-label={open ? t("agent.close") : t("agent.open")}
           aria-expanded={open}
-          className="relative grid size-16 place-items-center rounded-full shadow-[0_0_40px_-8px_rgba(232,147,58,0.9)]"
+          className="group relative flex items-center rounded-full"
         >
-          <AgentFace mood={mood} size={64} />
-          {messages.length === 0 && !open && <span className="absolute right-1 top-1 size-2.5 rounded-full bg-emerald-400 ring-2 ring-night-950" />}
+          <AnimatePresence>
+            {hover && !open && (
+              <motion.span
+                key="label"
+                initial={{ opacity: 0, x: 10, width: 0 }}
+                animate={{ opacity: 1, x: 0, width: "auto" }}
+                exit={{ opacity: 0, x: 10, width: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mr-3 hidden overflow-hidden whitespace-nowrap rounded-full border border-white/10 bg-night-900/90 px-3.5 py-2 text-sm text-fg backdrop-blur sm:block"
+              >
+                Digital Haval
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <motion.span
+            className="grid size-[68px] place-items-center rounded-full"
+            animate={{ scale: hover ? 1.06 : 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18 }}
+          >
+            <AgentFace mood={mood} size={68} />
+          </motion.span>
+          {messages.length === 0 && !open && <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-emerald-400 ring-2 ring-night-950" />}
         </motion.button>
       </div>
     </div>
