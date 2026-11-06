@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Loader2, Send, Trash2, X } from "lucide-react";
 import { onAgentOpen, openAgent, useDigitalHaval } from "../lib/chat";
-import Agent3D from "./Agent3D";
+import Agent3D, { type IntroPhase } from "./Agent3D";
 import { t } from "../lib/i18n";
 
 /* ---------- The face ---------- */
@@ -183,7 +183,7 @@ export default function AgentWidget() {
 
   // A gentle "hi" after a few seconds, once per session, only if the chat is untouched.
   useEffect(() => {
-    if (messages.length > 0) return;
+    if (messages.length > 0 || intro) return;
     let seen = false;
     try {
       seen = sessionStorage.getItem("hj_agent_hi") === "1";
@@ -223,6 +223,25 @@ export default function AgentWidget() {
 
   const mood: Mood = busy ? "thinking" : speaking ? "speaking" : hover || open ? "happy" : "idle";
   const [pop, setPop] = useState(0);
+  // Entrance: once per session (or ?intro=1) the character jumps out of the terrain and shakes it off.
+  const [intro] = useState(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("intro") === "1") return true;
+      if (sessionStorage.getItem("hj_intro") === "1") return false;
+      sessionStorage.setItem("hj_intro", "1");
+      return true;
+    } catch {
+      return true;
+    }
+  });
+  const [phase, setPhase] = useState<IntroPhase>(intro ? "buried" : "done");
+  useEffect(() => {
+    if (phase === "present") {
+      setBubble(true);
+      const hide = window.setTimeout(() => setBubble(false), 9000);
+      return () => window.clearTimeout(hide);
+    }
+  }, [phase]);
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] sm:inset-x-auto sm:bottom-5 sm:right-5">
@@ -327,8 +346,18 @@ export default function AgentWidget() {
           onMouseEnter={() => { setHover(true); setPop((n) => n + 1); }}
           onMouseLeave={() => setHover(false)}
           whileTap={{ scale: 0.96 }}
-          animate={open ? { y: 0 } : { y: [0, -3, 0] }}
-          transition={open ? { duration: 0.2 } : { duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          initial={intro ? { y: 190, opacity: 1 } : false}
+          animate={
+            phase === "buried" ? { y: 190 }
+            : phase === "jump" ? { y: [190, -44, 0, -10, 0], scaleY: [1, 1.08, 0.86, 1.04, 1], scaleX: [1, 0.94, 1.12, 0.98, 1] }
+            : open ? { y: 0 }
+            : { y: [0, -3, 0] }
+          }
+          transition={
+            phase === "jump" ? { duration: 1.0, times: [0, 0.45, 0.7, 0.85, 1], ease: "easeOut" }
+            : open || phase !== "done" ? { duration: 0.2 }
+            : { duration: 5, repeat: Infinity, ease: "easeInOut" }
+          }
           aria-label={open ? t("agent.close") : t("agent.open")}
           aria-expanded={open}
           className="group relative flex items-center rounded-full"
@@ -350,7 +379,7 @@ export default function AgentWidget() {
           <span className="relative grid size-[84px] place-items-center rounded-full">
             <span className="absolute inset-3 rounded-full bg-ember-500/40 blur-xl" aria-hidden="true" />
             <span className="absolute inset-[9px] rounded-full bg-[#0b0908]" aria-hidden="true" />
-            <Agent3D mood={mood} size={84} bounce={pop} className="relative" />
+            <Agent3D mood={mood} size={84} bounce={pop} intro={intro} onPhase={setPhase} className="relative" />
           </span>
           {messages.length === 0 && !open && <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-emerald-400 ring-2 ring-night-950" />}
         </motion.button>

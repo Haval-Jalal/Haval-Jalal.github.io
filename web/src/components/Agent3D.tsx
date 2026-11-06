@@ -4,7 +4,8 @@ import { AgentFace } from "./Agent";
 
 export type Mood = "idle" | "thinking" | "speaking" | "happy";
 
-type Props = { mood?: Mood; size?: number; className?: string; bounce?: number };
+export type IntroPhase = "buried" | "jump" | "shake" | "reveal" | "present" | "done";
+type Props = { mood?: Mood; size?: number; className?: string; bounce?: number; intro?: boolean; onPhase?: (phase: IntroPhase) => void };
 
 // Digital Haval as a little 3D character: a glossy dark sphere with an ember core, big glowing
 // eyes that look at the pointer, a rotating ring of light, squash-and-stretch when touched,
@@ -48,12 +49,14 @@ function glowMaterial(color: number, intensity: number, power: number) {
   });
 }
 
-export default function Agent3D({ mood = "idle", size = 68, className = "", bounce = 0 }: Props) {
+export default function Agent3D({ mood = "idle", size = 68, className = "", bounce = 0, intro = false, onPhase }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const moodRef = useRef<Mood>(mood);
   const bounceRef = useRef(0);
+  const phaseRef = useRef(onPhase);
   const [webgl, setWebgl] = useState(true);
   moodRef.current = mood;
+  phaseRef.current = onPhase;
 
   useEffect(() => {
     if (bounce > 0) bounceRef.current = 1;
@@ -69,8 +72,11 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
       setWebgl(false);
       return;
     }
+    const pad = 2.1; // canvas is this many times the character's size, centred on it
+    const px = Math.round(size * pad);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(size, size);
+    renderer.setSize(px, px);
+    Object.assign(renderer.domElement.style, { position: "absolute", left: `${(size - px) / 2}px`, top: `${(size - px) / 2}px`, pointerEvents: "none" });
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -78,7 +84,7 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 20);
-    camera.position.set(0, 0.05, 4.6);
+    camera.position.set(0, 0.05, 4.6 * pad);
 
     // Soft studio reflections for the glass, plus a warm and a cool light for shape.
     const pmrem = new THREE.PMREMGenerator(renderer);
@@ -178,6 +184,48 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
       pulses.push({ mesh: m, t: i / 3 });
     }
 
+    // Intro: the character arrives as a lump of terrain (dark rock + ember wireframe) and shakes it off.
+    const noise = (v: THREE.Vector3) => 1 + (Math.sin(v.x * 7.1) * Math.cos(v.y * 5.3) + Math.sin(v.z * 6.7 + v.x * 2)) * 0.05;
+    const lumpy = (geo: THREE.BufferGeometry) => {
+      const pos = geo.attributes.position as THREE.BufferAttribute;
+      const v = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        v.multiplyScalar(noise(v));
+        pos.setXYZ(i, v.x, v.y, v.z);
+      }
+      geo.computeVertexNormals();
+      return geo;
+    };
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x0f0c0a, roughness: 1, metalness: 0, transparent: true, opacity: 1 });
+    const rock = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1.02, 24, 16)), rockMat);
+    rock.renderOrder = 20;
+    rock.visible = intro;
+    head.add(rock);
+    const wireMat = new THREE.MeshBasicMaterial({ color: 0xff8a2a, wireframe: true, transparent: true, opacity: 0.95, depthTest: false });
+    const wire = new THREE.Mesh(lumpy(new THREE.SphereGeometry(1.05, 18, 12)), wireMat);
+    wire.renderOrder = 21;
+    wire.visible = intro;
+    head.add(wire);
+    const fragMat = new THREE.MeshBasicMaterial({ color: 0xffa040, wireframe: true, transparent: true, opacity: 1, depthTest: false });
+    const frags: { m: THREE.Mesh; v: THREE.Vector3; r: THREE.Vector3 }[] = [];
+    for (let i = 0; i < 30; i++) {
+      const m = new THREE.Mesh(new THREE.TetrahedronGeometry(0.08 + Math.random() * 0.1, 0), fragMat);
+      m.visible = false;
+      m.renderOrder = 22;
+      scene.add(m);
+      frags.push({ m, v: new THREE.Vector3(), r: new THREE.Vector3(Math.random() * 6, Math.random() * 6, Math.random() * 6) });
+    }
+    const introStart = intro ? performance.now() : -1;
+    let phase: IntroPhase = intro ? "buried" : "done";
+    const setPhase = (p: IntroPhase) => {
+      if (phase === p) return;
+      phase = p;
+      phaseRef.current?.(p);
+    };
+    let fragsLaunched = false;
+    let shakeAmp = 0;
+
     // Pointer tracking (whole page) in normalised coordinates relative to the character.
     const target = { x: 0, y: 0 };
     const onMove = (e: PointerEvent) => {
@@ -208,14 +256,72 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       t += dt;
-      const mood = moodRef.current;
+      let mood = moodRef.current;
+
+      // ----- intro timeline -----
+      if (phase !== "done") {
+        const it = (now - introStart) / 1000;
+        if (it < 0.6) setPhase("buried");
+        else if (it < 1.7) setPhase("jump");
+        else if (it < 2.45) setPhase("shake");
+        else if (it < 2.95) setPhase("reveal");
+        else if (it < 4.8) setPhase("present");
+        else setPhase("done");
+
+        const covered = phase === "buried" || phase === "jump" || phase === "shake";
+        rock.visible = covered || phase === "reveal";
+        wire.visible = covered || phase === "reveal";
+        if (phase === "shake") {
+          shakeAmp = Math.min(1, shakeAmp + dt * 6);
+          if (it > 1.95 && !fragsLaunched) {
+            fragsLaunched = true;
+            for (const f of frags) {
+              const dir = new THREE.Vector3().randomDirection();
+              f.m.position.copy(dir).multiplyScalar(1.05);
+              f.v.copy(dir).multiplyScalar(2 + Math.random() * 2.5).add(new THREE.Vector3(0, 1.5 + Math.random(), 0));
+              f.m.visible = true;
+              f.m.scale.setScalar(1);
+            }
+          }
+          if (it > 2.1) {
+            const k = (it - 2.1) / 0.35;
+            wireMat.opacity = Math.max(0, 1 - k);
+            wire.scale.setScalar(1 + k * 0.6);
+          }
+        }
+        if (phase === "reveal") {
+          const k = (it - 2.45) / 0.5;
+          rockMat.opacity = Math.max(0, 1 - k * 1.4);
+          rock.scale.setScalar(Math.max(0.01, 1 - k * 0.9));
+          wireMat.opacity = 0;
+          shakeAmp = Math.max(0, shakeAmp - dt * 4);
+        }
+        if (phase === "present") mood = "happy";
+        if ((phase as IntroPhase) === "done") { rock.visible = false; wire.visible = false; }
+      }
+      // fragments fly out and fall
+      if (fragsLaunched) {
+        let alive = false;
+        for (const f of frags) {
+          if (!f.m.visible) continue;
+          f.v.y -= 7 * dt;
+          f.m.position.addScaledVector(f.v, dt);
+          f.m.rotation.x += f.r.x * dt;
+          f.m.rotation.y += f.r.y * dt;
+          f.m.scale.multiplyScalar(1 - dt * 1.1);
+          if (f.m.position.y < -3.5 || f.m.scale.x < 0.06) f.m.visible = false;
+          else alive = true;
+        }
+        if (!alive) fragsLaunched = false;
+      }
 
       // Head follows the pointer with a soft spring; eyes lead a little.
       look.x += (target.x - look.x) * Math.min(1, dt * 6);
       look.y += (target.y - look.y) * Math.min(1, dt * 6);
       head.rotation.y = look.x * 0.5 + Math.sin(t * 0.6) * 0.04;
       head.rotation.x = look.y * 0.35 + (mood === "thinking" ? -0.18 : 0) + Math.sin(t * 0.9) * 0.02;
-      head.rotation.z = Math.sin(t * 0.7) * 0.03 + (mood === "happy" ? Math.sin(t * 6) * 0.04 : 0);
+      head.rotation.z = Math.sin(t * 0.7) * 0.03 + (mood === "happy" ? Math.sin(t * 6) * 0.04 : 0) + Math.sin(t * 48) * 0.32 * shakeAmp;
+      head.position.x = Math.sin(t * 61) * 0.06 * shakeAmp;
 
       // Idle bob + squash/stretch spring (bounce on click, wobble on hover)
       if (bounceRef.current > 0) { squash.vel -= 6; bounceRef.current = 0; }
@@ -236,13 +342,14 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
         if (blinkT > 0.18) blinkT = -1;
       }
       const happy = mood === "happy";
+      const covered = phase === "buried" || phase === "jump" || phase === "shake";
       for (const e of eyes) {
-        e.visible = !happy;
+        e.visible = !happy && !covered;
         e.scale.y = Math.max(0.08, blinkScale);
         e.position.x = (e === eyes[0] ? -0.3 : 0.3) + look.x * 0.06;
         e.position.y = 0.14 - look.y * 0.05;
       }
-      for (const a of arcs) a.visible = happy;
+      for (const a of arcs) a.visible = happy && !covered;
 
       // Ember heart breathing, drifting plasma, rising sparks; eyes pulse while speaking
       const coreScale = mood === "thinking" ? 1 + Math.sin(t * 5) * 0.08 : 1 + Math.sin(t * 1.3) * 0.05;
@@ -277,7 +384,7 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
         if (mood === "speaking") {
           p.t += dt * 0.9;
           if (p.t > 1) p.t = 0;
-          const s = 1 + p.t * 0.45;
+          const s = 1 + p.t * 0.9;
           p.mesh.scale.set(s, s, s);
           m.opacity = (1 - p.t) * 0.5;
         } else {
@@ -307,8 +414,9 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
       });
       el.removeChild(renderer.domElement);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [size]);
 
   if (!webgl) return <AgentFace mood={mood} size={size} className={className} />;
-  return <div ref={host} className={className} style={{ width: size, height: size }} aria-hidden="true" />;
+  return <div ref={host} className={className} style={{ width: size, height: size, position: "relative", overflow: "visible" }} aria-hidden="true" />;
 }
