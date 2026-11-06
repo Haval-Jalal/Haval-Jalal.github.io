@@ -52,7 +52,7 @@ public sealed class CvDocument(CvModel cv) : IDocument
                 });
                 row.ConstantItem(170).AlignRight().Column(right =>
                 {
-                    foreach (var k in cv.Contacts)
+                    foreach (var k in cv.Contacts.Where(k => !string.IsNullOrWhiteSpace(k.Value)))
                     {
                         right.Item().Text(t =>
                         {
@@ -74,12 +74,15 @@ public sealed class CvDocument(CvModel cv) : IDocument
             row.RelativeItem(2).PaddingRight(18).Column(main =>
             {
                 main.Spacing(14);
-                main.Item().Element(x => Section(x, "Profil", s => s.Item().Text(cv.Summary).FontSize(9.5f)));
+                if (!string.IsNullOrWhiteSpace(cv.Summary))
+                    main.Item().Element(x => Section(x, "Profil", s => s.Item().Text(cv.Summary).FontSize(9.5f)));
 
+                var experience = cv.Experience.Where(e => !string.IsNullOrWhiteSpace(e.Title) || !string.IsNullOrWhiteSpace(e.Org)).ToList();
+                if (experience.Count > 0)
                 main.Item().Element(x => Section(x, "Erfarenhet", s =>
                 {
                     s.Spacing(10);
-                    foreach (var e in cv.Experience)
+                    foreach (var e in experience)
                     {
                         s.Item().Column(item =>
                         {
@@ -88,9 +91,9 @@ public sealed class CvDocument(CvModel cv) : IDocument
                                 r.RelativeItem().Text(e.Title).SemiBold().FontSize(10.5f);
                                 r.ConstantItem(90).AlignRight().Text(e.Period).FontSize(8.5f).FontColor(_accent).SemiBold();
                             });
-                            item.Item().Text(e.Org).FontSize(9).FontColor(Muted);
-                            item.Item().PaddingTop(3).Text(e.Text);
-                            foreach (var b in e.Bullets)
+                            if (!string.IsNullOrWhiteSpace(e.Org)) item.Item().Text(e.Org).FontSize(9).FontColor(Muted);
+                            if (!string.IsNullOrWhiteSpace(e.Text)) item.Item().PaddingTop(3).Text(e.Text);
+                            foreach (var b in e.Bullets.Where(b => !string.IsNullOrWhiteSpace(b)))
                             {
                                 item.Item().PaddingLeft(8).Row(r =>
                                 {
@@ -102,10 +105,12 @@ public sealed class CvDocument(CvModel cv) : IDocument
                     }
                 }));
 
+                var projects = cv.Projects.Where(p => !string.IsNullOrWhiteSpace(p.Title)).ToList();
+                if (projects.Count > 0)
                 main.Item().Element(x => Section(x, "Projekt", s =>
                 {
                     s.Spacing(8);
-                    foreach (var p in cv.Projects)
+                    foreach (var p in projects)
                     {
                         s.Item().Column(item =>
                         {
@@ -118,9 +123,10 @@ public sealed class CvDocument(CvModel cv) : IDocument
                                 });
                                 r.ConstantItem(50).AlignRight().Text(p.Year).FontSize(8.5f).FontColor(Muted);
                             });
-                            item.Item().Text(p.Summary);
-                            if (p.Tags.Count > 0)
-                                item.Item().PaddingTop(2).Text(string.Join("  ·  ", p.Tags)).FontSize(8).FontColor(Muted);
+                            if (!string.IsNullOrWhiteSpace(p.Summary)) item.Item().Text(p.Summary);
+                            var tags = p.Tags.Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+                            if (tags.Count > 0)
+                                item.Item().PaddingTop(2).Text(string.Join("  ·  ", tags)).FontSize(8).FontColor(Muted);
                         });
                     }
                 }));
@@ -129,22 +135,29 @@ public sealed class CvDocument(CvModel cv) : IDocument
             row.RelativeItem(1).PaddingLeft(18).BorderLeft(1).BorderColor(Line).PaddingLeft(14).Column(side =>
             {
                 side.Spacing(14);
+                var skills = cv.Skills
+                    .Select(g => new CvSkillGroup(g.Title, g.Items.Where(i => !string.IsNullOrWhiteSpace(i)).ToList()))
+                    .Where(g => g.Items.Count > 0)
+                    .ToList();
+                if (skills.Count > 0)
                 side.Item().Element(x => Section(x, "Stack", s =>
                 {
                     s.Spacing(7);
-                    foreach (var g in cv.Skills)
+                    foreach (var g in skills)
                     {
                         s.Item().Column(item =>
                         {
-                            item.Item().Text(g.Title).FontSize(8.5f).SemiBold().FontColor(Ink);
+                            if (!string.IsNullOrWhiteSpace(g.Title)) item.Item().Text(g.Title).FontSize(8.5f).SemiBold().FontColor(Ink);
                             item.Item().Text(string.Join(", ", g.Items)).FontSize(8.5f).FontColor(Muted);
                         });
                     }
                 }));
+                var education = cv.Education.Where(e => !string.IsNullOrWhiteSpace(e.Program) || !string.IsNullOrWhiteSpace(e.School)).ToList();
+                if (education.Count > 0)
                 side.Item().Element(x => Section(x, "Utbildning", s =>
                 {
                     s.Spacing(6);
-                    foreach (var e in cv.Education)
+                    foreach (var e in education)
                     {
                         s.Item().Column(item =>
                         {

@@ -11,6 +11,7 @@ export default function Contact() {
     { icon: Mail, label: "E-post", href: profile.links.email ? `mailto:${profile.links.email}` : "#", sub: "Kommer" },
     { icon: FileDown, label: "CV som PDF", href: "/api/cv.pdf", sub: "Alltid uppdaterat" },
   ];
+  const tool = { label: "Skapa ditt eget CV", href: "/cv", sub: "Gratis verktyg med samma mall, och AI som vässar texten" };
   return (
     <section id="kontakt" className="surface-a relative text-fg">
       <div
@@ -67,6 +68,24 @@ export default function Contact() {
             </motion.li>
           ))}
         </motion.ul>
+
+        <motion.a
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          href={tool.href}
+          className="group mx-auto mt-6 flex max-w-4xl items-center gap-4 rounded-2xl border border-ember-400/30 bg-ember-500/10 p-4 transition-colors hover:bg-ember-500/15"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-ember-500 text-night-950">
+            <FileDown className="size-4" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-medium text-fg">{tool.label}</span>
+            <span className="block text-xs text-fg-muted">{tool.sub}</span>
+          </span>
+          <ArrowUpRight className="ml-auto size-4 shrink-0 text-ember-300 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </motion.a>
 
         <footer className="mt-24 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 text-xs text-fg-faint md:flex-row">
           <p>© {new Date().getFullYear()} {profile.name}. Byggd för hand med React, Three.js och .NET på Azure.</p>

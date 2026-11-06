@@ -8,8 +8,9 @@ import { ContentProvider } from "./lib/content";
 // prototype page. No router needed (yet): Static Web Apps rewrites every path to index.html.
 const Admin = lazy(() => import("./admin/Admin"));
 const LabPage = lazy(() => import("./pages/LabPage"));
+const CvBuilder = lazy(() => import("./pages/CvBuilder"));
 const path = window.location.pathname;
-const page = path.startsWith("/admin") ? "admin" : path.startsWith("/lab/") ? "lab" : "site";
+const page = path.startsWith("/admin") ? "admin" : path.startsWith("/lab/") ? "lab" : path === "/cv" || path === "/cv/" ? "cv" : "site";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -17,7 +18,9 @@ createRoot(document.getElementById("root")!).render(
       {page === "site" ? (
         <App />
       ) : (
-        <Suspense fallback={<div className="min-h-screen bg-night-950" />}>{page === "admin" ? <Admin /> : <LabPage />}</Suspense>
+        <Suspense fallback={<div className="min-h-screen bg-night-950" />}>
+          {page === "admin" ? <Admin /> : page === "cv" ? <CvBuilder /> : <LabPage />}
+        </Suspense>
       )}
     </ContentProvider>
   </StrictMode>,

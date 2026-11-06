@@ -226,7 +226,7 @@ type UsageSummary = {
   recent: { ts: string; feature: string; model: string; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; usd: number; truncated: boolean }[];
 };
 
-const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)" };
+const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)" };
 const usd = (n: number) => `${n.toFixed(n < 1 ? 3 : 2)} USD`;
 const tok = (n: number) => n.toLocaleString("sv-SE");
 
@@ -410,7 +410,7 @@ function AiUsage() {
                 <tr key={i} className="border-t border-white/5">
                   <td className="py-2 font-mono text-fg-muted">{new Date(r.ts).toLocaleString("sv-SE", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
                   <td className="py-2 text-fg">
-                    {r.feature === "build" ? "Build Lab" : "Chatt"}
+                    {r.feature === "build" ? "Build Lab" : r.feature === "cvpolish" ? "CV-text" : "Chatt"}
                     {r.truncated && <span className="ml-2 rounded bg-amber-400/15 px-1.5 py-px text-[10px] text-amber-200">avklippt</span>}
                   </td>
                   <td className="py-2 font-mono text-fg-muted">{r.model.replace("claude-", "")}</td>
