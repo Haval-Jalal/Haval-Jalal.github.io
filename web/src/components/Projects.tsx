@@ -4,15 +4,16 @@ import { ArrowRight, ArrowUpRight, Check, ChevronLeft, ChevronRight, Images, X }
 import Section, { reveal, stagger } from "./Section";
 import { useSiteContent } from "../lib/content";
 import type { Project } from "../data/content";
+import { t } from "../lib/i18n";
 
 // Projects are shown like products: screenshot, status, what it is, what it does, where to go.
 export const STATUS_LABEL: Record<string, string> = {
-  live: "Live",
-  delivered: "Levererad",
-  pilot: "Pilot",
-  wip: "Pågår",
-  concept: "Koncept",
-  school: "Skolprojekt",
+  live: t("status.live"),
+  delivered: t("status.delivered"),
+  pilot: t("status.pilot"),
+  wip: t("status.wip"),
+  concept: t("status.concept"),
+  school: t("status.school"),
 };
 
 export default function Projects() {
@@ -22,13 +23,13 @@ export default function Projects() {
     <Section
       id="projekt"
       tone="a"
-      eyebrow="Projekt"
+      eyebrow={t("projects.eyebrow")}
       title={
         <>
-          Saker jag <span className="text-ember-300">byggt.</span>
+          {t("projects.title")} <span className="text-ember-300">{t("projects.title_accent")}</span>
         </>
       }
-      lede="Produkter, plattformar och verktyg jag designat och byggt, från databas till UI. Var och en löser ett riktigt problem, och här står precis vad den gör."
+      lede={t("projects.lede")}
     >
       <motion.ul
         initial="hidden"
@@ -59,7 +60,7 @@ function ProjectCard({ project: p, onOpen }: { project: Project; onOpen: (index:
         type="button"
         onClick={() => cover && onOpen(0)}
         className={`group relative block aspect-[16/10] w-full overflow-hidden bg-night-800 text-left ${cover ? "cursor-zoom-in" : "cursor-default"}`}
-        aria-label={cover ? `Visa bilder för ${p.title}` : undefined}
+        aria-label={cover ? `${t("projects.show_images")} ${p.title}` : undefined}
       >
         {cover ? (
           <img src={cover} alt={p.title} loading="lazy" className="size-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
@@ -109,14 +110,14 @@ function ProjectCard({ project: p, onOpen }: { project: Project; onOpen: (index:
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full bg-ember-500 px-3.5 py-1.5 text-xs font-medium text-night-950 transition-colors hover:bg-ember-400"
             >
-              {l.label || "Besök"} <ArrowUpRight className="size-3.5" />
+              {l.label || t("projects.visit")} <ArrowUpRight className="size-3.5" />
             </a>
           ))}
           <a
             href="#kontakt"
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-1.5 text-xs text-fg transition-colors hover:border-ember-400/50"
           >
-            Fråga om detta <ArrowRight className="size-3.5" />
+            {t("projects.ask")} <ArrowRight className="size-3.5" />
           </a>
         </div>
       </div>
@@ -171,17 +172,17 @@ function Lightbox({ project, index: start, onClose }: { project: Project; index:
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={`Bilder: ${project.title}`}
+      aria-label={`${t("projects.images_alt")}: ${project.title}`}
     >
-      <button onClick={onClose} className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/[0.06] text-fg hover:bg-white/[0.12]" aria-label="Stäng">
+      <button onClick={onClose} className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/[0.06] text-fg hover:bg-white/[0.12]" aria-label={t("projects.close")}>
         <X className="size-5" />
       </button>
       {images.length > 1 && (
         <>
-          <button onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-4 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/[0.06] text-fg hover:bg-white/[0.12]" aria-label="Föregående">
+          <button onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-4 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/[0.06] text-fg hover:bg-white/[0.12]" aria-label={t("projects.prev")}>
             <ChevronLeft className="size-5" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-4 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/[0.06] text-fg hover:bg-white/[0.12]" aria-label="Nästa">
+          <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-4 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/[0.06] text-fg hover:bg-white/[0.12]" aria-label={t("projects.next")}>
             <ChevronRight className="size-5" />
           </button>
         </>

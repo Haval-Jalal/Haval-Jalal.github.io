@@ -38,6 +38,33 @@ public sealed class CosmosContentStore(CosmosDb db, IMemoryCache cache) : IConte
         await container.UpsertItemAsync(new CosmosDoc<SiteContent>(Id, Id, DateTime.UtcNow, content), new PartitionKey(Id), cancellationToken: ct);
         cache.Remove(CacheKey);
     }
+
+    // Translations live next to the master document as "site-en" etc.
+    public async Task<SiteContent?> GetAsync(string lang, CancellationToken ct)
+    {
+        if (lang == "sv") return await GetAsync(ct);
+        var key = $"content:site-{lang}";
+        if (cache.TryGetValue(key, out SiteContent? cached) && cached is not null) return cached;
+        var container = await db.ContainerAsync(CosmosDb.Content);
+        try
+        {
+            var response = await container.ReadItemAsync<CosmosDoc<SiteContent>>($"site-{lang}", new PartitionKey(Id), cancellationToken: ct);
+            cache.Set(key, response.Resource.Data, TimeSpan.FromSeconds(30));
+            return response.Resource.Data;
+        }
+        catch (CosmosException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task SaveAsync(SiteContent content, string lang, CancellationToken ct)
+    {
+        if (lang == "sv") { await SaveAsync(content, ct); return; }
+        var container = await db.ContainerAsync(CosmosDb.Content);
+        await container.UpsertItemAsync(new CosmosDoc<SiteContent>($"site-{lang}", Id, DateTime.UtcNow, content), new PartitionKey(Id), cancellationToken: ct);
+        cache.Remove($"content:site-{lang}");
+    }
 }
 
 public sealed class CosmosAnalyticsStore(CosmosDb db) : IAnalyticsStore

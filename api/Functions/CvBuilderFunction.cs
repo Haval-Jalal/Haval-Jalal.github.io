@@ -28,6 +28,7 @@ public class CvBuilderFunction(AnthropicClient client, AgentGuard guard, ILogger
 
         var model = await ReadModelAsync(req, ct);
         if (model is null) return new BadRequestObjectResult(new { error = "invalid_cv" });
+        model = model with { Labels = CvLabels.For(req.Query["lang"]) };
 
         var bytes = new CvDocument(model).GeneratePdf();
         var inline = req.Query["download"].ToString() != "1";

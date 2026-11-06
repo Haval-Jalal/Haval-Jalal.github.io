@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target } from "lucide-react";
+import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
 import type { JourneyStep, Project, SiteContent } from "../data/content";
@@ -252,7 +252,7 @@ type UsageSummary = {
   recent: { ts: string; feature: string; model: string; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; usd: number; truncated: boolean }[];
 };
 
-const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)", pitch: "Rekryterarläge, utkast (Sonnet 5.5)" };
+const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)", pitch: "Rekryterarläge, utkast (Sonnet 5.5)", translate: "Översättning av innehåll (Sonnet 5.5)" };
 const usd = (n: number) => `${n.toFixed(n < 1 ? 3 : 2)} USD`;
 const tok = (n: number) => n.toLocaleString("sv-SE");
 
@@ -737,26 +737,46 @@ function ImagesEditor({ images, onChange }: { images: string[]; onChange: (image
 
 /* ---------- Innehåll ---------- */
 
-function useDraft() {
-  const { content, refresh } = useSiteContent();
-  const [draft, setDraft] = useState<SiteContent>(content);
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "error">("idle");
+type Lang = "sv" | "en";
 
-  // Adopt the live document once it arrives (only if the user has not started editing).
+// Swedish is the master document (served to the provider); English is a separate document
+// that starts empty and is usually created with the AI translation button.
+function useDraft(lang: Lang) {
+  const { content, refresh } = useSiteContent();
+  const [draft, setDraft] = useState<SiteContent | null>(lang === "sv" ? content : null);
+  const [exists, setExists] = useState(lang === "sv");
+  const [loaded, setLoaded] = useState(lang === "sv");
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "error" | "translating">("idle");
+
+  // Adopt the live Swedish document once it arrives (only if the user has not started editing).
   useEffect(() => {
-    if (!dirty) setDraft(content);
-  }, [content, dirty]);
+    if (lang === "sv" && !dirty) setDraft(content);
+  }, [content, dirty, lang]);
+
+  useEffect(() => {
+    if (lang === "sv") return;
+    setLoaded(false);
+    fetch(`/api/manage/content?lang=${lang}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { exists: boolean; content: SiteContent | null }) => {
+        setExists(d.exists);
+        setDraft(d.content);
+        setDirty(false);
+      })
+      .finally(() => setLoaded(true));
+  }, [lang]);
 
   const update = (fn: (d: SiteContent) => SiteContent) => {
-    setDraft((d) => fn(d));
+    setDraft((d) => (d ? fn(d) : d));
     setDirty(true);
     setSaving("idle");
   };
 
   const save = async () => {
+    if (!draft) return;
     setSaving("saving");
-    const r = await fetch("/api/manage/content", {
+    const r = await fetch(`/api/manage/content?lang=${lang}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(draft),
@@ -764,13 +784,26 @@ function useDraft() {
     if (r.ok) {
       setSaving("saved");
       setDirty(false);
-      await refresh();
+      setExists(true);
+      if (lang === "sv") await refresh();
     } else {
       setSaving("error");
     }
   };
 
-  return { draft, update, save, dirty, saving };
+  const translate = async () => {
+    setSaving("translating");
+    const r = await fetch(`/api/manage/content/translate?lang=${lang}`, { method: "POST" });
+    if (r.ok) {
+      setDraft((await r.json()) as SiteContent);
+      setDirty(true);
+      setSaving("idle");
+    } else {
+      setSaving("error");
+    }
+  };
+
+  return { draft, update, save, translate, dirty, saving, exists, loaded };
 }
 
 function SaveBar({ dirty, saving, onSave }: { dirty: boolean; saving: string; onSave: () => void }) {
@@ -778,6 +811,7 @@ function SaveBar({ dirty, saving, onSave }: { dirty: boolean; saving: string; on
     <div className="sticky bottom-4 z-10 mt-8 flex items-center justify-between rounded-full border border-white/10 bg-night-900/90 px-4 py-2 backdrop-blur">
       <span className="text-xs text-fg-muted">
         {saving === "saving" && "Sparar…"}
+        {saving === "translating" && "Översätter med AI, tar cirka en minut…"}
         {saving === "saved" && "Sparat. Sajten uppdateras direkt."}
         {saving === "error" && <span className="text-red-300">Kunde inte spara.</span>}
         {saving === "idle" && (dirty ? "Osparade ändringar" : "Allt sparat")}
@@ -794,14 +828,60 @@ function SaveBar({ dirty, saving, onSave }: { dirty: boolean; saving: string; on
 }
 
 function ContentEditor() {
-  const { draft, update, save, dirty, saving } = useDraft();
+  const [lang, setLang] = useState<Lang>("sv");
+  const { draft, update, save, translate, dirty, saving, exists, loaded } = useDraft(lang);
+
+  const tabs = (
+    <div className="mt-4 flex flex-wrap items-center gap-2">
+      {(["sv", "en"] as Lang[]).map((l) => (
+        <button
+          key={l}
+          onClick={() => {
+            if (dirty && !window.confirm("Du har osparade ändringar. Byta språk ändå?")) return;
+            setLang(l);
+          }}
+          className={`rounded-full px-3 py-1.5 text-xs font-medium ${lang === l ? "bg-ember-500 text-night-950" : "border border-white/10 text-fg-muted hover:text-fg"}`}
+        >
+          {l === "sv" ? "Svenska" : "English"}
+        </button>
+      ))}
+      {lang === "en" && (
+        <button
+          onClick={() => {
+            if (!exists || window.confirm("Skriva över den engelska versionen med en ny AI-översättning av den svenska?")) void translate();
+          }}
+          disabled={saving === "translating"}
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-ember-400/40 bg-ember-500/10 px-3 py-1.5 text-xs text-ember-200 disabled:opacity-50"
+        >
+          <Sparkles className="size-3.5" /> {saving === "translating" ? "Översätter…" : exists ? "Översätt om från svenska" : "Översätt från svenska med AI"}
+        </button>
+      )}
+    </div>
+  );
+
+  if (!draft) {
+    return (
+      <div className="max-w-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight">Innehåll</h1>
+        <p className="text-sm text-fg-muted">Allt som syns på sajten. Ändringar går live när du sparar.</p>
+        {tabs}
+        <p className="mt-8 text-sm text-fg-muted">
+          {!loaded ? "Hämtar…" : "Ingen engelsk version ännu. Sajten visar den svenska texten på /en tills du översätter och sparar."}
+        </p>
+      </div>
+    );
+  }
+
   const p = draft.profile;
   const setProfile = (patch: Partial<typeof p>) => update((d) => ({ ...d, profile: { ...d.profile, ...patch } }));
 
   return (
     <div className="max-w-3xl">
       <h1 className="text-2xl font-semibold tracking-tight">Innehåll</h1>
-      <p className="text-sm text-fg-muted">Allt som syns på sajten. Ändringar går live när du sparar.</p>
+      <p className="text-sm text-fg-muted">
+        {lang === "sv" ? "Allt som syns på sajten. Ändringar går live när du sparar." : "Den engelska versionen (havaljalal.se/en). Slugs, länkar och taggar är gemensamma med svenskan."}
+      </p>
+      {tabs}
 
       <Group title="Profil">
         <Field label="Namn" value={p.name} onChange={(v) => setProfile({ name: v })} />
@@ -935,7 +1015,8 @@ function ContentEditor() {
 /* ---------- Inställningar ---------- */
 
 function SettingsEditor() {
-  const { draft, update, save, dirty, saving } = useDraft();
+  const { draft, update, save, dirty, saving } = useDraft("sv");
+  if (!draft) return null;
   const s = draft.settings;
   const set = (patch: Partial<typeof s>) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
   return (

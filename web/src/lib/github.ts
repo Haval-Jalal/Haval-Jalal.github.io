@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { numberLocale, t } from "./i18n";
 
 export type GitHubRepo = {
   name: string;
@@ -37,13 +38,13 @@ export function useGitHub(): State {
 }
 
 export function relativeTime(iso: string | null | undefined): string {
-  if (!iso) return "okänt";
+  if (!iso) return t("time.unknown");
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.round(diff / 60000);
-  if (m < 60) return `${m} min sedan`;
+  if (m < 60) return `${m} ${t("time.min")}`;
   const h = Math.round(m / 60);
-  if (h < 48) return `${h} h sedan`;
+  if (h < 48) return `${h} ${t("time.h")}`;
   const d = Math.round(h / 24);
-  if (d < 30) return `${d} dagar sedan`;
-  return new Date(iso).toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+  if (d < 30) return `${d} ${t("time.days")}`;
+  return new Date(iso).toLocaleDateString(numberLocale, { day: "numeric", month: "short" });
 }

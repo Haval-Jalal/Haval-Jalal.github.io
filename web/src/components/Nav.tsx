@@ -1,6 +1,7 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import { Volume2, VolumeX } from "lucide-react";
 import { useSiteContent } from "../lib/content";
+import { otherLocaleUrl, t } from "../lib/i18n";
 
 type Props = {
   soundOn: boolean;
@@ -48,15 +49,22 @@ export default function Nav({ soundOn, onToggleSound, dark = false }: Props) {
           ))}
         </ul>
         <div className="flex items-center gap-2">
+          <a
+            href={otherLocaleUrl()}
+            title={t("nav.lang_title")}
+            className={`grid h-9 place-items-center rounded-full border px-3 font-mono text-[11px] font-medium backdrop-blur transition-colors ${iconBtn}`}
+          >
+            {t("nav.lang")}
+          </a>
           <button
             onClick={onToggleSound}
-            aria-label={soundOn ? "Stäng av ljud" : "Sätt på ljud"}
+            aria-label={soundOn ? t("nav.sound_off") : t("nav.sound_on")}
             className={`grid size-9 place-items-center rounded-full border backdrop-blur transition-colors ${iconBtn}`}
           >
             {soundOn ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
           </button>
           <a href="#kontakt" className={`rounded-full px-4 py-2 text-[13px] font-medium transition-transform hover:-translate-y-px ${cta}`}>
-            Hör av dig
+            {t("nav.cta")}
           </a>
         </div>
       </nav>

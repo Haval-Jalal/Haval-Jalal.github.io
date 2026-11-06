@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import Section, { reveal, stagger } from "./Section";
 import { useSiteContent } from "../lib/content";
+import { t } from "../lib/i18n";
 
 export default function Journey() {
   const { education, journey, profile } = useSiteContent().content;
@@ -8,10 +9,10 @@ export default function Journey() {
     <Section
       id="resan"
       tone="b"
-      eyebrow="Resan"
+      eyebrow={t("journey.eyebrow")}
       title={
         <>
-          Från biltillverkning till <span className="text-ember-300">produktion-klar kod.</span>
+          {t("journey.title")} <span className="text-ember-300">{t("journey.title_accent")}</span>
         </>
       }
       lede={profile.about}

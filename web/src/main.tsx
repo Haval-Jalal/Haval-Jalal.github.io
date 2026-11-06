@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { ContentProvider } from "./lib/content";
+import { locale, sitePath } from "./lib/i18n";
 
 // Three entry points share one bundle: the public site, the admin panel and the stand-alone
 // prototype page. No router needed (yet): Static Web Apps rewrites every path to index.html.
@@ -10,7 +11,9 @@ const Admin = lazy(() => import("./admin/Admin"));
 const LabPage = lazy(() => import("./pages/LabPage"));
 const CvBuilder = lazy(() => import("./pages/CvBuilder"));
 const PitchPage = lazy(() => import("./pages/PitchPage"));
-const path = window.location.pathname;
+const path = sitePath;
+document.documentElement.lang = locale;
+if (locale === "en") document.title = "Haval Jalal — Software Developer";
 const page = path.startsWith("/admin") ? "admin" : path.startsWith("/lab/") ? "lab" : path.startsWith("/for/") ? "pitch" : path === "/cv" || path === "/cv/" ? "cv" : "site";
 
 createRoot(document.getElementById("root")!).render(

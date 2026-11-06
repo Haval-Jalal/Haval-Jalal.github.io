@@ -1,4 +1,5 @@
 // Client for the AI endpoints in the .NET API.
+import { locale, t } from "./i18n";
 
 export type ChatMsg = { role: "user" | "assistant"; text: string };
 
@@ -13,15 +14,15 @@ export const PLAN_MARKER = "=====PLAN=====";
 export function friendlyError(code: string): string {
   switch (code) {
     case "rate_limited":
-      return "Du har nått gränsen för den här timmen. Prova igen om en stund.";
+      return t("err.rate_limited");
     case "daily_cap":
-      return "Dagens AI-budget är slut. Välkommen tillbaka i morgon!";
+      return t("err.daily_cap");
     case "not_configured":
-      return "AI-funktionerna är inte aktiverade på den här miljön ännu.";
+      return t("err.not_configured");
     case "upstream":
-      return "AI-tjänsten svarade inte. Prova igen om en stund.";
+      return t("err.upstream");
     default:
-      return "Något gick fel. Prova igen.";
+      return t("err.unknown");
   }
 }
 
@@ -52,7 +53,7 @@ export async function chat(messages: ChatMsg[]): Promise<{ reply: string; refuse
   const r = await fetch("/api/agent/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, lang: locale }),
   });
   if (!r.ok) throw new AgentError(await codeOf(r));
   return r.json();
@@ -70,7 +71,7 @@ export async function streamBuild(
   const r = await fetch("/api/agent/build", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idea, visitor }),
+    body: JSON.stringify({ idea, visitor, lang: locale }),
     signal,
   });
   if (!r.ok || !r.body) throw new AgentError(await codeOf(r));

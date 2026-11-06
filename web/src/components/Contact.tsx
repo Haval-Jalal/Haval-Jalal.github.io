@@ -2,16 +2,17 @@ import { motion } from "motion/react";
 import { ArrowUpRight, FileDown, Linkedin, Mail, MessageSquare } from "lucide-react";
 import { reveal, stagger } from "./Section";
 import { useSiteContent } from "../lib/content";
+import { L, locale, t } from "../lib/i18n";
 
 export default function Contact() {
   const { profile } = useSiteContent().content;
   const links = [
-    { icon: Linkedin, label: "LinkedIn", href: profile.links.linkedin || "#", sub: profile.links.linkedin ? "Säg hej" : "Kommer" },
-    { icon: Mail, label: "E-post", href: profile.links.email ? `mailto:${profile.links.email}` : "#", sub: profile.links.email || "Kommer" },
-    { icon: MessageSquare, label: "Digital Haval", href: "#build-lab", sub: "Fråga AI-agenten" },
-    { icon: FileDown, label: "CV som PDF", href: "/api/cv.pdf", sub: "Alltid uppdaterat" },
+    { icon: Linkedin, label: "LinkedIn", href: profile.links.linkedin || "#", sub: profile.links.linkedin ? t("contact.linkedin_sub") : t("contact.coming") },
+    { icon: Mail, label: t("contact.email"), href: profile.links.email ? `mailto:${profile.links.email}` : "#", sub: profile.links.email || t("contact.coming") },
+    { icon: MessageSquare, label: t("contact.chat"), href: "#build-lab", sub: t("contact.chat_sub") },
+    { icon: FileDown, label: t("contact.cv"), href: `/api/cv.pdf?lang=${locale}`, sub: t("contact.cv_sub") },
   ];
-  const tool = { label: "Skapa ditt eget CV", href: "/cv", sub: "Gratis verktyg med samma mall, och AI som vässar texten" };
+  const tool = { label: t("contact.tool"), href: L("/cv"), sub: t("contact.tool_sub") };
   return (
     <section id="kontakt" className="surface-a relative text-fg">
       <div
@@ -27,14 +28,13 @@ export default function Contact() {
           className="mx-auto max-w-3xl text-center"
         >
           <motion.p variants={reveal} className="font-mono text-xs uppercase tracking-[0.22em] text-ember-300">
-            Kontakt
+            {t("contact.eyebrow")}
           </motion.p>
           <motion.h2
             variants={reveal}
             className="mt-4 text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.025em] md:text-6xl"
           >
-            Öppen för nya möjligheter, samarbeten och{" "}
-            <span className="text-ember-300">bra samtal om teknik.</span>
+            {t("contact.title")} <span className="text-ember-300">{t("contact.title_accent")}</span>
           </motion.h2>
           <motion.p variants={reveal} className="mt-6 text-pretty text-lg text-fg-muted">
             {profile.tagline}
@@ -52,7 +52,7 @@ export default function Contact() {
             <motion.li key={label} variants={reveal}>
               <a
                 href={href}
-                target={href.startsWith("http") || href.endsWith(".pdf") ? "_blank" : undefined}
+                target={href.startsWith("http") || href.includes(".pdf") ? "_blank" : undefined}
                 rel="noreferrer"
                 className="panel-tile group flex items-center gap-3 rounded-2xl p-4 transition-all hover:-translate-y-0.5 hover:border-ember-400/40"
               >
@@ -88,8 +88,8 @@ export default function Contact() {
         </motion.a>
 
         <footer className="mt-24 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 text-xs text-fg-faint md:flex-row">
-          <p>© {new Date().getFullYear()} {profile.name}. Byggd för hand med React, Three.js och .NET på Azure.</p>
-          <p className="font-mono">Göteborg · 57.7°N 11.9°E</p>
+          <p>© {new Date().getFullYear()} {profile.name}. {t("contact.footer")}</p>
+          <p className="font-mono">{locale === "en" ? "Gothenburg" : "Göteborg"} · 57.7°N 11.9°E</p>
         </footer>
       </div>
     </section>

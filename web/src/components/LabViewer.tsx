@@ -3,6 +3,7 @@ import { Check, Copy, Download, ExternalLink, Send } from "lucide-react";
 import { AgentError, friendlyError } from "../lib/agent";
 import { downloadUrl, shareUrl, unlockBuild, type Build } from "../lib/lab";
 import { trackEvent } from "../lib/beacon";
+import { L, t } from "../lib/i18n";
 
 const input = "rounded-xl border border-white/10 bg-night-900 px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:border-ember-400/60 focus:outline-none";
 
@@ -15,7 +16,7 @@ export function LabFrame({ build, height = "h-[520px]" }: { build: Build; height
         <span className="size-2.5 rounded-full bg-[#ff5f57]" />
         <span className="size-2.5 rounded-full bg-[#febc2e]" />
         <span className="size-2.5 rounded-full bg-[#28c840]" />
-        <span className="ml-3 truncate font-mono text-[11px] text-white/50">{build.title} · sandlåda</span>
+        <span className="ml-3 truncate font-mono text-[11px] text-white/50">{build.title} · {t("viewer.sandbox")}</span>
       </div>
       {/* key = id: the document is mounted exactly once, so clicks inside never trigger a reload. */}
       <iframe key={build.id} title={build.title} sandbox="allow-scripts" srcDoc={build.html} className={`${height} w-full bg-night-950`} />
@@ -47,7 +48,7 @@ export function LabActions({ build, onUnlocked }: { build: Build; onUnlocked: ()
             onClick={() => trackEvent("lab_download")}
             className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-4 py-2 text-sm font-medium text-night-950"
           >
-            <Download className="size-4" /> Ladda ner HTML
+            <Download className="size-4" /> {t("viewer.download_html")}
           </a>
         ) : (
           <button
@@ -55,15 +56,15 @@ export function LabActions({ build, onUnlocked }: { build: Build; onUnlocked: ()
             onClick={() => setShowForm((s) => !s)}
             className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-4 py-2 text-sm font-medium text-night-950"
           >
-            <Download className="size-4" /> Ladda ner koden
+            <Download className="size-4" /> {t("viewer.download_code")}
           </button>
         )}
         <button type="button" onClick={copy} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-fg-muted hover:text-fg">
           {copied ? <Check className="size-4 text-emerald-300" /> : <Copy className="size-4" />}
-          {copied ? "Länk kopierad" : "Kopiera länk"}
+          {copied ? t("viewer.copied") : t("viewer.copy")}
         </button>
-        <a href={`/lab/${build.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-fg-muted hover:text-fg">
-          <ExternalLink className="size-4" /> Öppna i helskärm
+        <a href={L(`/lab/${build.id}`)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-fg-muted hover:text-fg">
+          <ExternalLink className="size-4" /> {t("viewer.fullscreen")}
         </a>
       </div>
       {showForm && !build.unlocked && <UnlockForm build={build} onUnlocked={onUnlocked} />}
@@ -99,18 +100,18 @@ export function UnlockForm({ build, onUnlocked }: { build: Build; onUnlocked: ()
   return (
     <form onSubmit={submit} className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <p className="text-sm font-medium text-fg">Ladda ner prototypen som en HTML-fil</p>
-        <p className="mt-1 text-xs text-fg-muted">Fyll i dina uppgifter så får du filen direkt. Haval får en kopia av idén och hör gärna av sig om du vill bygga vidare.</p>
+        <p className="text-sm font-medium text-fg">{t("viewer.unlock_title")}</p>
+        <p className="mt-1 text-xs text-fg-muted">{t("viewer.unlock_sub")}</p>
       </div>
       <input tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} name="website" aria-hidden="true" className="absolute -left-[9999px] h-px w-px opacity-0" />
-      <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Namn *" className={input} />
-      <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-post *" className={input} />
-      <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon (valfritt)" className={input} />
-      <input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Vad vill du göra med den? (valfritt)" className={input} />
+      <input required value={name} onChange={(e) => setName(e.target.value)} placeholder={t("viewer.name")} className={input} />
+      <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("viewer.email")} className={input} />
+      <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t("viewer.phone")} className={input} />
+      <input value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("viewer.message")} className={input} />
       <div className="flex items-center justify-between gap-3 sm:col-span-2">
-        <span className="text-xs text-fg-faint">{status === "error" ? <span className="text-red-300">{error}</span> : "Inga nyhetsbrev, bara ett personligt mejl om du vill."}</span>
+        <span className="text-xs text-fg-faint">{status === "error" ? <span className="text-red-300">{error}</span> : t("viewer.no_spam")}</span>
         <button type="submit" disabled={status === "sending"} className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-4 py-2 text-sm font-medium text-night-950 disabled:opacity-40">
-          <Send className="size-4" /> {status === "sending" ? "Skickar…" : "Lås upp & ladda ner"}
+          <Send className="size-4" /> {status === "sending" ? t("viewer.sending") : t("viewer.unlock")}
         </button>
       </div>
     </form>

@@ -75,11 +75,11 @@ public sealed class CvDocument(CvModel cv) : IDocument
             {
                 main.Spacing(14);
                 if (!string.IsNullOrWhiteSpace(cv.Summary))
-                    main.Item().Element(x => Section(x, "Profil", s => s.Item().Text(cv.Summary).FontSize(9.5f)));
+                    main.Item().Element(x => Section(x, cv.L.Profile, s => s.Item().Text(cv.Summary).FontSize(9.5f)));
 
                 var experience = cv.Experience.Where(e => !string.IsNullOrWhiteSpace(e.Title) || !string.IsNullOrWhiteSpace(e.Org)).ToList();
                 if (experience.Count > 0)
-                main.Item().Element(x => Section(x, "Erfarenhet", s =>
+                main.Item().Element(x => Section(x, cv.L.Experience, s =>
                 {
                     s.Spacing(10);
                     foreach (var e in experience)
@@ -107,7 +107,7 @@ public sealed class CvDocument(CvModel cv) : IDocument
 
                 var projects = cv.Projects.Where(p => !string.IsNullOrWhiteSpace(p.Title)).ToList();
                 if (projects.Count > 0)
-                main.Item().Element(x => Section(x, "Projekt", s =>
+                main.Item().Element(x => Section(x, cv.L.Projects, s =>
                 {
                     s.Spacing(8);
                     foreach (var p in projects)
@@ -140,7 +140,7 @@ public sealed class CvDocument(CvModel cv) : IDocument
                     .Where(g => g.Items.Count > 0)
                     .ToList();
                 if (skills.Count > 0)
-                side.Item().Element(x => Section(x, "Stack", s =>
+                side.Item().Element(x => Section(x, cv.L.Stack, s =>
                 {
                     s.Spacing(7);
                     foreach (var g in skills)
@@ -154,7 +154,7 @@ public sealed class CvDocument(CvModel cv) : IDocument
                 }));
                 var education = cv.Education.Where(e => !string.IsNullOrWhiteSpace(e.Program) || !string.IsNullOrWhiteSpace(e.School)).ToList();
                 if (education.Count > 0)
-                side.Item().Element(x => Section(x, "Utbildning", s =>
+                side.Item().Element(x => Section(x, cv.L.Education, s =>
                 {
                     s.Spacing(6);
                     foreach (var e in education)

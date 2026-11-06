@@ -6,12 +6,13 @@ import { useSiteContent } from "../lib/content";
 import { getPitch, pitchEvent, type PublicPitch } from "../lib/pitch";
 import { trackView } from "../lib/beacon";
 import type { Project } from "../data/content";
+import { L, locale, sitePath, t } from "../lib/i18n";
 
 const Terrain = lazy(() => import("../components/backgrounds/Terrain"));
 
 // /for/{slug}: the personal page for one company. Same look as the site, content curated for them.
 export default function PitchPage() {
-  const slug = window.location.pathname.split("/")[2] ?? "";
+  const slug = sitePath.split("/")[2] ?? "";
   const [pitch, setPitch] = useState<PublicPitch | null | undefined>(undefined);
   const { content } = useSiteContent();
 
@@ -61,31 +62,31 @@ export default function PitchPage() {
 
       <div className="relative z-10">
         <header className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5">
-          <a href="/" className="flex items-center gap-2 text-sm text-fg-muted hover:text-fg">
+          <a href={L("/")} className="flex items-center gap-2 text-sm text-fg-muted hover:text-fg">
             <span className="grid size-7 place-items-center rounded-md bg-ember-400 text-xs font-bold text-night-950">H</span>
             Haval Jalal
           </a>
-          <span className="font-mono text-xs text-fg-faint">Personlig sida</span>
+          <span className="font-mono text-xs text-fg-faint">{t("pitch.personal")}</span>
         </header>
 
         <main className="mx-auto max-w-5xl px-5 pb-24">
-          {pitch === undefined && <p className="pt-24 text-fg-muted">Hämtar…</p>}
+          {pitch === undefined && <p className="pt-24 text-fg-muted">{t("pitch.loading")}</p>}
           {pitch === null && (
             <div className="pt-32 text-center">
-              <h1 className="text-3xl font-semibold tracking-tight">Den här sidan finns inte längre</h1>
-              <p className="mt-3 text-fg-muted">Länken kan vara fel eller ha stängts.</p>
-              <a href="/" className="mt-8 inline-flex items-center gap-2 rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950">
-                Till havaljalal.se <ArrowRight className="size-4" />
+              <h1 className="text-3xl font-semibold tracking-tight">{t("pitch.gone")}</h1>
+              <p className="mt-3 text-fg-muted">{t("pitch.gone_sub")}</p>
+              <a href={L("/")} className="mt-8 inline-flex items-center gap-2 rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950">
+                {t("pitch.to_site")} <ArrowRight className="size-4" />
               </a>
             </div>
           )}
           {pitch && (
             <motion.div initial="hidden" animate="show" variants={stagger}>
               <motion.p variants={reveal} className="pt-16 font-mono text-xs uppercase tracking-[0.22em] text-ember-300 md:pt-24">
-                För {pitch.company}{pitch.role ? ` · ${pitch.role}` : ""}
+                {t("pitch.for")} {pitch.company}{pitch.role ? ` · ${pitch.role}` : ""}
               </motion.p>
               <motion.h1 variants={reveal} className="mt-4 max-w-3xl text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.03em] md:text-7xl">
-                {pitch.greeting || `Hej ${pitch.company}.`}
+                {pitch.greeting || `${t("pitch.hi")} ${pitch.company}.`}
               </motion.h1>
               <motion.div variants={reveal} className="mt-8 max-w-2xl space-y-4 text-lg leading-relaxed text-fg-muted">
                 {pitch.intro.split(/\n\s*\n/).map((para, i) => (
@@ -95,16 +96,16 @@ export default function PitchPage() {
 
               <motion.div variants={reveal} className="mt-8 flex flex-wrap gap-3">
                 <a href={cta} target={pitch.ctaUrl ? "_blank" : undefined} rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950 transition-colors hover:bg-ember-400">
-                  {pitch.ctaLabel || "Boka ett samtal"} <ArrowUpRight className="size-4" />
+                  {pitch.ctaLabel || t("pitch.cta")} <ArrowUpRight className="size-4" />
                 </a>
-                <a href="/api/cv.pdf?download=1" onClick={() => pitchEvent(pitch.slug, "cv")} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm text-fg transition-colors hover:border-ember-400/50">
-                  <FileDown className="size-4" /> Ladda ner CV
+                <a href={`/api/cv.pdf?download=1&lang=${locale}`} onClick={() => pitchEvent(pitch.slug, "cv")} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm text-fg transition-colors hover:border-ember-400/50">
+                  <FileDown className="size-4" /> {t("pitch.cv")}
                 </a>
               </motion.div>
 
               {pitch.highlights.length > 0 && (
                 <motion.section variants={reveal} className="panel-tile mt-16 rounded-2xl p-6 md:p-8">
-                  <h2 className="text-xs font-medium uppercase tracking-[0.18em] text-ember-300">Varför jag passar hos er</h2>
+                  <h2 className="text-xs font-medium uppercase tracking-[0.18em] text-ember-300">{t("pitch.why")}</h2>
                   <ul className="mt-4 grid gap-3 sm:grid-cols-2">
                     {pitch.highlights.map((h) => (
                       <li key={h} className="flex items-start gap-2.5 text-fg">
@@ -119,7 +120,7 @@ export default function PitchPage() {
               {projects.length > 0 && (
                 <section className="mt-16">
                   <motion.h2 variants={reveal} className="text-2xl font-semibold tracking-tight md:text-3xl">
-                    Projekt som är relevanta <span className="text-ember-300">för er.</span>
+                    {t("pitch.projects")} <span className="text-ember-300">{t("pitch.projects_accent")}</span>
                   </motion.h2>
                   <div className="mt-6 grid gap-5 md:grid-cols-2">
                     {projects.map(({ project: p, why }) => (
@@ -147,8 +148,8 @@ export default function PitchPage() {
                       </motion.article>
                     ))}
                   </div>
-                  <motion.a variants={reveal} href="/#projekt" className="mt-4 inline-flex items-center gap-1.5 text-sm text-ember-300 hover:underline">
-                    Alla projekt <ArrowRight className="size-4" />
+                  <motion.a variants={reveal} href={L("/#projekt")} className="mt-4 inline-flex items-center gap-1.5 text-sm text-ember-300 hover:underline">
+                    {t("pitch.all_projects")} <ArrowRight className="size-4" />
                   </motion.a>
                 </section>
               )}
@@ -157,13 +158,13 @@ export default function PitchPage() {
                 <div className="flex flex-wrap items-center justify-between gap-6">
                   <div className="max-w-xl">
                     <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-ember-300">
-                      <Sparkles className="size-3.5" /> Något ingen annan kandidat har
+                      <Sparkles className="size-3.5" /> {t("pitch.unique")}
                     </p>
-                    <h2 className="mt-2 text-xl font-semibold tracking-tight md:text-2xl">Beskriv något ni behöver. AI-agenten på min sajt bygger ett utkast på 20 sekunder.</h2>
-                    <p className="mt-2 text-sm text-fg-muted">Build Lab är byggt av mig, i .NET och React på Azure. Prototypen får ni behålla.</p>
+                    <h2 className="mt-2 text-xl font-semibold tracking-tight md:text-2xl">{t("pitch.lab_title")}</h2>
+                    <p className="mt-2 text-sm text-fg-muted">{t("pitch.lab_sub")}</p>
                   </div>
-                  <a href="/#build-lab" onClick={() => pitchEvent(pitch.slug, "lab")} className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950 transition-colors hover:bg-ember-400">
-                    Testa AI Build Lab <ArrowRight className="size-4" />
+                  <a href={L("/#build-lab")} onClick={() => pitchEvent(pitch.slug, "lab")} className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950 transition-colors hover:bg-ember-400">
+                    {t("pitch.lab_cta")} <ArrowRight className="size-4" />
                   </a>
                 </div>
               </motion.section>

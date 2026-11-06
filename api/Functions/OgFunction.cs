@@ -19,7 +19,8 @@ public class OgFunction(IContentStore content, IMemoryCache cache)
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "og.png")] HttpRequest req,
         CancellationToken ct)
     {
-        var site = await content.GetAsync(ct);
+        var lang = HavalApi.Cv.CvLabels.Normalise(req.Query["lang"]);
+        var site = lang == "sv" ? await content.GetAsync(ct) : (await content.GetAsync(lang, ct) ?? await content.GetAsync(ct));
         var title = Clip(req.Query["t"].ToString(), 80) ?? site.Profile.Name;
         var subtitle = Clip(req.Query["s"].ToString(), 120) ?? $"{site.Profile.Role} · {site.Profile.Location}";
         var tagline = req.Query.ContainsKey("t") ? "" : site.Profile.Tagline;

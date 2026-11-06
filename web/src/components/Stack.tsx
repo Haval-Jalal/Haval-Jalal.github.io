@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import Section, { reveal, stagger } from "./Section";
 import { useSiteContent } from "../lib/content";
+import { t } from "../lib/i18n";
 
 export default function Stack() {
   const { skills } = useSiteContent().content;
@@ -8,13 +9,13 @@ export default function Stack() {
     <Section
       id="stack"
       tone="a"
-      eyebrow="Stack"
+      eyebrow={t("stack.eyebrow")}
       title={
         <>
-          Verktygen jag bygger <span className="text-ember-300">på riktigt</span> med.
+          {t("stack.title_a")} <span className="text-ember-300">{t("stack.title_accent")}</span> {t("stack.title_b")}
         </>
       }
-      lede="Jag kombinerar mitt industriella tankesätt med moderna utvecklingsmetoder för att bygga skalbara, eleganta och användarfokuserade applikationer."
+      lede={t("stack.lede")}
     >
       <motion.div
         initial="hidden"

@@ -14,6 +14,7 @@ import {
 import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { useSiteContent } from "../lib/content";
 import { relativeTime, useGitHub, type GitHubActivity } from "../lib/github";
+import { t } from "../lib/i18n";
 
 type Props = {
   mouseX: MotionValue<number>;
@@ -65,13 +66,13 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
 
 function Sidebar({ repoCount }: { repoCount: number }) {
   const items = [
-    { icon: LayoutDashboard, label: "Översikt", active: true },
-    { icon: FolderGit2, label: "Projekt", badge: String(repoCount) },
-    { icon: Code2, label: "Stack" },
-    { icon: Briefcase, label: "Erfarenhet" },
-    { icon: GraduationCap, label: "Utbildning" },
-    { icon: Sparkles, label: "Build Lab", badge: "Ny" },
-    { icon: Mail, label: "Kontakt" },
+    { icon: LayoutDashboard, label: t("os.overview"), active: true },
+    { icon: FolderGit2, label: t("os.projects"), badge: String(repoCount) },
+    { icon: Code2, label: t("os.stack") },
+    { icon: Briefcase, label: t("os.experience") },
+    { icon: GraduationCap, label: t("os.education") },
+    { icon: Sparkles, label: t("os.lab"), badge: t("os.new") },
+    { icon: Mail, label: t("os.contact") },
   ];
   return (
     <aside className="border-r border-white/5 p-4 max-md:hidden">
@@ -106,7 +107,7 @@ function Sidebar({ repoCount }: { repoCount: number }) {
 
 type PanelProject = { slug: string; title: string; status?: string; year: string };
 
-const STATUS: Record<string, string> = { live: "live", delivered: "levererad", pilot: "pilot", wip: "pågår", concept: "koncept", school: "skola" };
+const STATUS: Record<string, string> = { live: t("status.live"), delivered: t("status.delivered"), pilot: t("status.pilot"), wip: t("status.wip"), concept: t("status.concept"), school: t("status.school") };
 
 function Main({ data, live, projects }: { data: GitHubActivity; live: boolean; projects: PanelProject[] }) {
   const latest = projects[0];
@@ -116,11 +117,11 @@ function Main({ data, live, projects }: { data: GitHubActivity; live: boolean; p
       <div className="flex items-center gap-3 border-b border-white/5 px-5 py-3 text-xs text-fg-muted">
         <span>Haval OS</span>
         <span className="text-fg-faint">/</span>
-        <span className="text-fg">Översikt</span>
+        <span className="text-fg">{t("os.overview")}</span>
         <div className="ml-auto flex items-center gap-2">
           <div className="flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1.5 max-sm:hidden">
             <Search className="size-3.5" />
-            <span className="text-fg-faint">Sök projekt, teknik…</span>
+            <span className="text-fg-faint">{t("os.search")}</span>
             <kbd className="ml-4 font-mono text-[10px] text-fg-faint">⌘K</kbd>
           </div>
           <span className="grid size-7 place-items-center rounded-full bg-white/[0.05]">
@@ -135,32 +136,32 @@ function Main({ data, live, projects }: { data: GitHubActivity; live: boolean; p
       <div className="p-5">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold tracking-tight text-fg">Översikt</h3>
+            <h3 className="text-lg font-semibold tracking-tight text-fg">{t("os.overview")}</h3>
             <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-muted">
               <span className={`size-1.5 rounded-full ${live ? "bg-emerald-400" : "bg-fg-faint"}`} />
-              {live ? `Live från GitHub · ${relativeTime(data.updatedAt)}` : "Demo-data · väntar på API"}
+              {live ? `${t("os.live")} · ${relativeTime(data.updatedAt)}` : t("os.demo")}
             </p>
           </div>
           <div className="flex gap-2 text-xs">
-            <span className="rounded-full border border-white/10 px-3 py-1.5 text-fg-muted">Senaste 90 dagarna</span>
+            <span className="rounded-full border border-white/10 px-3 py-1.5 text-fg-muted">{t("os.last90")}</span>
             <a href="#projekt" className="pointer-events-auto rounded-full bg-ember-500 px-3 py-1.5 font-medium text-night-950">
-              Se projekten
+              {t("os.see_projects")}
             </a>
           </div>
         </div>
 
         {/* KPI tiles */}
         <div className="grid grid-cols-4 gap-3 max-md:grid-cols-2">
-          <Kpi icon={FolderGit2} label="Projekt" value={String(projects.length)} delta={latest ? `senast: ${latest.title}` : "—"} />
-          <Kpi icon={GitCommitHorizontal} label="Commits · 90 d" value={String(data.commits90d)} delta={live ? "live från GitHub" : "demo"} />
-          <Kpi icon={Activity} label="År på Volvo Cars" value="10+" delta="teamledarskap" />
+          <Kpi icon={FolderGit2} label={t("os.projects")} value={String(projects.length)} delta={latest ? `${t("os.latest")}: ${latest.title}` : "—"} />
+          <Kpi icon={GitCommitHorizontal} label={t("os.commits90")} value={String(data.commits90d)} delta={live ? t("os.live_short") : t("os.demo_short")} />
+          <Kpi icon={Activity} label={t("os.years_volvo")} value="10+" delta={t("os.team_lead")} />
           <div className="rounded-xl bg-gradient-to-br from-ember-400 to-ember-600 p-4 text-night-950">
             <div className="flex items-center justify-between text-xs font-medium">
-              <span>Status</span>
+              <span>{t("os.status")}</span>
               <span className="rounded-full bg-night-950/15 px-2 py-0.5 font-mono text-[10px]">LIVE</span>
             </div>
-            <p className="mt-3 text-xl font-semibold leading-tight tracking-tight">Öppen för uppdrag</p>
-            <p className="mt-1 text-[11px] opacity-80">Göteborg · remote fungerar</p>
+            <p className="mt-3 text-xl font-semibold leading-tight tracking-tight">{t("os.open")}</p>
+            <p className="mt-1 text-[11px] opacity-80">{t("os.open_sub")}</p>
           </div>
         </div>
 
@@ -169,8 +170,8 @@ function Main({ data, live, projects }: { data: GitHubActivity; live: boolean; p
           <div className="panel-tile rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-fg">Commits per vecka</p>
-                <p className="text-[11px] text-fg-faint">Senaste 12 veckorna</p>
+                <p className="text-sm font-medium text-fg">{t("os.commits_week")}</p>
+                <p className="text-[11px] text-fg-faint">{t("os.last12")}</p>
               </div>
               <div className="flex gap-1 text-[11px]">
                 <span className="rounded-full bg-ember-500 px-2 py-0.5 text-night-950">.NET</span>
@@ -181,7 +182,7 @@ function Main({ data, live, projects }: { data: GitHubActivity; live: boolean; p
             <Bars values={data.weeklyCommits} />
           </div>
           <div className="panel-tile rounded-xl p-4">
-            <p className="text-sm font-medium text-fg">Projekt</p>
+            <p className="text-sm font-medium text-fg">{t("os.projects")}</p>
             <ul className="mt-3 space-y-2">
               {projects.slice(0, 4).map((p) => (
                 <li key={p.slug} className="flex items-center gap-2 text-xs">

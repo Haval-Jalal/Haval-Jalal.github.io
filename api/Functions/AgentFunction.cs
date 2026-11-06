@@ -47,7 +47,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         try
         {
             var turns = dto.Messages.Select(m => new ChatTurn(m.Role == "assistant" ? "assistant" : "user", m.Text.Trim())).ToList();
-            var reply = await agent.ChatAsync(turns, ct);
+            var reply = await agent.ChatAsync(turns, dto.Lang == "en" ? "en" : "sv", ct);
             return new OkObjectResult(new { reply = reply.Text, refused = reply.Refused });
         }
         catch (AnthropicApiException ex)
@@ -92,7 +92,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
             await WriteEvent(res, "mode", new { mode = AgentGuard.ModeName(mode) }, ct);
             Usage? usageInfo = null;
             var full = new StringBuilder();
-            await foreach (var delta in agent.BuildStreamAsync(idea, eco, u => usageInfo = u, ct))
+            await foreach (var delta in agent.BuildStreamAsync(idea, eco, dto?.Lang == "en" ? "en" : "sv", u => usageInfo = u, ct))
             {
                 full.Append(delta);
                 await WriteEvent(res, "delta", new { t = delta }, ct);
@@ -204,7 +204,11 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
 
     private static string? Clip(string? s, int max) => string.IsNullOrWhiteSpace(s) ? null : s.Trim()[..Math.Min(s.Trim().Length, max)];
 
-    private sealed class ChatDto { [JsonPropertyName("messages")] public List<ChatMessageDto>? Messages { get; set; } }
+    private sealed class ChatDto
+    {
+        [JsonPropertyName("messages")] public List<ChatMessageDto>? Messages { get; set; }
+        [JsonPropertyName("lang")] public string? Lang { get; set; }
+    }
     private sealed class ChatMessageDto
     {
         [JsonPropertyName("role")] public string Role { get; set; } = "user";
@@ -214,6 +218,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
     {
         [JsonPropertyName("idea")] public string? Idea { get; set; }
         [JsonPropertyName("visitor")] public string? Visitor { get; set; }
+        [JsonPropertyName("lang")] public string? Lang { get; set; }
     }
     private sealed class LeadDto
     {

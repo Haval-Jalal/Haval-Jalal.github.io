@@ -15,7 +15,7 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
 {
     public const string ChatModel = "claude-sonnet-5-5";
 
-    public async Task<ChatReply> ChatAsync(IReadOnlyList<ChatTurn> turns, CancellationToken ct)
+    public async Task<ChatReply> ChatAsync(IReadOnlyList<ChatTurn> turns, string lang, CancellationToken ct)
     {
         var site = await content.GetAsync(ct);
         var messages = turns
@@ -30,7 +30,7 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
             Model = ChatModel,
             MaxTokens = 1024,
             OutputConfig = new OutputConfig { Effort = Effort.Low },
-            System = new List<TextBlockParam> { new() { Text = Prompts.Chat(site), CacheControl = new CacheControlEphemeral() } },
+            System = new List<TextBlockParam> { new() { Text = Prompts.Chat(site, lang), CacheControl = new CacheControlEphemeral() } },
             Messages = messages,
         }, cancellationToken: ct);
 
@@ -42,6 +42,40 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
 
         var text = string.Concat(response.Content.Select(b => b.Value).OfType<TextBlock>().Select(t => t.Text));
         return new ChatReply(text, ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens, false);
+    }
+
+    // Translates every human-readable string of the content document; structure, keys, slugs,
+    // links, tags, years, images and settings stay exactly as they are.
+    public async Task<SiteContent> TranslateAsync(SiteContent source, string lang, CancellationToken ct)
+    {
+        var language = lang == "en" ? "English" : lang;
+        var json = System.Text.Json.JsonSerializer.Serialize(source, JsonFileContentStore.Json);
+        var response = await client.Messages.Create(new MessageCreateParams
+        {
+            Model = ChatModel,
+            MaxTokens = 16000,
+            OutputConfig = new OutputConfig { Effort = Effort.Low },
+            System = new List<TextBlockParam> { new() { Text = $$"""
+                You translate the content document of Haval Jalal's portfolio site from Swedish to {{language}}.
+                Return ONLY the translated JSON document (no code fences, no commentary), with exactly the same structure
+                and keys. Translate every human-readable string: profile texts, headline, project titles only if they are
+                generic words (keep product names), taglines, summaries, highlights, journey/education texts, skill group
+                titles, nav labels. Keep unchanged: slugs, URLs, e-mail addresses, hrefs, tags/technology names, years,
+                periods, image paths, status codes, settings, dates. Keep the tone: warm, concrete, professional, first
+                person where the source is first person. Use natural {{language}}, not word-for-word.
+                """ } },
+            Messages = [new UserMessageParam { Content = json }],
+        }, cancellationToken: ct);
+        await guard.RecordAsync("translate", ChatModel, response.Usage.InputTokens, response.Usage.OutputTokens,
+            response.Usage.CacheReadInputTokens ?? 0, response.Usage.CacheCreationInputTokens ?? 0, response.StopReason == "max_tokens", ct);
+        if (response.StopReason == "max_tokens") throw new InvalidOperationException("Translation was cut off");
+
+        var text = string.Concat(response.Content.Select(b => b.Value).OfType<TextBlock>().Select(t => t.Text));
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+        if (start < 0 || end <= start) throw new InvalidOperationException("Translation was not JSON");
+        return System.Text.Json.JsonSerializer.Deserialize<SiteContent>(text[start..(end + 1)], JsonFileContentStore.Json)
+               ?? throw new InvalidOperationException("Translation was empty");
     }
 
     public sealed record PitchDraft(string Greeting, string Intro, List<PitchProject> Projects, List<string> Highlights, string Closing);
@@ -89,6 +123,7 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
     public async IAsyncEnumerable<string> BuildStreamAsync(
         string idea,
         bool eco,
+        string lang,
         Action<Usage> onDone,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
     {
@@ -112,7 +147,7 @@ public sealed class AgentService(AnthropicClient client, IContentStore content, 
             {
                 Effort = eco ? Effort.Low : guard.BuildEffort switch { "low" => Effort.Low, "high" => Effort.High, _ => Effort.Medium },
             },
-            System = new List<TextBlockParam> { new() { Text = Prompts.Build(site, eco), CacheControl = new CacheControlEphemeral() } },
+            System = new List<TextBlockParam> { new() { Text = Prompts.Build(site, eco, lang), CacheControl = new CacheControlEphemeral() } },
             Messages = [new UserMessageParam { Content = $"Idé: {idea}" }],
         }, cancellationToken: deadline.Token);
 

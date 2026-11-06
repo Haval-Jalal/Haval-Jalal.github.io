@@ -13,6 +13,7 @@ import { BACKGROUNDS, currentBackground, type BackgroundKey } from "./components
 import { useSiteContent } from "./lib/content";
 import { attachGlobalSfx, setSoundEnabled } from "./lib/sound";
 import { trackView } from "./lib/beacon";
+import { t } from "./lib/i18n";
 
 // Accent colour for the italic headline word, per background.
 const ACCENT: Record<string, string> = {
@@ -125,13 +126,13 @@ export default function App() {
                 className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 ${primaryBtn}`}
               >
                 <Sparkles className="size-4" />
-                Testa AI Build Lab
+                {t("hero.lab")}
               </a>
               <a
                 href="#projekt"
                 className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium backdrop-blur transition-colors ${secondaryBtn}`}
               >
-                Se projekten
+                {t("hero.projects")}
                 <ArrowRight className="size-4" />
               </a>
             </motion.div>

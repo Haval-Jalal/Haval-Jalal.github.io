@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { defaultContent, type SiteContent } from "../data/content";
+import { locale } from "./i18n";
 
 type ContentState = { content: SiteContent; source: "api" | "bundle"; refresh: () => Promise<void> };
 
@@ -7,7 +8,7 @@ const ContentContext = createContext<ContentState>({ content: defaultContent, so
 
 export async function fetchContent(): Promise<SiteContent | null> {
   try {
-    const r = await fetch("/api/content", { headers: { Accept: "application/json" } });
+    const r = await fetch(`/api/content?lang=${locale}`, { headers: { Accept: "application/json" } });
     if (!r.ok) return null;
     return (await r.json()) as SiteContent;
   } catch {
