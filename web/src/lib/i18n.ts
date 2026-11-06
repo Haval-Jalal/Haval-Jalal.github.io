@@ -10,6 +10,7 @@ export const sitePath = locale === "en" ? rawPath.replace(/^\/en/, "") || "/" : 
 
 // Localised link: L("/cv") -> "/cv" or "/en/cv"; L("/") -> "/" or "/en"; anchors pass through.
 export function L(path: string): string {
+  if (path === "/boka") return locale === "en" ? "/en/book" : "/boka";
   if (locale === "sv" || !path.startsWith("/")) return path;
   if (path === "/") return "/en";
   if (path.startsWith("/#")) return "/en" + path.slice(1);
@@ -254,6 +255,27 @@ const sv = {
   "cv.remove": "Ta bort",
   "cv.add": "Lägg till",
 
+  // Booking
+  "book.label": "Bokning",
+  "book.eyebrow": "Boka",
+  "book.title": "Boka ett samtal",
+  "book.closed": "Bokningen är stängd just nu",
+  "book.closed_sub": "Hör av dig via kontaktsidan så hittar vi en tid.",
+  "book.tz": "Tidszon",
+  "book.none": "Inga lediga tider just nu. Prova igen om några dagar eller hör av dig direkt.",
+  "book.pick_day": "Välj dag",
+  "book.pick_time": "Välj tid",
+  "book.choose_first": "Välj en tid till vänster",
+  "book.note": "Vad vill du prata om? (valfritt)",
+  "book.confirm": "Boka tiden",
+  "book.privacy": "Du får en bekräftelse med kalenderinbjudan. Inga nyhetsbrev.",
+  "book.taken": "Tiden hann bli upptagen. Välj en annan.",
+  "book.done": "Bokat!",
+  "book.done_mail": "En bekräftelse med kalenderinbjudan är på väg till din e-post.",
+  "book.done_nomail": "Haval har fått bokningen och hör av sig med detaljer.",
+  "contact.book": "Boka ett samtal",
+  "contact.book_sub": "Välj en ledig tid",
+
   // Pitch page
   "pitch.personal": "Personlig sida",
   "pitch.loading": "Hämtar…",
@@ -491,6 +513,26 @@ const en: Record<keyof typeof sv, string> = {
   "cv.down": "Move down",
   "cv.remove": "Remove",
   "cv.add": "Add",
+
+  "book.label": "Booking",
+  "book.eyebrow": "Book",
+  "book.title": "Book a call",
+  "book.closed": "Booking is closed right now",
+  "book.closed_sub": "Get in touch via the contact section and we'll find a time.",
+  "book.tz": "Time zone",
+  "book.none": "No free slots right now. Try again in a few days or get in touch directly.",
+  "book.pick_day": "Pick a day",
+  "book.pick_time": "Pick a time",
+  "book.choose_first": "Pick a time on the left",
+  "book.note": "What would you like to talk about? (optional)",
+  "book.confirm": "Book this slot",
+  "book.privacy": "You get a confirmation with a calendar invite. No newsletters.",
+  "book.taken": "That slot was just taken. Please pick another.",
+  "book.done": "Booked!",
+  "book.done_mail": "A confirmation with a calendar invite is on its way to your inbox.",
+  "book.done_nomail": "Haval has received the booking and will follow up with details.",
+  "contact.book": "Book a call",
+  "contact.book_sub": "Pick a free slot",
 
   "pitch.personal": "Personal page",
   "pitch.loading": "Loading…",

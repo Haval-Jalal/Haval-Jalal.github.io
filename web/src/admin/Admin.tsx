@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical } from "lucide-react";
+import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical, CalendarDays } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
 import type { JourneyStep, Project, SiteContent } from "../data/content";
 import { STATUS_LABEL } from "../components/Projects";
 import Pitches from "./Pitches";
 import Builds from "./Builds";
+import Bookings from "./Bookings";
 
-type Tab = "overview" | "content" | "pitches" | "lab" | "leads" | "ai" | "security" | "settings";
+type Tab = "overview" | "content" | "pitches" | "lab" | "bookings" | "leads" | "ai" | "security" | "settings";
 
 export default function Admin() {
   const auth = useAuth();
@@ -43,6 +44,7 @@ export default function Admin() {
     { key: "content", label: "Innehåll", icon: FileText },
     { key: "pitches", label: "Rekryterare", icon: Target },
     { key: "lab", label: "Build Lab", icon: FlaskConical },
+    { key: "bookings", label: "Bokning", icon: CalendarDays },
     { key: "leads", label: "Leads", icon: Inbox },
     { key: "ai", label: "AI & kostnad", icon: Cpu },
     { key: "security", label: "Säkerhet", icon: ShieldAlert },
@@ -86,6 +88,7 @@ export default function Admin() {
           {tab === "content" && <ContentEditor />}
           {tab === "pitches" && <Pitches />}
           {tab === "lab" && <Builds />}
+          {tab === "bookings" && <Bookings />}
           {tab === "leads" && <Leads />}
           {tab === "ai" && <AiUsage />}
           {tab === "security" && <Security me={auth.user.userId} />}

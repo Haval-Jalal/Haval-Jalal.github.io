@@ -297,3 +297,57 @@ public sealed class CosmosPitchStore(CosmosDb db) : IPitchStore
         await SaveAsync(pitch with { Stats = pitch.Stats.With(kind, visitor, DateTime.UtcNow) }, ct);
     }
 }
+
+public sealed class CosmosBookingStore(CosmosDb db) : IBookingStore
+{
+    private const string SettingsPk = "settings";
+    private const string BookingPk = "booking";
+
+    public async Task<BookingSettings> GetSettingsAsync(CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Bookings);
+        try
+        {
+            var r = await container.ReadItemAsync<CosmosDoc<BookingSettings>>("settings", new PartitionKey(SettingsPk), cancellationToken: ct);
+            return r.Resource.Data;
+        }
+        catch (CosmosException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return BookingSettings.Default;
+        }
+    }
+
+    public async Task SaveSettingsAsync(BookingSettings settings, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Bookings);
+        await container.UpsertItemAsync(new CosmosDoc<BookingSettings>("settings", SettingsPk, DateTime.UtcNow, settings), new PartitionKey(SettingsPk), cancellationToken: ct);
+    }
+
+    public async Task<List<Booking>> ListAsync(DateTime fromUtc, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Bookings);
+        var query = new QueryDefinition("SELECT * FROM c WHERE c.data.start >= @from ORDER BY c.data.start ASC").WithParameter("@from", fromUtc);
+        var rows = await CosmosDb.QueryAsync<CosmosDoc<Booking>>(container, query, ct, BookingPk);
+        return rows.Select(r => r.Data).ToList();
+    }
+
+    public async Task<Booking?> GetAsync(string id, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Bookings);
+        try
+        {
+            var r = await container.ReadItemAsync<CosmosDoc<Booking>>(id, new PartitionKey(BookingPk), cancellationToken: ct);
+            return r.Resource.Data;
+        }
+        catch (CosmosException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task SaveAsync(Booking booking, CancellationToken ct)
+    {
+        var container = await db.ContainerAsync(CosmosDb.Bookings);
+        await container.UpsertItemAsync(new CosmosDoc<Booking>(booking.Id, BookingPk, booking.Ts, booking), new PartitionKey(BookingPk), cancellationToken: ct);
+    }
+}

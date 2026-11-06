@@ -1,15 +1,21 @@
 import { motion } from "motion/react";
-import { ArrowUpRight, FileDown, Linkedin, Mail, MessageSquare } from "lucide-react";
+import { ArrowUpRight, CalendarDays, FileDown, Linkedin, Mail, MessageSquare } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getBookingInfo } from "../lib/booking";
 import { reveal, stagger } from "./Section";
 import { useSiteContent } from "../lib/content";
 import { L, locale, t } from "../lib/i18n";
 
 export default function Contact() {
   const { profile } = useSiteContent().content;
+  const [bookable, setBookable] = useState(false);
+  useEffect(() => {
+    void getBookingInfo().then((i) => setBookable(!!i?.enabled));
+  }, []);
   const links = [
     { icon: Linkedin, label: "LinkedIn", href: profile.links.linkedin || "#", sub: profile.links.linkedin ? t("contact.linkedin_sub") : t("contact.coming") },
     { icon: Mail, label: t("contact.email"), href: profile.links.email ? `mailto:${profile.links.email}` : "#", sub: profile.links.email || t("contact.coming") },
-    { icon: MessageSquare, label: t("contact.chat"), href: "#build-lab", sub: t("contact.chat_sub") },
+    ...(bookable ? [{ icon: CalendarDays, label: t("contact.book"), href: L("/boka"), sub: t("contact.book_sub") }] : [{ icon: MessageSquare, label: t("contact.chat"), href: "#build-lab", sub: t("contact.chat_sub") }]),
     { icon: FileDown, label: t("contact.cv"), href: `/api/cv.pdf?lang=${locale}`, sub: t("contact.cv_sub") },
   ];
   const tool = { label: t("contact.tool"), href: L("/cv"), sub: t("contact.tool_sub") };

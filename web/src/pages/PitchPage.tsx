@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, Check, FileDown, Sparkles } from "lucide-reac
 import { reveal, stagger } from "../components/Section";
 import { useSiteContent } from "../lib/content";
 import { getPitch, pitchEvent, type PublicPitch } from "../lib/pitch";
+import { getBookingInfo } from "../lib/booking";
 import { trackView } from "../lib/beacon";
 import type { Project } from "../data/content";
 import { L, locale, sitePath, t } from "../lib/i18n";
@@ -14,6 +15,7 @@ const Terrain = lazy(() => import("../components/backgrounds/Terrain"));
 export default function PitchPage() {
   const slug = sitePath.split("/")[2] ?? "";
   const [pitch, setPitch] = useState<PublicPitch | null | undefined>(undefined);
+  const [bookable, setBookable] = useState(false);
   const { content } = useSiteContent();
 
   const rawX = useMotionValue(0);
@@ -27,6 +29,7 @@ export default function PitchPage() {
     meta.content = "noindex";
     document.head.appendChild(meta);
     trackView();
+    void getBookingInfo().then((i) => setBookable(!!i?.enabled));
     getPitch(slug)
       .then((p) => {
         setPitch(p);
@@ -51,7 +54,7 @@ export default function PitchPage() {
     .map((pp) => ({ why: pp.why, project: content.projects.find((p) => p.slug === pp.slug) }))
     .filter((x): x is { why: string; project: Project } => !!x.project);
   const email = content.profile.links.email;
-  const cta = pitch?.ctaUrl || (email ? `mailto:${email}` : "/#kontakt");
+  const cta = pitch?.ctaUrl || (bookable ? L("/boka") : email ? `mailto:${email}` : L("/#kontakt"));
 
   return (
     <div className="min-h-screen bg-night-950 text-fg">

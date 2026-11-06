@@ -3,15 +3,20 @@ using Microsoft.Extensions.Logging;
 
 namespace HavalApi.Mail;
 
+public sealed record MailAttachment(string FileName, string ContentType, byte[] Content);
+
 public interface IMailer
 {
     bool Enabled { get; }
-    Task SendAsync(string subject, string text, CancellationToken ct);
+    // To Haval (LEAD_NOTIFY_EMAIL).
+    Task SendAsync(string subject, string text, CancellationToken ct, MailAttachment? attachment = null);
+    // To anyone else (booking confirmations). Needs a verified sending domain at Resend.
+    Task SendToAsync(string to, string subject, string text, CancellationToken ct, MailAttachment? attachment = null);
 }
 
 // Sends through Resend (https://resend.com, free tier). Needs RESEND_API_KEY and LEAD_NOTIFY_EMAIL.
 // Until a domain is verified, Resend only delivers "onboarding@resend.dev" to the account owner's
-// own address, which is exactly the use case here.
+// own address, which covers the lead and booking notifications to Haval.
 public sealed class ResendMailer(IHttpClientFactory http, ILogger<ResendMailer> log) : IMailer
 {
     private static readonly string? ApiKey = Environment.GetEnvironmentVariable("RESEND_API_KEY");
@@ -20,16 +25,26 @@ public sealed class ResendMailer(IHttpClientFactory http, ILogger<ResendMailer> 
 
     public bool Enabled => !string.IsNullOrWhiteSpace(ApiKey) && !string.IsNullOrWhiteSpace(To);
 
-    public async Task SendAsync(string subject, string text, CancellationToken ct)
+    public Task SendAsync(string subject, string text, CancellationToken ct, MailAttachment? attachment = null) =>
+        SendToAsync(To ?? "", subject, text, ct, attachment);
+
+    public async Task SendToAsync(string to, string subject, string text, CancellationToken ct, MailAttachment? attachment = null)
     {
-        if (!Enabled)
+        if (!Enabled || string.IsNullOrWhiteSpace(to))
         {
-            log.LogInformation("Mail not configured; would have sent: {Subject}", subject);
+            log.LogInformation("Mail not configured; would have sent to {To}: {Subject}", to, subject);
             return;
         }
         var client = http.CreateClient("resend");
-        var res = await client.PostAsJsonAsync("emails", new { from = From, to = new[] { To }, subject, text }, ct);
+        object payload = attachment is null
+            ? new { from = From, to = new[] { to }, subject, text }
+            : new
+            {
+                from = From, to = new[] { to }, subject, text,
+                attachments = new[] { new { filename = attachment.FileName, content = Convert.ToBase64String(attachment.Content), content_type = attachment.ContentType } },
+            };
+        var res = await client.PostAsJsonAsync("emails", payload, ct);
         if (!res.IsSuccessStatusCode)
-            log.LogWarning("Resend returned {Status}: {Body}", res.StatusCode, await res.Content.ReadAsStringAsync(ct));
+            log.LogWarning("Resend returned {Status} for {To}: {Body}", res.StatusCode, to, await res.Content.ReadAsStringAsync(ct));
     }
 }
