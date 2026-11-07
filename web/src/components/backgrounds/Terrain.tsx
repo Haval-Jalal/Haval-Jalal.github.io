@@ -79,8 +79,12 @@ export default function Terrain({ mouseX, mouseY }: Props) {
     const clock = new THREE.Clock();
     const look = new THREE.Vector3();
     let raf = 0;
-    const frame = () => {
+    let last = 0;
+    const minFrame = mobile || (navigator.hardwareConcurrency ?? 8) <= 4 ? 1000 / 30 : 0;
+    const frame = (now = 0) => {
       raf = requestAnimationFrame(frame);
+      if (now - last < minFrame) return;
+      last = now;
       if (!reduced) uniforms.uTime.value = clock.getElapsedTime();
       const mx = mouseX.get();
       const my = mouseY.get();

@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import Lenis from "lenis";
 import { motion, useMotionValue, useSpring, type Variants } from "motion/react";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -10,7 +10,6 @@ import Stack from "./components/Stack";
 import BuildLab from "./components/BuildLab";
 import Gallery from "./components/Gallery";
 import AgentWidget from "./components/Agent";
-import Agent3D from "./components/Agent3D";
 import Contact from "./components/Contact";
 import { BACKGROUNDS, currentBackground, type BackgroundKey } from "./components/backgrounds";
 import { useSiteContent } from "./lib/content";
@@ -161,12 +160,16 @@ export default function App() {
       {import.meta.env.DEV && <BackgroundSwitcher active={bgKey} />}
       {import.meta.env.DEV && new URLSearchParams(window.location.search).get("agent") === "big" && (
         <div className="fixed left-10 top-28 z-[100] rounded-3xl bg-night-950 p-8">
-          <Agent3D size={360} mood={(new URLSearchParams(window.location.search).get("mood") as "idle" | "thinking" | "speaking" | "happy") ?? "idle"} />
+          <Suspense fallback={null}>
+            <Agent3DDev size={360} mood={(new URLSearchParams(window.location.search).get("mood") as "idle" | "thinking" | "speaking" | "happy") ?? "idle"} />
+          </Suspense>
         </div>
       )}
     </div>
   );
 }
+
+const Agent3DDev = lazy(() => import("./components/Agent3D"));
 
 // Dev-only picker while we decide on the hero background.
 function BackgroundSwitcher({ active }: { active: BackgroundKey }) {

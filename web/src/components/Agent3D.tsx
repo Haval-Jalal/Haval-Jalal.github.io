@@ -5,7 +5,13 @@ import { AgentFace } from "./Agent";
 export type Mood = "idle" | "thinking" | "speaking" | "happy";
 
 export type IntroPhase = "buried" | "jump" | "shake" | "reveal" | "present" | "done";
-type Props = { mood?: Mood; size?: number; className?: string; bounce?: number; intro?: boolean; onPhase?: (phase: IntroPhase) => void };
+export type Agent3DProps = { mood?: Mood; size?: number; className?: string; bounce?: number; intro?: boolean; onPhase?: (phase: IntroPhase) => void };
+
+// Phones, tablets and small laptops: half the frame rate and a lower pixel ratio keep the
+// character smooth without eating the main thread.
+export function lowPower(): boolean {
+  return (navigator.hardwareConcurrency ?? 8) <= 4 || window.matchMedia("(pointer: coarse)").matches;
+}
 
 // Digital Haval as a little 3D character: a glossy dark sphere with an ember core, big glowing
 // eyes that look at the pointer, a rotating ring of light, squash-and-stretch when touched,
@@ -49,7 +55,7 @@ function glowMaterial(color: number, intensity: number, power: number) {
   });
 }
 
-export default function Agent3D({ mood = "idle", size = 68, className = "", bounce = 0, intro = false, onPhase }: Props) {
+export default function Agent3D({ mood = "idle", size = 68, className = "", bounce = 0, intro = false, onPhase }: Agent3DProps) {
   const host = useRef<HTMLDivElement>(null);
   const moodRef = useRef<Mood>(mood);
   const bounceRef = useRef(0);
@@ -74,7 +80,7 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
     }
     const pad = 2.1; // canvas is this many times the character's size, centred on it
     const px = Math.round(size * pad);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, lowPower() ? 1.5 : 2));
     renderer.setSize(px, px);
     Object.assign(renderer.domElement.style, { position: "absolute", left: `${(size - px) / 2}px`, top: `${(size - px) / 2}px`, pointerEvents: "none" });
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -247,12 +253,17 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
     let last = performance.now();
     let t = 0;
     let visible = true;
+    let onScreen = true;
+    const io = new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; last = performance.now(); }, { threshold: 0 });
+    io.observe(el);
     const look = { x: 0, y: 0 };
     const squash = { v: 1, vel: 0 };
 
+    const minFrame = lowPower() ? 1000 / 30 : 0;
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      if (!visible) return;
+      if (!visible || !onScreen) return;
+      if (now - last < minFrame) return;
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       t += dt;
@@ -401,6 +412,7 @@ export default function Agent3D({ mood = "idle", size = 68, className = "", boun
 
     return () => {
       cancelAnimationFrame(raf);
+      io.disconnect();
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("pointermove", onMove);
       document.removeEventListener("mouseleave", onLeave);

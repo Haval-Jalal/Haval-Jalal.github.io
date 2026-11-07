@@ -1,8 +1,18 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Loader2, Send, Trash2, X } from "lucide-react";
 import { onAgentOpen, openAgent, useDigitalHaval } from "../lib/chat";
-import Agent3D, { type IntroPhase } from "./Agent3D";
+import type { Agent3DProps, IntroPhase } from "./Agent3D";
+
+// three.js is 600 kB, so the 3D character arrives after the page; the SVG face stands in until then.
+const Agent3DLazy = lazy(() => import("./Agent3D"));
+function Agent3D(props: Agent3DProps) {
+  return (
+    <Suspense fallback={<AgentFace mood={props.mood ?? "idle"} size={props.size ?? 84} className={props.className} />}>
+      <Agent3DLazy {...props} />
+    </Suspense>
+  );
+}
 import { t } from "../lib/i18n";
 
 /* ---------- The face ---------- */

@@ -136,7 +136,7 @@ function Main({ data, live, projects }: { data: GitHubActivity; live: boolean; p
       <div className="p-5">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold tracking-tight text-fg">{t("os.overview")}</h3>
+            <h2 className="text-lg font-semibold tracking-tight text-fg">{t("os.overview")}</h2>
             <p className="mt-0.5 flex items-center gap-1.5 text-xs text-fg-muted">
               <span className={`size-1.5 rounded-full ${live ? "bg-emerald-400" : "bg-fg-faint"}`} />
               {live ? `${t("os.live")} · ${relativeTime(data.updatedAt)}` : t("os.demo")}

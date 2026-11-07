@@ -30,7 +30,7 @@ export default function Journey() {
             variants={reveal}
             className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/60"
           >
-            <img src="/profile.jpg" alt={profile.name} className="aspect-[4/5] w-full object-cover" />
+            <img src="/profile.webp" alt={profile.name} width={400} height={400} loading="lazy" decoding="async" className="aspect-[4/5] w-full object-cover" />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-night-950/90 to-transparent p-5">
               <p className="text-lg font-semibold text-fg">{profile.name}</p>
               <p className="text-sm text-fg-muted">
