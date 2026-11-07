@@ -1,7 +1,7 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import { Volume2, VolumeX } from "lucide-react";
 import { useSiteContent } from "../lib/content";
-import { otherLocaleUrl, t } from "../lib/i18n";
+import { L, otherLocaleUrl, t } from "../lib/i18n";
 
 type Props = {
   soundOn: boolean;
@@ -47,6 +47,12 @@ export default function Nav({ soundOn, onToggleSound, dark = false }: Props) {
               </a>
             </li>
           ))}
+          <li>
+            <a href={L("/nu")} title={t("nav.now_title")} className={`inline-flex items-center gap-1.5 transition-colors ${text}`}>
+              <span className="size-1.5 rounded-full bg-ember-400 shadow-[0_0_8px_theme(--color-ember-400)]" aria-hidden />
+              {t("nav.now")}
+            </a>
+          </li>
         </ul>
         <div className="flex items-center gap-2">
           <a
