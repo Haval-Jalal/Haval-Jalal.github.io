@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, ArrowUpRight, Check, ChevronLeft, ChevronRight, Images, X } from "lucide-react";
 import Section, { reveal, stagger } from "./Section";
-import Showreel from "./Showreel";
 import { useSiteContent } from "../lib/content";
 import type { Project } from "../data/content";
 import { t } from "../lib/i18n";
@@ -18,9 +17,7 @@ export const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function Projects() {
-  const { content } = useSiteContent();
-  const projects = content.projects.filter((p) => !p.hidden);
-  const reel = (content.settings.showreel ?? []).filter((r) => r.image);
+  const projects = useSiteContent().content.projects.filter((p) => !p.hidden);
   const [lightbox, setLightbox] = useState<{ project: Project; index: number } | null>(null);
   return (
     <Section
@@ -34,22 +31,86 @@ export default function Projects() {
       }
       lede={t("projects.lede")}
     >
-      <Showreel items={reel} />
+      <Rail count={projects.length}>
+        {projects.map((p) => (
+          <motion.li key={p.slug} id={`projekt-${p.slug}`} variants={reveal} className="flex w-[82vw] max-w-sm shrink-0 snap-start scroll-mt-24 md:w-[calc((100%-1.25rem)/2)] md:max-w-none xl:w-[calc((100%-2.5rem)/3)]">
+            <ProjectCard project={p} onOpen={(index) => setLightbox({ project: p, index })} />
+          </motion.li>
+        ))}
+      </Rail>
+      <AnimatePresence>{lightbox && <Lightbox {...lightbox} onClose={() => setLightbox(null)} />}</AnimatePresence>
+    </Section>
+  );
+}
+
+// One horizontal row of cards, swiped on a phone and paged with the arrows on a desktop. Native
+// scrolling with snap points, so it is as cheap and accessible as a plain list; the arrows just
+// scroll the row one viewport at a time. The page counter follows the scroll position.
+function Rail({ count, children }: { count: number; children: React.ReactNode }) {
+  const ref = useRef<HTMLUListElement>(null);
+  const [pos, setPos] = useState({ index: 0, pages: 1, atStart: true, atEnd: false });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      const pages = Math.max(1, Math.ceil(el.scrollWidth / el.clientWidth));
+      const atEnd = el.scrollLeft >= max - 2;
+      const index = atEnd ? pages - 1 : Math.min(pages - 1, Math.round(el.scrollLeft / el.clientWidth));
+      setPos({ index, pages, atStart: el.scrollLeft <= 2, atEnd });
+    };
+    measure();
+    el.addEventListener("scroll", measure, { passive: true });
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", measure);
+      ro.disconnect();
+    };
+  }, [count]);
+
+  const page = (dir: -1 | 1) => ref.current?.scrollBy({ left: dir * ref.current.clientWidth, behavior: "smooth" });
+
+  return (
+    <div className="relative">
       <motion.ul
+        ref={ref}
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: "-60px" }}
         variants={stagger}
-        className="grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+        className="-mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain px-5 pb-4 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+        aria-label={t("projects.eyebrow")}
       >
-        {projects.map((p) => (
-          <motion.li key={p.slug} id={`projekt-${p.slug}`} variants={reveal} className="min-w-0 scroll-mt-24">
-            <ProjectCard project={p} onOpen={(index) => setLightbox({ project: p, index })} />
-          </motion.li>
-        ))}
+        {children}
       </motion.ul>
-      <AnimatePresence>{lightbox && <Lightbox {...lightbox} onClose={() => setLightbox(null)} />}</AnimatePresence>
-    </Section>
+      <div className="mt-2 flex items-center justify-between">
+        <p className="font-mono text-xs text-fg-faint" aria-live="polite">
+          {pos.index + 1} / {pos.pages}
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => page(-1)}
+            disabled={pos.atStart}
+            className="grid size-10 place-items-center rounded-full border border-white/10 text-fg transition-colors hover:border-ember-400/50 disabled:opacity-30 disabled:hover:border-white/10"
+            aria-label={t("projects.prev")}
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => page(1)}
+            disabled={pos.atEnd}
+            className="grid size-10 place-items-center rounded-full border border-white/10 text-fg transition-colors hover:border-ember-400/50 disabled:opacity-30 disabled:hover:border-white/10"
+            aria-label={t("projects.next")}
+          >
+            <ChevronRight className="size-5" />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

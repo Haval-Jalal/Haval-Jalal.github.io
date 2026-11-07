@@ -119,7 +119,6 @@ const sv = {
   "projects.prev": "Föregående",
   "projects.next": "Nästa",
   "projects.images_alt": "Bilder",
-  "projects.reel_caption": "Ett urval av det jag byggt och levererat. Kundsajter visas utan namn.",
 
   // Journey / Stack
   "journey.eyebrow": "Resan",
@@ -454,7 +453,6 @@ const en: Record<keyof typeof sv, string> = {
   "projects.prev": "Previous",
   "projects.next": "Next",
   "projects.images_alt": "Images",
-  "projects.reel_caption": "A selection of what I have built and shipped. Customer sites are shown without names.",
 
   "journey.eyebrow": "The journey",
   "journey.title": "From car manufacturing to",
