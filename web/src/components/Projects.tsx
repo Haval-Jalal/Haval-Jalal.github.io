@@ -39,7 +39,7 @@ export default function Projects() {
         className="grid gap-5 md:grid-cols-2 xl:grid-cols-3"
       >
         {projects.map((p) => (
-          <motion.li key={p.slug} variants={reveal} className="min-w-0">
+          <motion.li key={p.slug} id={`projekt-${p.slug}`} variants={reveal} className="min-w-0 scroll-mt-24">
             <ProjectCard project={p} onOpen={(index) => setLightbox({ project: p, index })} />
           </motion.li>
         ))}

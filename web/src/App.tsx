@@ -79,7 +79,7 @@ export default function App() {
     <div className={`grain ${dark ? "bg-night-950" : ""}`}>
       <Nav soundOn={soundOn} onToggleSound={toggleSound} dark={dark} />
 
-      <section className="relative min-h-[140vh]">
+      <section className="relative min-h-[140vh] max-md:pb-40">
         <Suspense fallback={<div className={`fixed inset-0 ${dark ? "bg-[#070810]" : "bg-sand-100"}`} aria-hidden />}>
           <Background mouseX={mouseX} mouseY={mouseY} />
         </Suspense>

@@ -10,18 +10,21 @@ export type GitHubRepo = {
   pushedAt: string | null;
 };
 
+export type DayCount = { date: string; count: number };
+
 export type GitHubActivity = {
   user: string;
+  // "graphql": the full year, private repos counted. "public": public repos, last ~90 days.
+  source: "graphql" | "public";
   repos: GitHubRepo[];
-  weeklyCommits: number[];
-  commits90d: number;
+  contributions: { total: number; commits: number; calendar: DayCount[] };
+  latestCommit: { repo: string; message: string; url: string; at: string } | null;
   updatedAt: string;
 };
 
 type State = { status: "loading" } | { status: "ok"; data: GitHubActivity } | { status: "error" };
 
-// Live data from the .NET API (which caches GitHub for 15 min). Components fall back to
-// illustrative numbers while loading or if the API is down, so the panel never looks broken.
+// Live data from the .NET API (which caches GitHub for 15 min).
 export function useGitHub(): State {
   const [state, setState] = useState<State>({ status: "loading" });
   useEffect(() => {
@@ -35,6 +38,11 @@ export function useGitHub(): State {
     return () => ctrl.abort();
   }, []);
   return state;
+}
+
+// Sum of the last `days` days of the calendar.
+export function recentTotal(calendar: DayCount[], days: number): number {
+  return calendar.slice(-days).reduce((s, d) => s + d.count, 0);
 }
 
 export function relativeTime(iso: string | null | undefined): string {

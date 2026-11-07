@@ -54,6 +54,15 @@ function Lab() {
   const examples = [t("lab.example1"), t("lab.example2"), t("lab.example3")];
   const [idea, setIdea] = useState("");
   const [state, setState] = useState<LabState>({ status: "idle" });
+  // The Haval OS panel can hand over an idea: it lands here, focused and ready to run.
+  useEffect(() => {
+    const onPrefill = (e: Event) => {
+      setIdea((e as CustomEvent<string>).detail);
+      window.setTimeout(() => document.getElementById("build-idea")?.focus(), 400);
+    };
+    window.addEventListener("lab:prefill", onPrefill);
+    return () => window.removeEventListener("lab:prefill", onPrefill);
+  }, []);
   const [raw, setRaw] = useState("");
   const [current, setCurrent] = useState<Build | null>(null);
   const [mine, setMine] = useState<BuildSummary[]>([]);
