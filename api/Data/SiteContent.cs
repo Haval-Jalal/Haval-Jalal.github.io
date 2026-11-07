@@ -63,4 +63,9 @@ public sealed record SiteSettings(
     string Background = "terrain",
     bool SoundDefault = false,
     bool OpenForWork = true,
-    List<string>? SectionOrder = null);
+    List<string>? SectionOrder = null,
+    List<ReelItem>? Showreel = null);
+
+// One screenshot in the showreel at the top of the projects section: customer work shown
+// without naming the customer, so only the picture, a short label and an optional link.
+public sealed record ReelItem(string Image, string Label = "", string Url = "");

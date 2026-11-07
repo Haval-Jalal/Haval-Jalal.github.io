@@ -100,6 +100,91 @@ body {
   background: color-mix(in oklab, var(--color-night-900) 92%, transparent);
 }
 
+/* Showreel: a cylinder of screenshots seen from the inside. The eye sits near the centre of the
+   ring (the ring is pushed forward by the perspective distance), so the middle card faces the
+   viewer and the outer ones lean in and slide off the edges. One animated transform. */
+.reel {
+  --reel-w: 210px;
+  --reel-h: 132px;
+  --reel-r: 560px;
+}
+@media (min-width: 768px) {
+  .reel {
+    --reel-w: 320px;
+    --reel-h: 200px;
+    --reel-r: 820px;
+  }
+}
+@media (min-width: 1280px) {
+  .reel {
+    --reel-w: 380px;
+    --reel-h: 238px;
+    --reel-r: 960px;
+  }
+}
+.reel-stage {
+  position: relative;
+  height: calc(var(--reel-h) * 1.25);
+  overflow: hidden;
+  perspective: calc(var(--reel-r) / 1.1);
+  perspective-origin: 50% 50%;
+}
+.reel-ring {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: reel-turn 75s linear infinite;
+  will-change: transform;
+}
+.reel:hover .reel-ring {
+  animation-play-state: paused;
+}
+.reel-card {
+  position: absolute;
+  left: calc(50% - var(--reel-w) / 2);
+  top: calc(50% - var(--reel-h) / 2);
+  width: var(--reel-w);
+  height: var(--reel-h);
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-night-800);
+  backface-visibility: hidden;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9);
+}
+.reel-card img {
+  user-select: none;
+}
+@keyframes reel-turn {
+  from {
+    transform: translateZ(calc(var(--reel-r) / 1.1)) rotateY(0deg);
+  }
+  to {
+    transform: translateZ(calc(var(--reel-r) / 1.1)) rotateY(-360deg);
+  }
+}
+.reel-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 16%;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.reel-edge-l {
+  left: 0;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--color-night-950) 90%, transparent), transparent);
+  mask-image: linear-gradient(90deg, #000 20%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 20%, transparent);
+}
+.reel-edge-r {
+  right: 0;
+  background: linear-gradient(270deg, color-mix(in oklab, var(--color-night-950) 90%, transparent), transparent);
+  mask-image: linear-gradient(270deg, #000 20%, transparent);
+  -webkit-mask-image: linear-gradient(270deg, #000 20%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

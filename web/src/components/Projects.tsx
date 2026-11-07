@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, ArrowUpRight, Check, ChevronLeft, ChevronRight, Images, X } from "lucide-react";
 import Section, { reveal, stagger } from "./Section";
+import Showreel from "./Showreel";
 import { useSiteContent } from "../lib/content";
 import type { Project } from "../data/content";
 import { t } from "../lib/i18n";
@@ -17,7 +18,9 @@ export const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function Projects() {
-  const projects = useSiteContent().content.projects.filter((p) => !p.hidden);
+  const { content } = useSiteContent();
+  const projects = content.projects.filter((p) => !p.hidden);
+  const reel = (content.settings.showreel ?? []).filter((r) => r.image);
   const [lightbox, setLightbox] = useState<{ project: Project; index: number } | null>(null);
   return (
     <Section
@@ -31,6 +34,7 @@ export default function Projects() {
       }
       lede={t("projects.lede")}
     >
+      <Showreel items={reel} />
       <motion.ul
         initial="hidden"
         whileInView="show"

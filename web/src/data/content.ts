@@ -170,11 +170,15 @@ export const nav = [
   { label: "Kontakt", href: "#kontakt" },
 ];
 
+export type ReelItem = { image: string; label?: string; url?: string };
+
 export type SiteSettings = {
   background: "terrain" | "aurora" | "network" | "dunes";
   soundDefault: boolean;
   openForWork: boolean;
   sectionOrder: string[] | null;
+  // Screenshots shown as a scrolling reel above the project cards (customer work, unnamed).
+  showreel?: ReelItem[] | null;
 };
 
 // The full document served by /api/content and edited in the admin panel.

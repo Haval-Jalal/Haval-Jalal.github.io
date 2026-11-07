@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical, CalendarDays, Newspaper, Mail, Loader2 } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
-import type { JourneyStep, Project, SiteContent } from "../data/content";
+import type { JourneyStep, Project, ReelItem, SiteContent } from "../data/content";
 import { STATUS_LABEL } from "../components/Projects";
 import Pitches from "./Pitches";
 import Builds from "./Builds";
@@ -1097,6 +1097,22 @@ function SettingsEditor() {
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={s.openForWork} onChange={(e) => set({ openForWork: e.target.checked })} /> Öppen för uppdrag
         </label>
+      </Group>
+      <Group title="Showreel (karusellen ovanför projekten)">
+        <p className="text-xs text-fg-muted">Skärmbilder som snurrar ovanför projektkorten. Ladda upp bilden under Media och klistra in adressen här. Etiketten visas i hörnet, länken är valfri.</p>
+        <ListEditor<ReelItem>
+          items={s.showreel ?? []}
+          onChange={(showreel) => set({ showreel })}
+          create={() => ({ image: "", label: "", url: "" })}
+          label={(x) => x.label || x.image || "Ny bild"}
+          render={(x, setItem) => (
+            <>
+              <Field label="Bild (adress)" value={x.image} onChange={(v) => setItem({ ...x, image: v })} />
+              <Field label="Etikett" value={x.label ?? ""} onChange={(v) => setItem({ ...x, label: v })} />
+              <Field label="Länk (valfri)" value={x.url ?? ""} onChange={(v) => setItem({ ...x, url: v })} />
+            </>
+          )}
+        />
       </Group>
       <SaveBar dirty={dirty} saving={saving} onSave={save} />
     </div>
