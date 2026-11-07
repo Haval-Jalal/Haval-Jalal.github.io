@@ -4,11 +4,26 @@ import { Loader2, Send, Trash2, X } from "lucide-react";
 import { onAgentOpen, openAgent, useDigitalHaval } from "../lib/chat";
 import type { Agent3DProps, IntroPhase } from "./Agent3D";
 
-// three.js is 600 kB, so the 3D character arrives after the page; the SVG face stands in until then.
+// three.js is 600 kB and compiling the character's shaders takes a moment, so the 3D character
+// is mounted once the browser is idle after the first paint; the SVG face stands in until then.
 const Agent3DLazy = lazy(() => import("./Agent3D"));
+let idleReached = false;
 function Agent3D(props: Agent3DProps) {
+  const [ready, setReady] = useState(idleReached);
+  useEffect(() => {
+    if (ready) return;
+    const go = () => { idleReached = true; setReady(true); };
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(go, { timeout: 2500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(go, 1500);
+    return () => window.clearTimeout(id);
+  }, [ready]);
+  const face = <AgentFace mood={props.mood ?? "idle"} size={props.size ?? 84} className={props.className} />;
+  if (!ready) return face;
   return (
-    <Suspense fallback={<AgentFace mood={props.mood ?? "idle"} size={props.size ?? 84} className={props.className} />}>
+    <Suspense fallback={face}>
       <Agent3DLazy {...props} />
     </Suspense>
   );

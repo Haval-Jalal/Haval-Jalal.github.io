@@ -4,13 +4,7 @@ import { motion, useMotionValue, useSpring, type Variants } from "motion/react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Nav from "./components/Nav";
 import HavalOS from "./components/HavalOS";
-import Projects from "./components/Projects";
-import Journey from "./components/Journey";
-import Stack from "./components/Stack";
-import BuildLab from "./components/BuildLab";
-import Gallery from "./components/Gallery";
 import AgentWidget from "./components/Agent";
-import Contact from "./components/Contact";
 import { BACKGROUNDS, currentBackground, type BackgroundKey } from "./components/backgrounds";
 import { useSiteContent } from "./lib/content";
 import { attachGlobalSfx, setSoundEnabled } from "./lib/sound";
@@ -148,12 +142,9 @@ export default function App() {
 
       {/* Everything below scrolls over the fixed background. */}
       <div className="relative z-10">
-        <Projects />
-        <Journey />
-        <Stack />
-        <BuildLab />
-        <Gallery />
-        <Contact />
+        <Suspense fallback={<div className="min-h-screen" aria-hidden />}>
+          <BelowFold />
+        </Suspense>
       </div>
 
       <AgentWidget />
@@ -169,6 +160,7 @@ export default function App() {
   );
 }
 
+const BelowFold = lazy(() => import("./components/BelowFold"));
 const Agent3DDev = lazy(() => import("./components/Agent3D"));
 
 // Dev-only picker while we decide on the hero background.
