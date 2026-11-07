@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { ReelItem } from "../data/content";
 import { t } from "../lib/i18n";
@@ -7,18 +7,24 @@ import { t } from "../lib/i18n";
 // middle ones face them and the outer ones lean in and slip out of the picture. One CSS
 // animation on one transform, so it costs the GPU nothing to speak of. Customer work is shown
 // here without names: only the picture, a short label and, when there is one, a link.
-const SLOTS = 14;
+//
+// The ring holds at least RING cards so it reads as a wall rather than a handful of panels. A
+// shorter list is repeated whole, which places each copy on the far side of the ring: only
+// about a third of the ring is in view at any moment, so two copies of a picture are never on
+// screen together. The radius follows the slot count (see --reel-r in index.css).
+const RING = 14;
 
 export default function Showreel({ items }: { items: ReelItem[] }) {
   const slots = useMemo(() => {
     const n = Math.max(items.length, 1);
-    return Array.from({ length: SLOTS }, (_, i) => items[i % n]);
+    const count = n >= RING ? n : Math.ceil(RING / n) * n;
+    return Array.from({ length: count }, (_, i) => items[i % n]);
   }, [items]);
   if (items.length === 0) return null;
-  const step = 360 / SLOTS;
+  const step = 360 / slots.length;
 
   return (
-    <figure className="reel relative mb-16 md:mb-20" aria-label={t("projects.reel_caption")}>
+    <figure className="reel relative mb-16 md:mb-20" style={{ "--reel-n": slots.length } as CSSProperties} aria-label={t("projects.reel_caption")}>
       <div className="reel-stage">
         <div className="reel-ring">
           {slots.map((item, i) => {

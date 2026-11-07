@@ -102,24 +102,25 @@ body {
 
 /* Showreel: a cylinder of screenshots seen from the inside. The eye sits near the centre of the
    ring (the ring is pushed forward by the perspective distance), so the middle card faces the
-   viewer and the outer ones lean in and slide off the edges. One animated transform. */
+   viewer and the outer ones lean in and slide off the edges. One animated transform.
+   The radius follows the card count (--reel-n, set by the component): neighbouring cards sit
+   about 15 % apart along the ring whatever the count. */
 .reel {
   --reel-w: 210px;
   --reel-h: 132px;
-  --reel-r: 560px;
+  --reel-n: 8;
+  --reel-r: calc(1.15 * var(--reel-w) / (2 * sin(pi / var(--reel-n))));
 }
 @media (min-width: 768px) {
   .reel {
     --reel-w: 320px;
     --reel-h: 200px;
-    --reel-r: 820px;
   }
 }
 @media (min-width: 1280px) {
   .reel {
     --reel-w: 380px;
     --reel-h: 238px;
-    --reel-r: 960px;
   }
 }
 .reel-stage {
