@@ -18,7 +18,7 @@ export default function Showreel({ items }: { items: ReelItem[] }) {
   const step = 360 / SLOTS;
 
   return (
-    <figure className="reel relative -mx-5 mb-16 md:mb-20" aria-label={t("projects.reel_caption")}>
+    <figure className="reel relative mb-16 md:mb-20" aria-label={t("projects.reel_caption")}>
       <div className="reel-stage">
         <div className="reel-ring">
           {slots.map((item, i) => {

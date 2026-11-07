@@ -124,6 +124,8 @@ body {
 }
 .reel-stage {
   position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
   height: calc(var(--reel-h) * 1.25);
   overflow: hidden;
   perspective: calc(var(--reel-r) / 1.1);
