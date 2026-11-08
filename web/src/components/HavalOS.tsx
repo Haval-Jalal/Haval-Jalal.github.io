@@ -306,13 +306,17 @@ function Kpi({ icon: Icon, label, value, delta, onClick }: { icon: typeof Folder
 function Heatmap({ days }: { days: DayCount[] | null }) {
   const cells = useMemo(() => {
     const list = days ?? emptyYear();
-    const max = Math.max(1, ...list.map((d) => d.count));
+    // Colour steps follow GitHub: quartiles of the active days, so an ordinary day stays visible
+    // next to a few huge ones instead of being scaled down to the faintest shade.
+    const active = list.map((d) => d.count).filter((c) => c > 0).sort((a, b) => a - b);
+    const q = (p: number) => active[Math.min(active.length - 1, Math.floor(active.length * p))] ?? 0;
+    const steps = [q(0.25), q(0.5), q(0.75)];
     const first = new Date(list[0].date + "T00:00:00");
     const pad = (first.getDay() + 6) % 7; // Monday = 0
     const out: { key: string; level: number; title: string }[] = [];
     for (let i = 0; i < pad; i++) out.push({ key: `pad${i}`, level: -1, title: "" });
     for (const d of list) {
-      const level = d.count === 0 ? 0 : Math.max(1, Math.ceil((d.count / max) * 4));
+      const level = d.count === 0 ? 0 : 1 + steps.filter((s) => d.count > s).length;
       const date = new Date(d.date + "T00:00:00").toLocaleDateString(numberLocale, { day: "numeric", month: "short" });
       out.push({ key: d.date, level, title: `${date}: ${d.count}` });
     }
@@ -331,7 +335,7 @@ function Heatmap({ days }: { days: DayCount[] | null }) {
     return labels;
   }, [days]);
 
-  const LEVEL = ["bg-white/[0.05]", "bg-ember-700/70", "bg-ember-600", "bg-ember-500", "bg-ember-300"];
+  const LEVEL = ["bg-white/[0.05]", "bg-ember-700", "bg-ember-600", "bg-ember-500", "bg-ember-300"];
   const cols = Math.ceil(cells.length / 7);
   return (
     <div className="mt-4 flex justify-end overflow-hidden">

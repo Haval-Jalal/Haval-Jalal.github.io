@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Loader2, Send, Trash2, X } from "lucide-react";
+import { Loader2, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { onAgentOpen, openAgent, useDigitalHaval } from "../lib/chat";
 import type { Agent3DProps, IntroPhase } from "./Agent3D";
 
@@ -413,16 +413,14 @@ export default function AgentWidget() {
   );
 }
 
-// Compact presentation used inside the Build Lab section: opens the floating agent.
+// Compact presentation used inside the Build Lab section: points at the floating character and
+// opens it. The character itself lives in one place only, the corner of the window.
 export function AgentTeaser() {
-  const [hover, setHover] = useState(false);
   return (
-    <div className="panel-tile min-w-0 rounded-3xl p-6" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+    <div className="panel-tile min-w-0 rounded-3xl p-6">
       <div className="flex items-center gap-4">
-        <button onClick={() => openAgent()} className="relative shrink-0 rounded-full" aria-label={t("agent.open")}>
-          <span className="absolute inset-2 rounded-full bg-ember-500/35 blur-xl" aria-hidden="true" />
-          <span className="absolute inset-[9px] rounded-full bg-[#0b0908]" aria-hidden="true" />
-          <Agent3D mood={hover ? "happy" : "idle"} size={88} className="relative" />
+        <button onClick={() => openAgent()} className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ember-500/15 text-ember-300 transition-colors hover:bg-ember-500/25" aria-label={t("agent.open")}>
+          <MessageCircle className="size-6" strokeWidth={1.75} />
         </button>
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-fg">Digital Haval</p>
