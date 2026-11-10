@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { ArrowUpRight, CalendarDays, Check, FileDown, Linkedin, Loader2, Mail, MessageSquare, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getBookingInfo } from "../lib/booking";
@@ -28,28 +28,28 @@ export default function Contact() {
         style={{ background: "radial-gradient(60% 50% at 50% 100%, rgba(232,147,58,0.14), transparent 70%)" }}
       />
       <div className="relative mx-auto max-w-6xl px-5 py-28 md:py-40">
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
           variants={stagger}
           className="mx-auto max-w-3xl text-center"
         >
-          <motion.p variants={reveal} className="font-mono text-xs uppercase tracking-[0.22em] text-ember-300">
+          <m.p variants={reveal} className="font-mono text-xs uppercase tracking-[0.22em] text-ember-300">
             {t("contact.eyebrow")}
-          </motion.p>
-          <motion.h2
+          </m.p>
+          <m.h2
             variants={reveal}
             className="mt-4 text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.025em] md:text-6xl"
           >
             {t("contact.title")} <span className="text-ember-300">{t("contact.title_accent")}</span>
-          </motion.h2>
-          <motion.p variants={reveal} className="mt-6 text-pretty text-lg text-fg-muted">
+          </m.h2>
+          <m.p variants={reveal} className="mt-6 text-pretty text-lg text-fg-muted">
             {profile.tagline}
-          </motion.p>
-        </motion.div>
+          </m.p>
+        </m.div>
 
-        <motion.ul
+        <m.ul
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
@@ -57,7 +57,7 @@ export default function Contact() {
           className="mx-auto mt-14 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-4"
         >
           {links.map(({ icon: Icon, label, href, sub }) => (
-            <motion.li key={label} variants={reveal}>
+            <m.li key={label} variants={reveal}>
               <a
                 href={href}
                 target={href.startsWith("http") || href.includes(".pdf") ? "_blank" : undefined}
@@ -73,11 +73,11 @@ export default function Contact() {
                 </span>
                 <ArrowUpRight className="ml-auto size-4 text-fg-faint transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
-            </motion.li>
+            </m.li>
           ))}
-        </motion.ul>
+        </m.ul>
 
-        <motion.a
+        <m.a
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -93,7 +93,7 @@ export default function Contact() {
             <span className="block text-xs text-fg-muted">{tool.sub}</span>
           </span>
           <ArrowUpRight className="ml-auto size-4 shrink-0 text-ember-300 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </motion.a>
+        </m.a>
 
         <ContactForm bookable={bookable} />
 
@@ -137,7 +137,7 @@ function ContactForm({ bookable }: { bookable: boolean }) {
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
@@ -185,6 +185,6 @@ function ContactForm({ bookable }: { bookable: boolean }) {
           </div>
         </form>
       )}
-    </motion.div>
+    </m.div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { reveal, stagger } from "../components/Section";
 import { getChangelog, type ChangelogEntry } from "../lib/posts";
@@ -31,17 +31,17 @@ export default function ChangelogPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-5 pb-24">
-        <motion.div initial="hidden" animate="show" variants={stagger}>
-          <motion.p variants={reveal} className="pt-8 font-mono text-xs uppercase tracking-[0.2em] text-ember-300">
+        <m.div initial="hidden" animate="show" variants={stagger}>
+          <m.p variants={reveal} className="pt-8 font-mono text-xs uppercase tracking-[0.2em] text-ember-300">
             {t("changelog.eyebrow")}
-          </motion.p>
-          <motion.h1 variants={reveal} className="mt-2 text-4xl font-semibold tracking-tight md:text-6xl">
+          </m.p>
+          <m.h1 variants={reveal} className="mt-2 text-4xl font-semibold tracking-tight md:text-6xl">
             {t("changelog.title")}
-          </motion.h1>
-          <motion.p variants={reveal} className="mt-4 max-w-xl text-pretty text-lg text-fg-muted">
+          </m.h1>
+          <m.p variants={reveal} className="mt-4 max-w-xl text-pretty text-lg text-fg-muted">
             {t("changelog.lede")}
-          </motion.p>
-        </motion.div>
+          </m.p>
+        </m.div>
 
         {entries === undefined && <p className="pt-10 text-fg-muted">{t("pitch.loading")}</p>}
         {entries === null && <p className="pt-10 text-fg-muted">{t("err.unknown")}</p>}
@@ -51,7 +51,7 @@ export default function ChangelogPage() {
             {entries.map((e, i) => {
               const { title, text } = pick(e);
               return (
-                <motion.li
+                <m.li
                   key={e.id}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -81,7 +81,7 @@ export default function ChangelogPage() {
                       ))}
                     </p>
                   )}
-                </motion.li>
+                </m.li>
               );
             })}
           </ol>

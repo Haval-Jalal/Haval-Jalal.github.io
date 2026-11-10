@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform } from "motion/react";
+import { m, useScroll, useTransform } from "motion/react";
 import { Mark } from "./Mark";
 import { Volume2, VolumeX } from "lucide-react";
 import { useSiteContent } from "../lib/content";
@@ -25,13 +25,13 @@ export default function Nav({ soundOn, onToggleSound, dark = false }: Props) {
   const bar = dark ? "border-white/5 bg-[#070810]/70" : "border-ink/5 bg-sand-100/70";
 
   return (
-    <motion.header
+    <m.header
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
       className="fixed inset-x-0 top-0 z-50"
     >
-      <motion.div style={{ opacity: barOpacity }} className={`absolute inset-0 border-b backdrop-blur-md ${bar}`} />
+      <m.div style={{ opacity: barOpacity }} className={`absolute inset-0 border-b backdrop-blur-md ${bar}`} />
       <nav className="relative mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
         <a href="#" className="flex items-center gap-2.5">
           <Mark size={10} />
@@ -72,6 +72,6 @@ export default function Nav({ soundOn, onToggleSound, dark = false }: Props) {
           </a>
         </div>
       </nav>
-    </motion.header>
+    </m.header>
   );
 }

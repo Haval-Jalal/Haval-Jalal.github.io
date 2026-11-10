@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useAfterLoad } from "./lib/afterLoad";
 import Lenis from "lenis";
-import { motion, useMotionValue, useSpring, type Variants } from "motion/react";
+import { m, useMotionValue, useSpring, type Variants } from "motion/react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Nav from "./components/Nav";
 import HavalOS from "./components/HavalOS";
@@ -91,13 +91,13 @@ export default function App() {
         )}
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-32">
-          <motion.div
+          <m.div
             initial="hidden"
             animate="show"
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12 } } }}
             className="mx-auto max-w-4xl text-center"
           >
-            <motion.p
+            <m.p
               variants={fade}
               className={`mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur ${
                 dark ? "border-white/10 bg-white/5 text-white/70" : "border-ink/10 bg-sand-50/50 text-ink-soft"
@@ -106,8 +106,8 @@ export default function App() {
               <span className={`size-1.5 rounded-full ${dark ? "bg-emerald-400" : "bg-ember-500"}`} />
               {profile.availability}
               <ArrowRight className="size-3" />
-            </motion.p>
-            <motion.h1
+            </m.p>
+            <m.h1
               variants={fade}
               className={`text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.03em] md:text-7xl ${
                 dark ? "text-white" : "text-ink"
@@ -115,14 +115,14 @@ export default function App() {
             >
               {profile.headline.lead}{" "}
               <span className={ACCENT[bg.accent]}>{profile.headline.accent}</span>
-            </motion.h1>
-            <motion.p
+            </m.h1>
+            <m.p
               variants={fade}
               className={`mx-auto mt-6 max-w-xl text-pretty text-base md:text-lg ${dark ? "text-white/65" : "text-ink-soft"}`}
             >
               {profile.intro}
-            </motion.p>
-            <motion.div variants={fade} className="mt-8 flex items-center justify-center gap-3">
+            </m.p>
+            <m.div variants={fade} className="mt-8 flex items-center justify-center gap-3">
               <a
                 href="#build-lab"
                 className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 ${primaryBtn}`}
@@ -137,8 +137,8 @@ export default function App() {
                 {t("hero.projects")}
                 <ArrowRight className="size-4" />
               </a>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
 
           <div className="mt-16">
             <HavalOS mouseX={mouseX} mouseY={mouseY} />

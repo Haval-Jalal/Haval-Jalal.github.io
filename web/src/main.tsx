@@ -1,5 +1,6 @@
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
+import { domAnimation, LazyMotion } from "motion/react";
 import "./index.css";
 import App from "./App";
 import { ContentProvider } from "./lib/content";
@@ -22,6 +23,9 @@ const page = path.startsWith("/admin") ? "admin" : path.startsWith("/lab/") ? "l
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    {/* Animations load the slim "m" runtime: domAnimation covers enter/exit/hover/tap/inView,
+        which is everything the site uses, at roughly half the weight of the full motion component. */}
+    <LazyMotion features={domAnimation} strict>
     <ContentProvider>
       {page === "site" ? (
         <App />
@@ -31,5 +35,6 @@ createRoot(document.getElementById("root")!).render(
         </Suspense>
       )}
     </ContentProvider>
+    </LazyMotion>
   </StrictMode>,
 );

@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import Section, { reveal, stagger } from "./Section";
 import { useSiteContent } from "../lib/content";
 import { t } from "../lib/i18n";
@@ -17,7 +17,7 @@ export default function Stack() {
       }
       lede={t("stack.lede")}
     >
-      <motion.div
+      <m.div
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: "-60px" }}
@@ -25,7 +25,7 @@ export default function Stack() {
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
       >
         {skills.map((g) => (
-          <motion.div
+          <m.div
             key={g.title}
             variants={reveal}
             className={`rounded-2xl p-6 ${
@@ -49,9 +49,9 @@ export default function Stack() {
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </m.div>
         ))}
-      </motion.div>
+      </m.div>
     </Section>
   );
 }

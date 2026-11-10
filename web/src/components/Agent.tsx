@@ -1,12 +1,12 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Loader2, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { onAgentOpen, openAgent, useDigitalHaval } from "../lib/chat";
 import type { Agent3DProps, IntroPhase } from "./Agent3D";
 
 // three.js is 600 kB and compiling the character's shaders blocks the main thread for a good
 // second on a phone, so the 3D character waits for the first sign of a visitor (pointer, touch,
-// scroll, key) or four seconds, and then an idle moment; the SVG face stands in until then.
+// scroll, key) or eight seconds, and then an idle moment; the SVG face stands in until then.
 const Agent3DLazy = lazy(() => import("./Agent3D"));
 let idleReached = false;
 const WAKE = ["pointermove", "pointerdown", "touchstart", "keydown", "wheel", "scroll"] as const;
@@ -25,7 +25,7 @@ function Agent3D(props: Agent3DProps) {
       else timer = window.setTimeout(go, 300);
     };
     WAKE.forEach((e) => window.addEventListener(e, schedule, { passive: true, once: true }));
-    const fallback = window.setTimeout(schedule, 4000);
+    const fallback = window.setTimeout(schedule, 8000);
     return () => {
       unlisten();
       window.clearTimeout(fallback);
@@ -129,7 +129,7 @@ export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?:
       </defs>
 
       {/* halo */}
-      <motion.circle
+      <m.circle
         cx="32" cy="32" r="30" fill="#e8933a" filter={`url(#${ids.soft})`}
         animate={mood === "thinking" ? { opacity: [0.25, 0.6, 0.25] } : { opacity: [0.18, 0.32, 0.18] }}
         transition={{ duration: mood === "thinking" ? 1.2 : 4, repeat: Infinity, ease: "easeInOut" }}
@@ -138,20 +138,20 @@ export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?:
       <circle cx="32" cy="32" r="29" fill={`url(#${ids.sphere})`} />
       {/* ember plasma drifting inside */}
       <g clipPath={`url(#${ids.clip})`} opacity={0.9}>
-        <motion.ellipse cx="22" cy="48" rx="22" ry="13" fill="#b4500f" filter={`url(#${ids.soft})`} opacity={0.75}
+        <m.ellipse cx="22" cy="48" rx="22" ry="13" fill="#b4500f" filter={`url(#${ids.soft})`} opacity={0.75}
           animate={{ x: [0, 7, -5, 0], y: [0, -6, 3, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.ellipse cx="46" cy="42" rx="17" ry="11" fill="#e8933a" filter={`url(#${ids.soft})`} opacity={0.5}
+        <m.ellipse cx="46" cy="42" rx="17" ry="11" fill="#e8933a" filter={`url(#${ids.soft})`} opacity={0.5}
           animate={{ x: [0, -8, 4, 0], y: [0, 5, -4, 0] }} transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.ellipse cx="32" cy="58" rx="20" ry="8" fill="#ff9f43" filter={`url(#${ids.soft})`} opacity={0.35}
+        <m.ellipse cx="32" cy="58" rx="20" ry="8" fill="#ff9f43" filter={`url(#${ids.soft})`} opacity={0.35}
           animate={{ x: [0, 5, -5, 0] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.ellipse cx="30" cy="18" rx="14" ry="8" fill="#ffb86b" filter={`url(#${ids.soft})`} opacity={0.16}
+        <m.ellipse cx="30" cy="18" rx="14" ry="8" fill="#ffb86b" filter={`url(#${ids.soft})`} opacity={0.16}
           animate={{ x: [0, 4, -6, 0], y: [0, 3, -2, 0] }} transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }} />
       </g>
       {/* glass highlight */}
       <ellipse cx="23" cy="15" rx="9" ry="4" fill="#ffffff" opacity={0.045} />
       {/* rim + slowly rotating light */}
       <circle cx="32" cy="32" r="29" fill="none" stroke={`url(#${ids.rim})`} strokeWidth="1.4" opacity={0.9} />
-      <motion.circle
+      <m.circle
         cx="32" cy="32" r="29" fill="none" stroke="#ffd2a1" strokeWidth="1.6" strokeLinecap="round"
         strokeDasharray="22 160" opacity={0.75}
         animate={{ rotate: 360 }} transition={{ duration: mood === "thinking" ? 2.5 : 9, repeat: Infinity, ease: "linear" }}
@@ -160,7 +160,7 @@ export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?:
 
       {/* eyes: soft glow behind, bright shape in front; hover/open turns them into happy arcs */}
       {[21, 43].map((cx) => (
-        <motion.g key={cx} animate={{ x: eyeX, y: eyeY }} transition={{ type: "spring", stiffness: 180, damping: 18 }}>
+        <m.g key={cx} animate={{ x: eyeX, y: eyeY }} transition={{ type: "spring", stiffness: 180, damping: 18 }}>
           {mood === "happy" && !blink ? (
             <>
               <path d={`M${cx - 4.5} 32 Q${cx} 24.5 ${cx + 4.5} 32`} fill="none" stroke="#ffb86b" strokeWidth={4} strokeLinecap="round" opacity={0.6} filter={`url(#${ids.glow})`} />
@@ -173,14 +173,14 @@ export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?:
               {!blink && <rect x={cx - 2.2} y={27} width={2.4} height={2.4} rx={1.2} fill="#ffffff" opacity={0.9} />}
             </>
           )}
-        </motion.g>
+        </m.g>
       ))}
 
       {/* voice / thought indicator below the eyes */}
       {mood === "speaking" && (
         <g fill="#ffc27a">
           {[26, 30, 34, 38].map((x, i) => (
-            <motion.rect key={x} x={x - 1.1} width={2.2} rx={1.1}
+            <m.rect key={x} x={x - 1.1} width={2.2} rx={1.1}
               animate={{ height: [3, 8 - i * 1.2, 3, 7, 3], y: [43.5, 41 + i * 0.6, 43.5, 41.5, 43.5] }}
               transition={{ duration: 0.8 + i * 0.1, repeat: Infinity, ease: "easeInOut" }} />
           ))}
@@ -189,7 +189,7 @@ export function AgentFace({ mood = "idle", size = 56, className = "" }: { mood?:
       {mood === "thinking" && (
         <g fill="#ffc27a">
           {[27, 32, 37].map((cx, i) => (
-            <motion.circle key={cx} cx={cx} cy={44} r={1.5} animate={{ opacity: [0.2, 1, 0.2], y: [0, -1.2, 0] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.18 }} />
+            <m.circle key={cx} cx={cx} cy={44} r={1.5} animate={{ opacity: [0.2, 1, 0.2], y: [0, -1.2, 0] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.18 }} />
           ))}
         </g>
       )}
@@ -285,7 +285,7 @@ export default function AgentWidget() {
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] sm:inset-x-auto sm:bottom-5 sm:right-5">
       <AnimatePresence>
         {open && (
-          <motion.section
+          <m.section
             key="panel"
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -360,14 +360,14 @@ export default function AgentWidget() {
                 <Send className="size-4" />
               </button>
             </form>
-          </motion.section>
+          </m.section>
         )}
       </AnimatePresence>
 
       <div className="pointer-events-auto flex items-end justify-end gap-3 px-4 pb-4 sm:p-0">
         <AnimatePresence>
           {bubble && !open && (
-            <motion.button
+            <m.button
               key="bubble"
               initial={{ opacity: 0, y: 8, x: 8 }}
               animate={{ opacity: 1, y: 0, x: 0 }}
@@ -376,10 +376,10 @@ export default function AgentWidget() {
               className="panel-tile mb-1 max-w-[240px] rounded-2xl rounded-br-sm px-4 py-2.5 text-left text-sm text-fg shadow-xl shadow-black/40"
             >
               {t("agent.hi")}
-            </motion.button>
+            </m.button>
           )}
         </AnimatePresence>
-        <motion.button
+        <m.button
           onClick={() => { setOpen((o) => !o); setBubble(false); setPop((n) => n + 1); }}
           onMouseEnter={() => { setHover(true); setPop((n) => n + 1); }}
           onMouseLeave={() => setHover(false)}
@@ -402,7 +402,7 @@ export default function AgentWidget() {
         >
           <AnimatePresence>
             {hover && !open && (
-              <motion.span
+              <m.span
                 key="label"
                 initial={{ opacity: 0, x: 10, width: 0 }}
                 animate={{ opacity: 1, x: 0, width: "auto" }}
@@ -411,7 +411,7 @@ export default function AgentWidget() {
                 className="mr-3 hidden overflow-hidden whitespace-nowrap rounded-full border border-white/10 bg-night-900/90 px-3.5 py-2 text-sm text-fg backdrop-blur sm:block"
               >
                 Digital Haval
-              </motion.span>
+              </m.span>
             )}
           </AnimatePresence>
           <span className="relative grid size-[84px] place-items-center rounded-full">
@@ -420,7 +420,7 @@ export default function AgentWidget() {
             <Agent3D mood={mood} size={84} bounce={pop} intro={intro} onPhase={setPhase} className="relative" />
           </span>
           {messages.length === 0 && !open && <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-emerald-400 ring-2 ring-night-950" />}
-        </motion.button>
+        </m.button>
       </div>
     </div>
   );

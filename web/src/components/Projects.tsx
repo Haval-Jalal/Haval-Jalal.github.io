@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowRight, ArrowUpRight, Check, ChevronLeft, ChevronRight, Images, X } from "lucide-react";
 import Section, { reveal, stagger } from "./Section";
 import { useSiteContent } from "../lib/content";
@@ -33,9 +33,9 @@ export default function Projects() {
     >
       <Rail count={projects.length}>
         {projects.map((p) => (
-          <motion.li key={p.slug} id={`projekt-${p.slug}`} variants={reveal} className="flex w-[82vw] max-w-sm shrink-0 snap-start scroll-mt-24 md:w-[calc((100%-1.25rem)/2)] md:max-w-none xl:w-[calc((100%-2.5rem)/3)]">
+          <m.li key={p.slug} id={`projekt-${p.slug}`} variants={reveal} className="flex w-[82vw] max-w-sm shrink-0 snap-start scroll-mt-24 md:w-[calc((100%-1.25rem)/2)] md:max-w-none xl:w-[calc((100%-2.5rem)/3)]">
             <ProjectCard project={p} onOpen={(index) => setLightbox({ project: p, index })} />
-          </motion.li>
+          </m.li>
         ))}
       </Rail>
       <AnimatePresence>{lightbox && <Lightbox {...lightbox} onClose={() => setLightbox(null)} />}</AnimatePresence>
@@ -81,7 +81,7 @@ function Rail({ count, children }: { count: number; children: React.ReactNode })
 
   return (
     <div className="relative">
-      <motion.ul
+      <m.ul
         ref={ref}
         initial="hidden"
         whileInView="show"
@@ -91,7 +91,7 @@ function Rail({ count, children }: { count: number; children: React.ReactNode })
         aria-label={t("projects.eyebrow")}
       >
         {children}
-      </motion.ul>
+      </m.ul>
       <div className="mt-2 flex items-center justify-between">
         <p className="font-mono text-xs text-fg-faint" aria-live="polite">
           {pos.index + 1} / {pos.pages}
@@ -243,7 +243,7 @@ function Lightbox({ project, index: start, onClose }: { project: Project; index:
   }, []);
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -267,7 +267,7 @@ function Lightbox({ project, index: start, onClose }: { project: Project; index:
           </button>
         </>
       )}
-      <motion.figure
+      <m.figure
         key={index}
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -280,7 +280,7 @@ function Lightbox({ project, index: start, onClose }: { project: Project; index:
           <span>{project.title}</span>
           <span>{index + 1} / {images.length}</span>
         </figcaption>
-      </motion.figure>
-    </motion.div>
+      </m.figure>
+    </m.div>
   );
 }

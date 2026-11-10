@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
+import { m, useScroll, useTransform, type MotionValue } from "motion/react";
 
 type Layer = {
   d: string;
@@ -134,7 +134,7 @@ function DuneLayer({
   const crest = layer.d.split(" L")[0];
 
   return (
-    <motion.svg
+    <m.svg
       viewBox="0 0 1440 900"
       // Stretch to the viewport so the composition (sky/dune split) is the same on every screen.
       preserveAspectRatio="none"
@@ -187,6 +187,6 @@ function DuneLayer({
         />
         <path d={crest} fill="none" stroke={`url(#${id}-ridge)`} strokeWidth={1.1 + layer.depth * 0.9} strokeLinecap="round" />
       </g>
-    </motion.svg>
+    </m.svg>
   );
 }

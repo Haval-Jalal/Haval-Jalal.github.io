@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Mark } from "../components/Mark";
-import { motion, useMotionValue, useSpring } from "motion/react";
+import { m, useMotionValue, useSpring } from "motion/react";
 import { ArrowRight, ArrowUpRight, Check, FileDown, Sparkles } from "lucide-react";
 import { reveal, stagger } from "../components/Section";
 import { useSiteContent } from "../lib/content";
@@ -86,30 +86,30 @@ export default function PitchPage() {
             </div>
           )}
           {pitch && (
-            <motion.div initial="hidden" animate="show" variants={stagger}>
-              <motion.p variants={reveal} className="pt-16 font-mono text-xs uppercase tracking-[0.22em] text-ember-300 md:pt-24">
+            <m.div initial="hidden" animate="show" variants={stagger}>
+              <m.p variants={reveal} className="pt-16 font-mono text-xs uppercase tracking-[0.22em] text-ember-300 md:pt-24">
                 {t("pitch.for")} {pitch.company}{pitch.role ? ` · ${pitch.role}` : ""}
-              </motion.p>
-              <motion.h1 variants={reveal} className="mt-4 max-w-3xl text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.03em] md:text-7xl">
+              </m.p>
+              <m.h1 variants={reveal} className="mt-4 max-w-3xl text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.03em] md:text-7xl">
                 {pitch.greeting || `${t("pitch.hi")} ${pitch.company}.`}
-              </motion.h1>
-              <motion.div variants={reveal} className="mt-8 max-w-2xl space-y-4 text-lg leading-relaxed text-fg-muted">
+              </m.h1>
+              <m.div variants={reveal} className="mt-8 max-w-2xl space-y-4 text-lg leading-relaxed text-fg-muted">
                 {pitch.intro.split(/\n\s*\n/).map((para, i) => (
                   <p key={i}>{para}</p>
                 ))}
-              </motion.div>
+              </m.div>
 
-              <motion.div variants={reveal} className="mt-8 flex flex-wrap gap-3">
+              <m.div variants={reveal} className="mt-8 flex flex-wrap gap-3">
                 <a href={cta} target={pitch.ctaUrl ? "_blank" : undefined} rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950 transition-colors hover:bg-ember-400">
                   {pitch.ctaLabel || t("pitch.cta")} <ArrowUpRight className="size-4" />
                 </a>
                 <a href={`/api/cv.pdf?download=1&lang=${locale}`} onClick={() => pitchEvent(pitch.slug, "cv")} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm text-fg transition-colors hover:border-ember-400/50">
                   <FileDown className="size-4" /> {t("pitch.cv")}
                 </a>
-              </motion.div>
+              </m.div>
 
               {pitch.highlights.length > 0 && (
-                <motion.section variants={reveal} className="panel-tile mt-16 rounded-2xl p-6 md:p-8">
+                <m.section variants={reveal} className="panel-tile mt-16 rounded-2xl p-6 md:p-8">
                   <h2 className="text-xs font-medium uppercase tracking-[0.18em] text-ember-300">{t("pitch.why")}</h2>
                   <ul className="mt-4 grid gap-3 sm:grid-cols-2">
                     {pitch.highlights.map((h) => (
@@ -119,17 +119,17 @@ export default function PitchPage() {
                       </li>
                     ))}
                   </ul>
-                </motion.section>
+                </m.section>
               )}
 
               {projects.length > 0 && (
                 <section className="mt-16">
-                  <motion.h2 variants={reveal} className="text-2xl font-semibold tracking-tight md:text-3xl">
+                  <m.h2 variants={reveal} className="text-2xl font-semibold tracking-tight md:text-3xl">
                     {t("pitch.projects")} <span className="text-ember-300">{t("pitch.projects_accent")}</span>
-                  </motion.h2>
+                  </m.h2>
                   <div className="mt-6 grid gap-5 md:grid-cols-2">
                     {projects.map(({ project: p, why }) => (
-                      <motion.article key={p.slug} variants={reveal} className="panel-tile flex min-w-0 flex-col overflow-hidden rounded-2xl">
+                      <m.article key={p.slug} variants={reveal} className="panel-tile flex min-w-0 flex-col overflow-hidden rounded-2xl">
                         {p.images?.[0] ? (
                           <img src={p.images[0]} alt={p.title} loading="lazy" className="aspect-[16/9] w-full object-cover" />
                         ) : (
@@ -150,16 +150,16 @@ export default function PitchPage() {
                             ))}
                           </ul>
                         </div>
-                      </motion.article>
+                      </m.article>
                     ))}
                   </div>
-                  <motion.a variants={reveal} href={L("/#projekt")} className="mt-4 inline-flex items-center gap-1.5 text-sm text-ember-300 hover:underline">
+                  <m.a variants={reveal} href={L("/#projekt")} className="mt-4 inline-flex items-center gap-1.5 text-sm text-ember-300 hover:underline">
                     {t("pitch.all_projects")} <ArrowRight className="size-4" />
-                  </motion.a>
+                  </m.a>
                 </section>
               )}
 
-              <motion.section variants={reveal} className="mt-16 rounded-2xl border border-ember-400/30 bg-ember-500/10 p-6 md:p-8">
+              <m.section variants={reveal} className="mt-16 rounded-2xl border border-ember-400/30 bg-ember-500/10 p-6 md:p-8">
                 <div className="flex flex-wrap items-center justify-between gap-6">
                   <div className="max-w-xl">
                     <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-ember-300">
@@ -172,18 +172,18 @@ export default function PitchPage() {
                     {t("pitch.lab_cta")} <ArrowRight className="size-4" />
                   </a>
                 </div>
-              </motion.section>
+              </m.section>
 
               {pitch.closing && (
-                <motion.p variants={reveal} className="mt-16 max-w-2xl text-lg text-fg-muted">
+                <m.p variants={reveal} className="mt-16 max-w-2xl text-lg text-fg-muted">
                   {pitch.closing}
-                </motion.p>
+                </m.p>
               )}
-              <motion.p variants={reveal} className="mt-6 text-fg">
+              <m.p variants={reveal} className="mt-6 text-fg">
                 {content.profile.name}
                 <span className="block text-sm text-fg-muted">{content.profile.role} · {content.profile.location}</span>
-              </motion.p>
-            </motion.div>
+              </m.p>
+            </m.div>
           )}
         </main>
       </div>

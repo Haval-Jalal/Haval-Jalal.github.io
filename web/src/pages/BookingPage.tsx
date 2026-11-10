@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { ArrowLeft, CalendarCheck, Check, Clock, Loader2, MapPin } from "lucide-react";
 import { reveal, stagger } from "../components/Section";
 import { book, getBookingInfo, type BookingInfo } from "../lib/booking";
@@ -91,7 +91,7 @@ export default function BookingPage() {
           </div>
         )}
         {info?.enabled && status === "done" && confirmed && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl pt-20 text-center">
+          <m.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl pt-20 text-center">
             <span className="mx-auto grid size-14 place-items-center rounded-full bg-emerald-500/15 text-emerald-300">
               <CalendarCheck className="size-7" />
             </span>
@@ -104,29 +104,29 @@ export default function BookingPage() {
             <a href={L("/")} className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-2.5 text-sm text-fg hover:border-ember-400/50">
               {t("pitch.to_site")}
             </a>
-          </motion.div>
+          </m.div>
         )}
         {info?.enabled && status !== "done" && (
-          <motion.div initial="hidden" animate="show" variants={stagger}>
-            <motion.p variants={reveal} className="pt-8 font-mono text-xs uppercase tracking-[0.2em] text-ember-300">
+          <m.div initial="hidden" animate="show" variants={stagger}>
+            <m.p variants={reveal} className="pt-8 font-mono text-xs uppercase tracking-[0.2em] text-ember-300">
               {t("book.eyebrow")}
-            </motion.p>
-            <motion.h1 variants={reveal} className="mt-2 text-3xl font-semibold tracking-tight md:text-5xl">
+            </m.p>
+            <m.h1 variants={reveal} className="mt-2 text-3xl font-semibold tracking-tight md:text-5xl">
               {info.title}
-            </motion.h1>
-            <motion.p variants={reveal} className="mt-3 max-w-2xl text-fg-muted">
+            </m.h1>
+            <m.p variants={reveal} className="mt-3 max-w-2xl text-fg-muted">
               {info.intro}
-            </motion.p>
-            <motion.p variants={reveal} className="mt-3 flex flex-wrap gap-4 text-xs text-fg-faint">
+            </m.p>
+            <m.p variants={reveal} className="mt-3 flex flex-wrap gap-4 text-xs text-fg-faint">
               <span className="inline-flex items-center gap-1.5"><Clock className="size-3.5" /> {info.slotMinutes} min</span>
               <span className="inline-flex items-center gap-1.5"><MapPin className="size-3.5" /> {info.location}</span>
               <span>{t("book.tz")}: {tz}</span>
-            </motion.p>
+            </m.p>
 
             {days.length === 0 ? (
-              <motion.p variants={reveal} className="mt-10 text-fg-muted">{t("book.none")}</motion.p>
+              <m.p variants={reveal} className="mt-10 text-fg-muted">{t("book.none")}</m.p>
             ) : (
-              <motion.div variants={reveal} className="mt-10 grid gap-6 lg:grid-cols-[1fr_1fr]">
+              <m.div variants={reveal} className="mt-10 grid gap-6 lg:grid-cols-[1fr_1fr]">
                 <div className="min-w-0 space-y-5">
                   <div>
                     <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-fg-faint">{t("book.pick_day")}</p>
@@ -180,9 +180,9 @@ export default function BookingPage() {
                   </button>
                   <p className="text-xs text-fg-faint">{t("book.privacy")}</p>
                 </form>
-              </motion.div>
+              </m.div>
             )}
-          </motion.div>
+          </m.div>
         )}
       </main>
     </div>

@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import Section, { reveal, stagger } from "./Section";
 import { useSiteContent } from "../lib/content";
 import { t } from "../lib/i18n";
@@ -19,14 +19,14 @@ export default function Journey() {
     >
       <div className="grid gap-12 md:grid-cols-[1fr_1.4fr] md:gap-16">
         {/* Portrait + facts */}
-        <motion.aside
+        <m.aside
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
           variants={stagger}
           className="md:sticky md:top-28 md:self-start"
         >
-          <motion.div
+          <m.div
             variants={reveal}
             className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/60"
           >
@@ -37,19 +37,19 @@ export default function Journey() {
                 {profile.role} · {profile.location}
               </p>
             </div>
-          </motion.div>
-          <motion.ul variants={reveal} className="mt-6 space-y-3">
+          </m.div>
+          <m.ul variants={reveal} className="mt-6 space-y-3">
             {education.map((e) => (
               <li key={e.school} className="panel-tile rounded-xl px-4 py-3">
                 <p className="text-sm font-medium text-fg">{e.program}</p>
                 <p className="text-xs text-fg-muted">{e.school}</p>
               </li>
             ))}
-          </motion.ul>
-        </motion.aside>
+          </m.ul>
+        </m.aside>
 
         {/* Timeline */}
-        <motion.ol
+        <m.ol
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
@@ -57,7 +57,7 @@ export default function Journey() {
           className="relative border-l border-white/10 pl-8"
         >
           {journey.map((step, i) => (
-            <motion.li key={step.title} variants={reveal} className="relative pb-12 last:pb-0">
+            <m.li key={step.title} variants={reveal} className="relative pb-12 last:pb-0">
               <span
                 className={`absolute -left-[2.35rem] top-1.5 grid size-5 place-items-center rounded-full border-2 border-night-900 ${
                   i === journey.length - 1 ? "bg-ember-500 shadow-[0_0_18px_rgba(232,147,58,0.6)]" : "bg-night-700"
@@ -77,9 +77,9 @@ export default function Journey() {
                   ))}
                 </ul>
               )}
-            </motion.li>
+            </m.li>
           ))}
-        </motion.ol>
+        </m.ol>
       </div>
     </Section>
   );

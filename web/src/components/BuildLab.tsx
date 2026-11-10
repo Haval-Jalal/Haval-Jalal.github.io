@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { Clock, Loader2, Lock, LockOpen, Send, Sparkles, Wand2 } from "lucide-react";
 import Section, { reveal, stagger } from "./Section";
 import { LabActions, LabFrame, Plan } from "./LabViewer";
@@ -25,7 +25,7 @@ export default function BuildLab() {
     >
       <div className="grid min-w-0 gap-6 lg:grid-cols-[1.5fr_1fr]">
         <Lab />
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
@@ -33,7 +33,7 @@ export default function BuildLab() {
           className="flex min-w-0 flex-col gap-4"
         >
           <AgentTeaser />
-          <motion.div variants={reveal} className="panel-tile rounded-3xl p-6">
+          <m.div variants={reveal} className="panel-tile rounded-3xl p-6">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-ember-300">{t("lab.how")}</p>
             <ol className="mt-3 space-y-2 text-sm text-fg-muted">
               <li>{t("lab.how1")}</li>
@@ -41,8 +41,8 @@ export default function BuildLab() {
               <li>{t("lab.how3")}</li>
               <li>{t("lab.how4")}</li>
             </ol>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </div>
     </Section>
   );
@@ -128,14 +128,14 @@ function Lab() {
   };
 
   return (
-    <motion.div
+    <m.div
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-60px" }}
       variants={stagger}
       className="panel-glass min-w-0 overflow-hidden rounded-3xl p-2"
     >
-      <motion.div variants={reveal} className="rounded-[1.25rem] border border-white/5 bg-night-950/60 p-5 md:p-7">
+      <m.div variants={reveal} className="rounded-[1.25rem] border border-white/5 bg-night-950/60 p-5 md:p-7">
         <div className="flex flex-wrap items-center gap-2 text-xs text-fg-faint">
           <Sparkles className="size-3.5 text-ember-300" />
           {t("lab.header")}
@@ -192,7 +192,7 @@ function Lab() {
             </button>
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {state.status === "running" && (
         <div className="mt-2 min-w-0 overflow-hidden rounded-[1.25rem] border border-white/5 bg-night-950">
@@ -250,7 +250,7 @@ function Lab() {
           </ul>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 }
 

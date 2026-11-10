@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import Section, { reveal, stagger } from "./Section";
 import { listGallery, type GalleryItem } from "../lib/lab";
@@ -27,7 +27,7 @@ export default function Gallery() {
       }
       lede={t("gallery.lede")}
     >
-      <motion.ul
+      <m.ul
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: "-60px" }}
@@ -35,7 +35,7 @@ export default function Gallery() {
         className="grid gap-5 md:grid-cols-2 xl:grid-cols-3"
       >
         {items.map((b) => (
-          <motion.li key={b.id} variants={reveal} className="min-w-0">
+          <m.li key={b.id} variants={reveal} className="min-w-0">
             <a
               href={L(`/lab/${b.id}`)}
               className="panel-tile group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:border-ember-400/40"
@@ -65,9 +65,9 @@ export default function Gallery() {
                 </span>
               </div>
             </a>
-          </motion.li>
+          </m.li>
         ))}
-      </motion.ul>
+      </m.ul>
     </Section>
   );
 }

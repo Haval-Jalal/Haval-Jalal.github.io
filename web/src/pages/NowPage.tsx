@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { reveal, stagger } from "../components/Section";
 import { getNow, type NowPage as NowDoc } from "../lib/posts";
@@ -37,24 +37,24 @@ export default function NowPage() {
         {doc === undefined && <p className="pt-10 text-fg-muted">{t("pitch.loading")}</p>}
         {doc === null && <p className="pt-10 text-fg-muted">{t("err.unknown")}</p>}
         {doc && (
-          <motion.div initial="hidden" animate="show" variants={stagger}>
-            <motion.p variants={reveal} className="pt-8 font-mono text-xs uppercase tracking-[0.2em] text-ember-300">
+          <m.div initial="hidden" animate="show" variants={stagger}>
+            <m.p variants={reveal} className="pt-8 font-mono text-xs uppercase tracking-[0.2em] text-ember-300">
               {t("now.eyebrow")}
-            </motion.p>
-            <motion.h1 variants={reveal} className="mt-2 text-4xl font-semibold tracking-tight md:text-6xl">
+            </m.p>
+            <m.h1 variants={reveal} className="mt-2 text-4xl font-semibold tracking-tight md:text-6xl">
               {t("now.title")}
-            </motion.h1>
-            <motion.p variants={reveal} className="mt-4 max-w-xl text-pretty text-lg text-fg-muted">
+            </m.h1>
+            <m.p variants={reveal} className="mt-4 max-w-xl text-pretty text-lg text-fg-muted">
               {doc.intro}
-            </motion.p>
-            <motion.p variants={reveal} className="mt-3 font-mono text-xs text-fg-faint">
+            </m.p>
+            <m.p variants={reveal} className="mt-3 font-mono text-xs text-fg-faint">
               {t("now.updated")} {updated}
               {servedLang !== locale && <span className="ml-2 text-fg-faint">· {t("now.sv_only")}</span>}
-            </motion.p>
+            </m.p>
 
             <div className="mt-12 space-y-8">
               {doc.sections.map((s) => (
-                <motion.section key={s.title} variants={reveal} className="panel-tile rounded-2xl p-6">
+                <m.section key={s.title} variants={reveal} className="panel-tile rounded-2xl p-6">
                   <h2 className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-ember-300">
                     <Sparkles className="size-3.5" /> {s.title}
                   </h2>
@@ -70,19 +70,19 @@ export default function NowPage() {
                       ))}
                     </ul>
                   )}
-                </motion.section>
+                </m.section>
               ))}
             </div>
 
-            <motion.div variants={reveal} className="mt-14 flex flex-wrap gap-3">
+            <m.div variants={reveal} className="mt-14 flex flex-wrap gap-3">
               <a href={L("/#kontakt")} className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-5 py-2.5 text-sm font-medium text-night-950">
                 {t("nav.cta")}
               </a>
               <a href={L("/")} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-2.5 text-sm text-fg hover:border-ember-400/50">
                 {t("pitch.to_site")}
               </a>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </main>
     </div>

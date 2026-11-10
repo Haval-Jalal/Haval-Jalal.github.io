@@ -17,7 +17,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { AnimatePresence, motion, useScroll, useTransform, type MotionValue } from "motion/react";
+import { AnimatePresence, m, useScroll, useTransform, type MotionValue } from "motion/react";
 import { useSiteContent } from "../lib/content";
 import { recentTotal, relativeTime, useGitHub, type DayCount, type GitHubActivity } from "../lib/github";
 import { L, numberLocale, t } from "../lib/i18n";
@@ -71,14 +71,14 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 80 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1.1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
       style={{ y, perspective: 1600 }}
       className="relative mx-auto w-full max-w-5xl"
     >
-      <motion.div
+      <m.div
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
         className="panel-glass overflow-hidden rounded-2xl text-fg"
       >
@@ -89,7 +89,7 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
             <TabStrip view={view} onSelect={go} />
             <div className="min-h-[430px] p-5 max-md:min-h-0">
               <AnimatePresence mode="wait" initial={false}>
-                <motion.div
+                <m.div
                   key={query.trim() ? "search" : view}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -113,13 +113,13 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
                   ) : (
                     <ContactView />
                   )}
-                </motion.div>
+                </m.div>
               </AnimatePresence>
             </div>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }
 
