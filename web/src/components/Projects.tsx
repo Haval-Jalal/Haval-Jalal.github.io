@@ -55,9 +55,11 @@ function Rail({ count, children }: { count: number; children: React.ReactNode })
     if (!el) return;
     const measure = () => {
       const max = el.scrollWidth - el.clientWidth;
-      const pages = Math.max(1, Math.ceil(el.scrollWidth / el.clientWidth));
+      // A page is one viewport plus the gap that follows it, so six cards in threes make two pages, not three.
+      const gap = parseFloat(getComputedStyle(el).columnGap) || 0;
+      const pages = Math.max(1, Math.ceil((el.scrollWidth + gap) / (el.clientWidth + gap)));
       const atEnd = el.scrollLeft >= max - 2;
-      const index = atEnd ? pages - 1 : Math.min(pages - 1, Math.round(el.scrollLeft / el.clientWidth));
+      const index = atEnd ? pages - 1 : Math.min(pages - 1, Math.round(el.scrollLeft / (el.clientWidth + gap)));
       setPos({ index, pages, atStart: el.scrollLeft <= 2, atEnd });
     };
     measure();
@@ -70,7 +72,12 @@ function Rail({ count, children }: { count: number; children: React.ReactNode })
     };
   }, [count]);
 
-  const page = (dir: -1 | 1) => ref.current?.scrollBy({ left: dir * ref.current.clientWidth, behavior: "smooth" });
+  const page = (dir: -1 | 1) => {
+    const el = ref.current;
+    if (!el) return;
+    const gap = parseFloat(getComputedStyle(el).columnGap) || 0;
+    el.scrollBy({ left: dir * (el.clientWidth + gap), behavior: "smooth" });
+  };
 
   return (
     <div className="relative">
