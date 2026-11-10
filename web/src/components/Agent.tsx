@@ -4,21 +4,34 @@ import { Loader2, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { onAgentOpen, openAgent, useDigitalHaval } from "../lib/chat";
 import type { Agent3DProps, IntroPhase } from "./Agent3D";
 
-// three.js is 600 kB and compiling the character's shaders takes a moment, so the 3D character
-// is mounted once the browser is idle after the first paint; the SVG face stands in until then.
+// three.js is 600 kB and compiling the character's shaders blocks the main thread for a good
+// second on a phone, so the 3D character waits for the first sign of a visitor (pointer, touch,
+// scroll, key) or four seconds, and then an idle moment; the SVG face stands in until then.
 const Agent3DLazy = lazy(() => import("./Agent3D"));
 let idleReached = false;
+const WAKE = ["pointermove", "pointerdown", "touchstart", "keydown", "wheel", "scroll"] as const;
 function Agent3D(props: Agent3DProps) {
   const [ready, setReady] = useState(idleReached);
   useEffect(() => {
     if (ready) return;
+    let idle = 0;
+    let timer = 0;
     const go = () => { idleReached = true; setReady(true); };
-    if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(go, { timeout: 2500 });
-      return () => window.cancelIdleCallback(id);
-    }
-    const id = window.setTimeout(go, 1500);
-    return () => window.clearTimeout(id);
+    const unlisten = () => WAKE.forEach((e) => window.removeEventListener(e, schedule));
+    const schedule = () => {
+      unlisten();
+      window.clearTimeout(fallback);
+      if (typeof window.requestIdleCallback === "function") idle = window.requestIdleCallback(go, { timeout: 1500 });
+      else timer = window.setTimeout(go, 300);
+    };
+    WAKE.forEach((e) => window.addEventListener(e, schedule, { passive: true, once: true }));
+    const fallback = window.setTimeout(schedule, 4000);
+    return () => {
+      unlisten();
+      window.clearTimeout(fallback);
+      if (idle) window.cancelIdleCallback(idle);
+      if (timer) window.clearTimeout(timer);
+    };
   }, [ready]);
   const face = <AgentFace mood={props.mood ?? "idle"} size={props.size ?? 84} className={props.className} />;
   if (!ready) return face;
