@@ -1,0 +1,369 @@
+{
+  "profile": {
+    "name": "Haval Jalal",
+    "role": "Systemutvecklare",
+    "tagline": "Systemutvecklare med industriell precision och kreativ ambition, en bro mellan struktur och innovation.",
+    "location": "Göteborg",
+    "availability": "Öppen för uppdrag i Göteborg och remote",
+    "headline": {
+      "lead": "Bygger digitala produkter med",
+      "accent": "industriell precision."
+    },
+    "intro": "Femton år på Volvo Cars, tio av dem som lagledare i monteringsfabriken. Nu systemutvecklare inom .NET och React som bygger produktionsklara applikationer från databas till UI.",
+    "about": "Jag har stått i produktionen, lett team och sett vad som funkar när man förändrar hur folk jobbar. Den erfarenheten tar jag med in i koden: jag bygger applikationer end-to-end, från databasdesign och säkra .NET-API:er till React-gränssnitt och molndeploy, med fokus på clean architecture, säkerhet, validering och leverans.",
+    "links": {
+      "github": "https://github.com/Haval-Jalal",
+      "linkedin": "https://www.linkedin.com/in/havaljalal/",
+      "email": "haval.jalal@hotmail.com"
+    }
+  },
+  "projects": [
+    {
+      "slug": "carcheck",
+      "title": "CarCheck",
+      "summary": "Skriv in ett registreringsnummer, eller fota skylten med mobilen, och få köp, avvakta eller undvik med en poäng 0–100 som väger tolv faktorer: besiktning, miltal, skulder, försäkring, återkallelser och mer.\n\nByggd ensam från idé till lansering: .NET-backend med Clean Architecture, React-frontend, konton, betalningar via Stripe och GDPR med all data i EU.",
+      "tags": [
+        ".NET 9",
+        "React 19",
+        "Clean Architecture",
+        "Stripe",
+        "GDPR"
+      ],
+      "repo": "",
+      "year": "2026",
+      "hidden": false,
+      "status": "live",
+      "tagline": "Datadriven rekommendation innan du köper en begagnad bil.",
+      "highlights": [
+        "Sök på regnummer, fota skylten eller klistra in en Blocket-annons",
+        "Abonnemang och krediter via Stripe",
+        "GDPR: exportera eller radera all din data, databasen ligger i EU"
+      ],
+      "images": [
+        "/work/carcheck-1.webp",
+        "/work/carcheck-2.webp"
+      ],
+      "links": [
+        {
+          "label": "carcheck.se",
+          "url": "https://www.carcheck.se"
+        }
+      ]
+    },
+    {
+      "slug": "presync",
+      "title": "PreSync",
+      "summary": "Läser din kalender och sammanställer en kort briefing om varje person du ska träffa, byggd på offentlig information. Spelar in och transkriberar möten så att de blir sökbara, och ger chefer en överblick över teamets möten.\n\nMVP byggd av ett team på tre hos InFiNet Code. Jag byggde frontend och backend.",
+      "tags": [
+        ".NET",
+        "React",
+        "TypeScript",
+        "AI"
+      ],
+      "repo": "",
+      "year": "2026",
+      "hidden": false,
+      "status": "pilot",
+      "tagline": "Gå in i varje möte och vet vem du har framför dig.",
+      "highlights": [
+        "Kalenderintegration och automatisk briefing",
+        "Inspelning och transkribering av möten",
+        "Teamöversikt för chefer"
+      ],
+      "images": [
+        "/work/presync-1.webp"
+      ],
+      "links": null
+    },
+    {
+      "slug": "dojo-future",
+      "title": "Dojo Future",
+      "summary": "Skolsystem från InFiNet Code för svenska skolor: antagning, närvaro, betyg, schema, LIA och ekonomi i ett system, med rapportering till MYH och CSN inbyggd. Separata portaler för administration, lärare, studerande och LIA-företag.\n\nJag byggde, felsökte och gjorde systemet säljredo tillsammans med teamet.",
+      "tags": [
+        ".NET",
+        "SQL Server",
+        "React",
+        "TypeScript"
+      ],
+      "repo": "",
+      "year": "2026",
+      "hidden": false,
+      "status": "wip",
+      "tagline": "En plattform för hela skolan, modul för modul.",
+      "highlights": [
+        "Antagning, närvaro, betyg och schema",
+        "MYH- och CSN-rapportering med automatiska exporter",
+        "Fem portaler, en för varje roll på skolan"
+      ],
+      "images": [
+        "/work/dojo-future-1.webp",
+        "/work/dojo-future-2.webp",
+        "/work/dojo-future-3.webp"
+      ],
+      "links": null
+    },
+    {
+      "slug": "eventify",
+      "title": "Eventify",
+      "summary": "Konsolapp i .NET där SQL Server-databasen är källan till sanningen: tabeller, constraints, vyer och säkerhet skrevs i T-SQL först, sedan scaffoldades EF Core-modellerna från databasen. Hanterar kunder, events, ordrar och biljetter och tar fram rapporter som toppkunder och försäljning per event.",
+      "tags": [
+        ".NET",
+        "EF Core",
+        "SQL Server",
+        "T-SQL"
+      ],
+      "repo": "https://github.com/Haval-Jalal/Eventify",
+      "year": "2026",
+      "hidden": false,
+      "status": "school",
+      "tagline": "Biljettsystem byggt databasen först.",
+      "highlights": [
+        "Åtta T-SQL-skript från schema till cleanup",
+        "EF Core-modeller scaffoldade från databasen",
+        "Rapporter via SQL-vyer"
+      ],
+      "images": [
+        "/work/eventify-1.webp",
+        "/work/eventify-erd.webp"
+      ],
+      "links": null
+    },
+    {
+      "slug": "job-application-tracker",
+      "title": "JobApplicationTracker",
+      "summary": "En av mina första C#-appar: lägg till ansökningar, uppdatera status, ta bort och lista allt sorterat på datum med dagar sedan ansökan. Uppgiften där LINQ gick från obegripligt till det jag helst använder.",
+      "tags": [
+        "C#",
+        ".NET",
+        "LINQ"
+      ],
+      "repo": "https://github.com/Haval-Jalal/JobApplicationTracker",
+      "year": "2025",
+      "hidden": false,
+      "status": "school",
+      "tagline": "Håll koll på jobbansökningarna från terminalen.",
+      "highlights": [
+        "CRUD med status Applied, Interview, Offer och Rejected",
+        "LINQ för sortering och filtrering",
+        "Räknar dagar sedan ansökan och svarsdatum"
+      ],
+      "images": [
+        "/work/jat-1.webp"
+      ],
+      "links": null
+    },
+    {
+      "slug": "mini-ecommerce-db",
+      "title": "MiniECommerceDB",
+      "summary": "Databasprojekt för en liten e-handel: kunder, produkter, kategorier, lager, ordrar, orderrader och betalningar. ER-modellen designades först, sedan skrevs allt i T-SQL: schema med constraints, seed-data, CRUD, joins, vyer och lagrade procedurer för rapporter.",
+      "tags": [
+        "SQL Server",
+        "T-SQL",
+        "ER-modellering"
+      ],
+      "repo": "https://github.com/Haval-Jalal/MiniECommerceDB",
+      "year": "2025",
+      "hidden": false,
+      "status": "school",
+      "tagline": "Relationsdatabas i 3NF med vyer och lagrade procedurer.",
+      "highlights": [
+        "Sju entiteter och en junction-tabell",
+        "Normaliserad till 3NF med PK, FK, UNIQUE och CHECK",
+        "Vyer och lagrade procedurer för rapporter"
+      ],
+      "images": [
+        "/work/ecommerce-1.webp",
+        "/work/ecommerce-erd.webp"
+      ],
+      "links": null
+    }
+  ],
+  "journey": [
+    {
+      "period": "2011 – 2014",
+      "title": "Montör i monteringsfabriken",
+      "org": "Volvo Cars, Torslanda",
+      "text": "Började på linan i Torslanda. Lärde mig takt, kvalitet och hur en fabrik fungerar när allt ska stämma varje minut.",
+      "bullets": null
+    },
+    {
+      "period": "2014 – idag",
+      "title": "Lagledare, produktion & kvalitet",
+      "org": "Volvo Cars, Torslanda",
+      "text": "Leder ett produktionsteam sedan 2014, sedan hösten 2025 på 75 % vid sidan av studierna. Att strukturera arbete, motivera människor och leverera under press är vardag här, och det är precis vad som krävs i ett utvecklingsteam också.",
+      "bullets": [
+        "Leder produktionsteam med fokus på kvalitet, säkerhet och leverans",
+        "Coachar, utbildar och utvecklar teammedlemmar",
+        "Driver ständiga förbättringsinitiativ",
+        "Processoptimering och effektivisering av arbetsflöden"
+      ]
+    },
+    {
+      "period": "Hösten 2025",
+      "title": "Från maskiner till mjukvara",
+      "org": "NBI Handelsakademin, Göteborg",
+      "text": "Började studera till systemutvecklare .NET vid sidan av jobbet. Tvåårig YH-utbildning med fullstack, Clean Architecture, SQL och molnet, examen 2027. Det som började som fascination för automation och digitala system blev ett yrkesbyte.",
+      "bullets": null
+    },
+    {
+      "period": "Februari 2026 –",
+      "title": "Junior software engineer & project lead",
+      "org": "InFiNet Code, Göteborg (deltid)",
+      "text": "Bygger hemsidor, appar och automatisering åt små företag, från första kundmöte till lansering. Leder projekten och levererar både frontend och backend.",
+      "bullets": [
+        "Kundsajter och demos åt småföretag",
+        "PreSync och DOJO tillsammans med teamet",
+        "Projektledning: planering, uppföljning och leverans"
+      ]
+    },
+    {
+      "period": "Hösten 2026",
+      "title": "LIA 1: utvecklare i plattformsteam",
+      "org": "Volvo Cars, Göteborg",
+      "text": "Tio veckors praktik som utvecklare i ett team som bygger appar för produktionen. Fyra stories genom hela stacken i Angular och Java, egna pull requests, kodgranskning och pipelines i Azure DevOps. Presenterade mina ändringar på ett releasemöte och blev inbjuden tillbaka till LIA 2.",
+      "bullets": [
+        "Angular och TypeScript i frontend",
+        "Java och Spring i backend",
+        "Azure DevOps-pipelines och kodgranskning",
+        "LIA 2 i samma team, februari till maj 2027"
+      ]
+    },
+    {
+      "period": "Nu",
+      "title": "Bygger produktion-klara applikationer",
+      "org": "Göteborg · remote",
+      "text": "Öppen för uppdrag. Bygger fullstack-lösningar i .NET och React, med AI-agenter som en naturlig del av verktygslådan. Nästa steg: LIA 2 på Volvo Cars, 1 februari till 14 maj 2027.",
+      "bullets": null
+    }
+  ],
+  "education": [
+    {
+      "school": "NBI Handelsakademin, Göteborg",
+      "program": "Systemutvecklare .NET"
+    },
+    {
+      "school": "Framtidsgymnasiet, Göteborg",
+      "program": "Gymnasieutbildning"
+    }
+  ],
+  "skills": [
+    {
+      "title": "Backend",
+      "items": [
+        ".NET Core",
+        "ASP.NET",
+        "Clean Architecture",
+        "CQRS",
+        "MediatR",
+        "Entity Framework",
+        "FluentValidation",
+        "Java & Spring"
+      ],
+      "accent": true
+    },
+    {
+      "title": "Säkerhet & Identitet",
+      "items": [
+        "JWT",
+        "Claims-based Access",
+        "Validering",
+        "Auth-aware UI",
+        "RBAC",
+        "2FA"
+      ],
+      "accent": false
+    },
+    {
+      "title": "Databaser & Data Access",
+      "items": [
+        "SQL Server",
+        "Relational Modelling",
+        "EF Core",
+        "T-SQL",
+        "Cosmos DB"
+      ],
+      "accent": false
+    },
+    {
+      "title": "Frontend",
+      "items": [
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "Framer Motion",
+        "Vite",
+        "Angular",
+        "TanStack Query",
+        "Zod"
+      ],
+      "accent": false
+    },
+    {
+      "title": "Fullstack Integrationer",
+      "items": [
+        "REST API",
+        "Azure",
+        "GitHub Actions",
+        "CI/CD",
+        "Azure DevOps",
+        "Docker"
+      ],
+      "accent": false
+    },
+    {
+      "title": "AI & Moderna Verktyg",
+      "items": [
+        "AI-powered Apps",
+        "Claude API",
+        "Agenter",
+        "Prompt-design"
+      ],
+      "accent": false
+    },
+    {
+      "title": "Projektledning",
+      "items": [
+        "GitHub Projects",
+        "GitHub flow",
+        "Scrum",
+        "Teamleverans"
+      ],
+      "accent": false
+    }
+  ],
+  "nav": [
+    {
+      "label": "Projekt",
+      "href": "#projekt"
+    },
+    {
+      "label": "Resan",
+      "href": "#resan"
+    },
+    {
+      "label": "Stack",
+      "href": "#stack"
+    },
+    {
+      "label": "Build Lab",
+      "href": "#build-lab"
+    },
+    {
+      "label": "Kontakt",
+      "href": "#kontakt"
+    }
+  ],
+  "settings": {
+    "background": "terrain",
+    "soundDefault": false,
+    "openForWork": true,
+    "sectionOrder": [
+      "projekt",
+      "resan",
+      "stack",
+      "build-lab",
+      "kontakt"
+    ]
+  },
+  "updatedAt": "2026-11-10T11:32:53.8495954Z"
+}

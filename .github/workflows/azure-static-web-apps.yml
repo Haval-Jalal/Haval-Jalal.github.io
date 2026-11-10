@@ -27,6 +27,12 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      # The bundle carries a copy of the content document so the first paint matches the API.
+      # If the API is down the committed copy is used; the step never fails the build.
+      - name: Snapshot live content into the bundle
+        working-directory: web
+        run: node scripts/snapshot-content.mjs
+
       - name: Build site
         working-directory: web
         run: |
