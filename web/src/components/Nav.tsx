@@ -1,4 +1,5 @@
 import { motion, useScroll, useTransform } from "motion/react";
+import { Mark } from "./Mark";
 import { Volume2, VolumeX } from "lucide-react";
 import { useSiteContent } from "../lib/content";
 import { L, otherLocaleUrl, t } from "../lib/i18n";
@@ -16,7 +17,6 @@ export default function Nav({ soundOn, onToggleSound, dark = false }: Props) {
   const barOpacity = useTransform(scrollY, [40, 160], [0, 1]);
 
   const text = dark ? "text-white/70 hover:text-white" : "text-ink-soft hover:text-ink";
-  const logoBox = dark ? "bg-white text-[#0b0d14]" : "bg-ink text-sand-100";
   const brand = dark ? "text-white" : "text-ink";
   const iconBtn = dark
     ? "border-white/15 bg-white/5 text-white/70 hover:text-white"
@@ -34,9 +34,7 @@ export default function Nav({ soundOn, onToggleSound, dark = false }: Props) {
       <motion.div style={{ opacity: barOpacity }} className={`absolute inset-0 border-b backdrop-blur-md ${bar}`} />
       <nav className="relative mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
         <a href="#" className="flex items-center gap-2.5">
-          <span className={`grid size-7 place-items-center rounded-lg ${logoBox}`}>
-            <span className="text-sm font-bold leading-none">H</span>
-          </span>
+          <Mark size={10} />
           <span className={`text-sm font-semibold tracking-tight ${brand}`}>Haval Jalal</span>
         </a>
         <ul className="flex items-center gap-7 text-[13px] font-medium max-md:hidden">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Mark } from "./Mark";
 import {
   ArrowUpRight,
   Briefcase,
@@ -128,9 +129,7 @@ function Sidebar({ view, onSelect, repoCount }: { view: View; onSelect: (v: View
   return (
     <aside className="border-r border-white/5 p-4 max-md:hidden">
       <div className="mb-6 flex items-center gap-2 px-2">
-        <span className="grid size-6 place-items-center rounded-md bg-ember-400 text-night-950">
-          <span className="text-xs font-bold leading-none">H</span>
-        </span>
+        <Mark size={9} />
         <span className="text-sm font-semibold tracking-tight">Haval OS</span>
       </div>
       <p className="mb-2 px-2 font-mono text-[10px] uppercase tracking-[0.18em] text-fg-faint">Main</p>

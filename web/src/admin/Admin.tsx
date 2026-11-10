@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Mark } from "../components/Mark";
 import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical, CalendarDays, Newspaper, Mail, Loader2 } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
@@ -60,7 +61,7 @@ export default function Admin() {
       <div className="grid min-h-screen grid-cols-[220px_1fr] max-md:grid-cols-1">
         <aside className="border-r border-white/5 p-5 max-md:border-b max-md:border-r-0">
           <div className="mb-8 flex items-center gap-2">
-            <span className="grid size-7 place-items-center rounded-md bg-ember-400 text-xs font-bold text-night-950">H</span>
+            <Mark size={10} />
             <span className="text-sm font-semibold">Haval OS · Admin</span>
           </div>
           <nav className="space-y-1">

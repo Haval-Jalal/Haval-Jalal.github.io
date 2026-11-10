@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { Mark } from "../components/Mark";
 import { motion, useMotionValue, useSpring } from "motion/react";
 import { ArrowRight, ArrowUpRight, Check, FileDown, Sparkles } from "lucide-react";
 import { reveal, stagger } from "../components/Section";
@@ -67,7 +68,7 @@ export default function PitchPage() {
       <div className="relative z-10">
         <header className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5">
           <a href={L("/")} className="flex items-center gap-2 text-sm text-fg-muted hover:text-fg">
-            <span className="grid size-7 place-items-center rounded-md bg-ember-400 text-xs font-bold text-night-950">H</span>
+            <Mark size={10} />
             Haval Jalal
           </a>
           <span className="font-mono text-xs text-fg-faint">{t("pitch.personal")}</span>
