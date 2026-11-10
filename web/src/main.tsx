@@ -17,7 +17,7 @@ const NowPage = lazy(() => import("./pages/NowPage"));
 const ChangelogPage = lazy(() => import("./pages/ChangelogPage"));
 const path = sitePath;
 document.documentElement.lang = locale;
-if (locale === "en") document.title = "Haval Jalal — Software Developer";
+if (locale === "en") document.title = "Haval Jalal – .NET & React Developer in Gothenburg";
 const clean = path.replace(/\/$/, "") || "/";
 const page = path.startsWith("/admin") ? "admin" : path.startsWith("/lab/") ? "lab" : path.startsWith("/for/") ? "pitch" : clean === "/boka" || clean === "/book" ? "book" : clean === "/cv" ? "cv" : clean === "/nu" || clean === "/now" ? "now" : clean === "/changelog" ? "changelog" : "site";
 
