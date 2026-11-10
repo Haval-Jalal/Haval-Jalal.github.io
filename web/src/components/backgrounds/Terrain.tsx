@@ -94,6 +94,7 @@ export default function Terrain({ mouseX, mouseY }: Props) {
       renderer.render(scene, camera);
     };
     frame();
+    requestAnimationFrame(() => canvas.style.opacity = "1");
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
@@ -112,7 +113,7 @@ export default function Terrain({ mouseX, mouseY }: Props) {
             "radial-gradient(70% 50% at 50% 55%, rgba(240,138,60,0.14) 0%, rgba(240,138,60,0) 60%), linear-gradient(to bottom, #09080c 0%, #0c0a0e 60%, #120d0b 100%)",
         }}
       />
-      <canvas ref={ref} className="absolute inset-0 h-full w-full" />
+      <canvas ref={ref} className="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-[1200ms] ease-out" />
       <div
         className="absolute inset-0"
         style={{ background: "radial-gradient(120% 90% at 50% 50%, transparent 50%, rgba(0,0,0,0.6) 100%)" }}

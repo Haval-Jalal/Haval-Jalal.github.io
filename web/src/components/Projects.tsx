@@ -135,7 +135,15 @@ function ProjectCard({ project: p, onOpen }: { project: Project; onOpen: (index:
         aria-label={cover ? `${t("projects.show_images")} ${p.title}` : undefined}
       >
         {cover ? (
-          <img src={cover} alt={p.title} loading="lazy" className="size-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+          <img
+            src={cover}
+            srcSet={`${cover.replace(/\.webp$/, "-800.webp")} 800w, ${cover} 1600w`}
+            sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 82vw"
+            alt={p.title}
+            loading="lazy"
+            decoding="async"
+            className="size-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+          />
         ) : (
           <Placeholder title={p.title} />
         )}

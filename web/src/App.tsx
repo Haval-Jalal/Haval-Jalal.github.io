@@ -1,10 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { useAfterLoad } from "./lib/afterLoad";
 import Lenis from "lenis";
 import { motion, useMotionValue, useSpring, type Variants } from "motion/react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Nav from "./components/Nav";
 import HavalOS from "./components/HavalOS";
-import AgentWidget from "./components/Agent";
 import { BACKGROUNDS, currentBackground, type BackgroundKey } from "./components/backgrounds";
 import { useSiteContent } from "./lib/content";
 import { attachGlobalSfx, setSoundEnabled } from "./lib/sound";
@@ -27,6 +27,9 @@ export default function App() {
   const bg = BACKGROUNDS[bgKey];
   const Background = bg.load;
   const dark = bg.theme === "dark";
+  // The 3D background and the agent are heavy and not needed for the first paint: they mount once
+  // the page has loaded and the browser is idle, so the hero text and the panel win the main thread.
+  const enhance = useAfterLoad();
 
   // Normalised pointer position (-1..1) feeding the background and the panel tilt.
   const rawX = useMotionValue(0);
@@ -80,9 +83,12 @@ export default function App() {
       <Nav soundOn={soundOn} onToggleSound={toggleSound} dark={dark} />
 
       <section className="relative min-h-[140vh] max-md:pb-40">
-        <Suspense fallback={<div className={`fixed inset-0 ${dark ? "bg-[#070810]" : "bg-sand-100"}`} aria-hidden />}>
-          <Background mouseX={mouseX} mouseY={mouseY} />
-        </Suspense>
+        <div className={`fixed inset-0 ${dark ? "bg-[#070810]" : "bg-sand-100"}`} aria-hidden />
+        {enhance && (
+          <Suspense fallback={null}>
+            <Background mouseX={mouseX} mouseY={mouseY} />
+          </Suspense>
+        )}
 
         <div className="relative z-10 mx-auto max-w-6xl px-5 pt-32">
           <motion.div
@@ -147,7 +153,11 @@ export default function App() {
         </Suspense>
       </div>
 
-      <AgentWidget />
+      {enhance && (
+        <Suspense fallback={null}>
+          <AgentWidget />
+        </Suspense>
+      )}
       {import.meta.env.DEV && <BackgroundSwitcher active={bgKey} />}
       {import.meta.env.DEV && new URLSearchParams(window.location.search).get("agent") === "big" && (
         <div className="fixed left-10 top-28 z-[100] rounded-3xl bg-night-950 p-8">
@@ -161,6 +171,7 @@ export default function App() {
 }
 
 const BelowFold = lazy(() => import("./components/BelowFold"));
+const AgentWidget = lazy(() => import("./components/Agent"));
 const Agent3DDev = lazy(() => import("./components/Agent3D"));
 
 // Dev-only picker while we decide on the hero background.
