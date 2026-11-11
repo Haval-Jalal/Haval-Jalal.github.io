@@ -205,26 +205,6 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         return new OkObjectResult(await cost.GetAsync(days, ct));
     }
 
-    // Admin diagnostic: shows exactly which IP headers Azure forwards, so the per-IP rate-limit fix
-    // (RequestIp.Of = last X-Forwarded-For entry) can be verified against real platform behaviour.
-    // Safe to remove once confirmed. Admin-gated, so it exposes nothing to visitors.
-    [Function("ManageWhoami")]
-    public async Task<IActionResult> ManageWhoami(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/whoami")] HttpRequest req,
-        CancellationToken ct)
-    {
-        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
-        req.HttpContext.Response.Headers.CacheControl = "no-store";
-        return new OkObjectResult(new
-        {
-            xForwardedFor = req.Headers["X-Forwarded-For"].ToString(),
-            xAzureClientIp = req.Headers["X-Azure-ClientIP"].ToString(),
-            xAzureSocketIp = req.Headers["X-Azure-SocketIP"].ToString(),
-            remoteIp = req.HttpContext.Connection.RemoteIpAddress?.ToString(),
-            computed = RequestIp.Of(req),
-        });
-    }
-
     private static bool Configured() => !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY"));
 
     private static ObjectResult Unavailable(string reason) =>
