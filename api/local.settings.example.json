@@ -6,6 +6,7 @@
     "GITHUB_USER": "Haval-Jalal",
     "GITHUB_TOKEN": "<optional: fine-grained token with public repo read, raises the rate limit>",
     "ANTHROPIC_API_KEY": "<required for Build Lab + chat: key from console.anthropic.com>",
+    "ANTHROPIC_ADMIN_KEY": "<optional: Admin API key (sk-ant-admin...) so /admin shows Anthropic's real billed cost (facit) next to the estimate; a different key from ANTHROPIC_API_KEY, made by an org admin in the Console>",
     "AGENT_DAILY_CAP_USD": "3.3",
     "AGENT_MONTHLY_CAP_USD": "90",
     "AGENT_ECO_THRESHOLD": "0.7",

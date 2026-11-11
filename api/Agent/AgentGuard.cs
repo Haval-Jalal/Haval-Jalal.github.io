@@ -101,7 +101,7 @@ public static class Pricing
         var (inPrice, outPrice, cachePrice) = model switch
         {
             var m when m.StartsWith("claude-opus-5-5") => (4m, 20m, 0.20m),
-            var m when m.StartsWith("claude-sonnet-5-5") => (2m, 10m, 0.20m),
+            var m when m.StartsWith("claude-sonnet-5-5") => (2m, 10m, 0.10m),
             var m when m.StartsWith("claude-opus-4-8") => (5m, 25m, 0.50m),
             _ => (5m, 25m, 0.50m),
         };

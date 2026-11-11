@@ -86,4 +86,18 @@ builder.Services.AddSingleton<AdminGate>();
 builder.Services.AddSingleton<AgentGuard>();
 builder.Services.AddSingleton<AgentService>();
 
+// Real billed cost from Anthropic's Admin Cost Report API (curl-only, not in the SDK). Needs an
+// Admin API key (sk-ant-admin...) in ANTHROPIC_ADMIN_KEY — a different credential from the message
+// key above. Without it, AnthropicCostService reports Configured=false and the admin keeps the estimate.
+builder.Services.AddHttpClient("anthropic-admin", client =>
+{
+    client.BaseAddress = new Uri("https://api.anthropic.com/");
+    client.DefaultRequestHeaders.Add("anthropic-version", "2026-10-21");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("havaljalal.se-admin/1.0");
+    var adminKey = Environment.GetEnvironmentVariable("ANTHROPIC_ADMIN_KEY");
+    if (!string.IsNullOrWhiteSpace(adminKey))
+        client.DefaultRequestHeaders.Add("x-api-key", adminKey);
+});
+builder.Services.AddSingleton<AnthropicCostService>();
+
 builder.Build().Run();
