@@ -3,6 +3,7 @@ using Anthropic;
 using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 using HavalApi.Agent;
+using HavalApi.Auth;
 using HavalApi.Cv;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ public class CvBuilderFunction(AnthropicClient client, AgentGuard guard, ILogger
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "cv/build")] HttpRequest req,
         CancellationToken ct)
     {
-        if (!guard.TryTake("cvbuild", ClientIp(req), 30, TimeSpan.FromHours(1)))
+        if (!guard.TryTake("cvbuild", RequestIp.Of(req), 30, TimeSpan.FromHours(1)))
             return new ObjectResult(new { error = "rate_limited" }) { StatusCode = StatusCodes.Status429TooManyRequests };
 
         var model = await ReadModelAsync(req, ct);
@@ -32,7 +33,11 @@ public class CvBuilderFunction(AnthropicClient client, AgentGuard guard, ILogger
 
         var bytes = new CvDocument(model).GeneratePdf();
         var inline = req.Query["download"].ToString() != "1";
-        var name = $"{model.Name.Replace(' ', '-')}-CV.pdf";
+        // Build the filename from safe characters only: Name is visitor input, and quotes or CR/LF in
+        // a Content-Disposition value would let it break out of the header.
+        var safe = string.Concat(model.Name.Where(ch => char.IsLetterOrDigit(ch) || ch is ' ' or '-')).Trim().Replace(' ', '-');
+        if (safe.Length == 0) safe = "CV";
+        var name = $"{safe}-CV.pdf";
         req.HttpContext.Response.Headers.ContentDisposition = $"{(inline ? "inline" : "attachment")}; filename=\"{name}\"";
         req.HttpContext.Response.Headers.CacheControl = "no-store";
         return new FileContentResult(bytes, "application/pdf");
@@ -48,7 +53,7 @@ public class CvBuilderFunction(AnthropicClient client, AgentGuard guard, ILogger
             return new ObjectResult(new { error = "not_configured" }) { StatusCode = StatusCodes.Status503ServiceUnavailable };
         if (await guard.ModeAsync(ct) == BudgetMode.Stopped)
             return new ObjectResult(new { error = "daily_cap" }) { StatusCode = StatusCodes.Status503ServiceUnavailable };
-        if (!guard.TryTake("cvpolish", ClientIp(req), 5, TimeSpan.FromHours(1)))
+        if (!guard.TryTake("cvpolish", RequestIp.Of(req), 5, TimeSpan.FromHours(1)))
             return new ObjectResult(new { error = "rate_limited" }) { StatusCode = StatusCodes.Status429TooManyRequests };
 
         var model = await ReadModelAsync(req, ct);
@@ -129,12 +134,6 @@ public class CvBuilderFunction(AnthropicClient client, AgentGuard guard, ILogger
             (m.Education ?? []).Take(6).Select(e => new CvEducation(C(e.School, 120), C(e.Program, 120))).ToList(),
             "Skapat med CV-byggaren på havaljalal.se",
             "#d9772a");
-    }
-
-    private static string ClientIp(HttpRequest req)
-    {
-        var fwd = req.Headers["X-Forwarded-For"].ToString();
-        return !string.IsNullOrEmpty(fwd) ? fwd.Split(',')[0].Trim() : req.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
 
     private sealed record PolishedDto(string? Summary, List<CvExperience>? Experience, List<CvProject>? Projects);

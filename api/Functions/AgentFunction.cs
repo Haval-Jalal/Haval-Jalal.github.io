@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HavalApi.Functions;
 
-public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate, ILeadStore leads, IUsageStore usage, IBuildStore builds, IMailer mailer, ILogger<AgentFunction> log)
+public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate, ILeadStore leads, IUsageStore usage, IBuildStore builds, IMailer mailer, AnthropicCostService cost, ILogger<AgentFunction> log)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan Hour = TimeSpan.FromHours(1);
@@ -38,7 +38,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
     {
         if (!Configured()) return Unavailable("not_configured");
         if (await guard.ModeAsync(ct) == BudgetMode.Stopped) return Unavailable("daily_cap");
-        if (!guard.TryTake("chat", ClientIp(req), guard.ChatPerHour, Hour)) return TooMany();
+        if (!guard.TryTake("chat", RequestIp.Of(req), guard.ChatPerHour, Hour)) return TooMany();
 
         var dto = await ReadAsync<ChatDto>(req, ct);
         if (dto?.Messages is not { Count: > 0 } || dto.Messages.Any(m => string.IsNullOrWhiteSpace(m.Text) || m.Text.Length > 2000))
@@ -76,7 +76,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         if (visitor.Length is < 16 or > 64 || !visitor.All(c => char.IsLetterOrDigit(c) || c == '-'))
             return new BadRequestObjectResult(new { error = "invalid_visitor" });
 
-        var ip = ClientIp(req);
+        var ip = RequestIp.Of(req);
         if (!guard.TryTake("build", ip, guard.BuildPerHour, Hour) || !guard.TryTake("build", ip, guard.BuildPerDay, Day))
             return TooMany();
 
@@ -133,7 +133,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "agent/lead")] HttpRequest req,
         CancellationToken ct)
     {
-        if (!guard.TryTake("lead", ClientIp(req), 5, Hour)) return TooMany();
+        if (!guard.TryTake("lead", RequestIp.Of(req), 5, Hour)) return TooMany();
         var dto = await ReadAsync<LeadDto>(req, ct);
         if (dto is null || string.IsNullOrWhiteSpace(dto.Email) || !dto.Email.Contains('@') || dto.Email.Length > 200)
             return new BadRequestObjectResult(new { error = "invalid_email" });
@@ -194,6 +194,37 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         return new OkObjectResult(await usage.SummaryAsync(days, await guard.BudgetAsync(ct), ct));
     }
 
+    // Admin: the real billed cost from Anthropic (facit), when an Admin API key is configured.
+    [Function("ManageAiCost")]
+    public async Task<IActionResult> ManageAiCost(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/ai/cost")] HttpRequest req,
+        CancellationToken ct)
+    {
+        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
+        var days = int.TryParse(req.Query["days"], out var d) ? Math.Clamp(d, 1, 90) : 30;
+        return new OkObjectResult(await cost.GetAsync(days, ct));
+    }
+
+    // Admin diagnostic: shows exactly which IP headers Azure forwards, so the per-IP rate-limit fix
+    // (RequestIp.Of = last X-Forwarded-For entry) can be verified against real platform behaviour.
+    // Safe to remove once confirmed. Admin-gated, so it exposes nothing to visitors.
+    [Function("ManageWhoami")]
+    public async Task<IActionResult> ManageWhoami(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/whoami")] HttpRequest req,
+        CancellationToken ct)
+    {
+        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
+        req.HttpContext.Response.Headers.CacheControl = "no-store";
+        return new OkObjectResult(new
+        {
+            xForwardedFor = req.Headers["X-Forwarded-For"].ToString(),
+            xAzureClientIp = req.Headers["X-Azure-ClientIP"].ToString(),
+            xAzureSocketIp = req.Headers["X-Azure-SocketIP"].ToString(),
+            remoteIp = req.HttpContext.Connection.RemoteIpAddress?.ToString(),
+            computed = RequestIp.Of(req),
+        });
+    }
+
     private static bool Configured() => !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY"));
 
     private static ObjectResult Unavailable(string reason) =>
@@ -213,12 +244,6 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         var line = $"event: {name}\ndata: {JsonSerializer.Serialize(data, Json)}\n\n";
         await res.Body.WriteAsync(Encoding.UTF8.GetBytes(line), ct);
         await res.Body.FlushAsync(ct);
-    }
-
-    private static string ClientIp(HttpRequest req)
-    {
-        var fwd = req.Headers["X-Forwarded-For"].ToString();
-        return !string.IsNullOrEmpty(fwd) ? fwd.Split(',')[0].Trim() : req.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
 
     private static string? Clip(string? s, int max) => string.IsNullOrWhiteSpace(s) ? null : s.Trim()[..Math.Min(s.Trim().Length, max)];

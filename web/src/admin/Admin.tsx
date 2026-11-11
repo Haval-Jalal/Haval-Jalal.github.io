@@ -302,20 +302,33 @@ type UsageSummary = {
   recent: { ts: string; feature: string; model: string; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; usd: number; truncated: boolean }[];
 };
 
+// The real billed cost from Anthropic's Admin Cost Report API (facit), when an Admin key is set.
+type ActualCost = {
+  configured: boolean;
+  totalUsd: number;
+  spentMonthUsd: number;
+  perDay: { day: string; usd: number }[];
+  byModel: { model: string; usd: number }[];
+  asOf: string;
+  error?: string | null;
+};
+
 const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)", pitch: "Rekryterarläge, utkast (Sonnet 5.5)", translate: "Översättning av innehåll (Sonnet 5.5)", draft: "Skrivhjälp i admin (Sonnet 5.5)" };
+const MODEL_LABEL = (m: string) => (m === "övrigt" ? "Övrigt" : m.replace("claude-", "").replace(/-/g, " "));
 const usd = (n: number) => `${n.toFixed(n < 1 ? 3 : 2)} USD`;
 const tok = (n: number) => n.toLocaleString("sv-SE");
 
 function AiUsage() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<UsageSummary | null>(null);
+  const [actual, setActual] = useState<ActualCost | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   // Live: refetch every 5 s while the tab is visible, so a running Build Lab shows up as it lands.
   useEffect(() => {
     let cancelled = false;
-    const load = () =>
+    const load = () => {
       fetch(`/api/manage/ai?days=${days}`, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
         .then((d: UsageSummary) => {
@@ -325,6 +338,12 @@ function AiUsage() {
           setError(null);
         })
         .catch((e: Error) => !cancelled && setError(e.message));
+      // Facit from Anthropic: only up to 90 days, and it never blocks the estimate above.
+      fetch(`/api/manage/ai/cost?days=${Math.min(days, 90)}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+        .then((d: ActualCost) => !cancelled && setActual(d))
+        .catch(() => !cancelled && setActual(null));
+    };
     void load();
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") void load();
@@ -344,13 +363,23 @@ function AiUsage() {
   const monthWarn = monthShare >= 0.8;
   const max = Math.max(0.001, ...data.perDay.map((d) => d.usd));
   const modeLabel = { full: "Fullt läge: Opus bygger", eco: "Sparläge: Sonnet bygger", stopped: "Stoppat: endast lead-formulär" }[data.mode];
+  const actualMax = Math.max(0.001, ...(actual?.perDay ?? []).map((d) => d.usd));
+  // Flag a real gap between facit and the token-estimate over the same period — a likely sign of a
+  // stale price in Pricing.Usd or calls that were billed but never logged. Ignore tiny amounts.
+  const divergence = actual?.configured && !actual.error && actual.totalUsd > 0.5
+    ? Math.abs(actual.totalUsd - data.totalUsd) / actual.totalUsd
+    : 0;
 
   return (
     <div className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">AI & kostnad</h1>
-          <p className="text-sm text-fg-muted">Räknat från faktiska tokens per anrop (listpris). Facit finns i Anthropic Console.</p>
+          <p className="text-sm text-fg-muted">
+            {actual?.configured
+              ? "Faktisk kostnad hämtad direkt från Anthropic (facit). Uppskattningen nedan räknas från tokens per anrop och styr taken."
+              : "Räknat från faktiska tokens per anrop (listpris). Lägg in ANTHROPIC_ADMIN_KEY för att visa facit från Anthropic här."}
+          </p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             <span className={`rounded-full border px-3 py-1 ${data.mode === "full" ? "border-emerald-400/30 text-emerald-200" : "border-amber-400/40 text-amber-200"}`}>
               ● {modeLabel}
@@ -369,6 +398,59 @@ function AiUsage() {
           ))}
         </div>
       </header>
+
+      {/* Facit: the real billed cost from Anthropic, when an Admin key is configured. */}
+      {actual?.configured && !actual.error ? (
+        <section className="rounded-2xl border border-emerald-400/30 bg-emerald-400/5 p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-sm font-medium text-emerald-100">Faktisk kostnad · facit från Anthropic</h2>
+            <span className="text-[11px] text-fg-faint">uppdaterad {new Date(actual.asOf).toLocaleTimeString("sv-SE")} · data kan släpa ~5 min</span>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div><p className="text-[11px] text-fg-faint">Faktiskt, {days} dagar</p><p className="font-mono text-2xl text-emerald-200">{usd(actual.totalUsd)}</p></div>
+            <div><p className="text-[11px] text-fg-faint">Faktiskt denna månad</p><p className="font-mono text-2xl text-emerald-200">{usd(actual.spentMonthUsd)}</p></div>
+            <div><p className="text-[11px] text-fg-faint">Uppskattat, samma period</p><p className="font-mono text-2xl text-fg-muted">{usd(data.totalUsd)}</p></div>
+          </div>
+          {divergence > 0.2 && (
+            <p className="mt-3 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+              ⚠ Uppskattningen skiljer sig {Math.round(divergence * 100)} % från facit ({usd(data.totalUsd)} mot {usd(actual.totalUsd)}). Kan bero på ett inaktuellt listpris i <code className="rounded bg-white/10 px-1">Pricing.Usd</code>, omförsök eller anrop som debiterats men inte loggats.
+            </p>
+          )}
+          {actual.perDay.length > 0 && (
+            <>
+              <div className="mt-5 flex h-28 gap-[3px]" role="img" aria-label="Faktisk kostnad per dag">
+                {actual.perDay.map((d) => (
+                  <div key={d.day} className="group flex h-full flex-1 flex-col justify-end" title={`${d.day}: ${usd(d.usd)} (facit)`}>
+                    <div className="rounded-t-[3px] bg-emerald-400 transition-opacity group-hover:opacity-80" style={{ height: `${Math.max(d.usd > 0 ? 3 : 1, (d.usd / actualMax) * 100)}%`, opacity: d.usd > 0 ? 1 : 0.25 }} />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex justify-between font-mono text-[10px] text-fg-faint">
+                <span>{actual.perDay[0]?.day}</span>
+                <span>{actual.perDay.at(-1)?.day}</span>
+              </div>
+            </>
+          )}
+          {actual.byModel.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-fg-muted">
+              {actual.byModel.map((m) => (
+                <span key={m.model}>{MODEL_LABEL(m.model)}: <span className="font-mono text-fg">{usd(m.usd)}</span></span>
+              ))}
+            </div>
+          )}
+          <p className="mt-3 text-xs text-fg-faint">Inkluderar all användning av Admin-nyckelns organisation, inte bara den här sajten. Taken nedan styrs av uppskattningen, som uppdateras direkt per anrop.</p>
+        </section>
+      ) : actual?.configured && actual.error ? (
+        <section className="panel-tile rounded-2xl p-5">
+          <h2 className="text-sm font-medium">Faktisk kostnad</h2>
+          <p className="mt-1 text-xs text-amber-200">Kunde inte hämta facit från Anthropic just nu ({actual.error}). Kontrollera att ANTHROPIC_ADMIN_KEY är en giltig Admin-nyckel (sk-ant-admin…). Uppskattningen nedan gäller tills vidare.</p>
+        </section>
+      ) : actual && !actual.configured ? (
+        <section className="panel-tile rounded-2xl p-5">
+          <h2 className="text-sm font-medium">Visa faktisk kostnad (facit)</h2>
+          <p className="mt-1 text-xs text-fg-faint">Siffrorna nedan är en uppskattning från tokens × listpris. För Anthropics verkliga belopp: skapa en <strong>Admin API-nyckel</strong> (sk-ant-admin…) i Claude Console och lägg den i miljövariabeln <code className="rounded bg-white/10 px-1">ANTHROPIC_ADMIN_KEY</code>. Det är en annan nyckel än ANTHROPIC_API_KEY.</p>
+        </section>
+      ) : null}
 
       {/* Today vs cap: a meter, with the warning in words and an icon, never colour alone. */}
       <section className={`rounded-2xl border p-5 ${warn ? "border-amber-400/40 bg-amber-400/10" : "panel-tile"}`}>

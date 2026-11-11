@@ -66,13 +66,7 @@ public class AnalyticsFunction(IAnalyticsStore store, AdminGate gate)
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(input)))[..16];
     }
 
-    internal static string ClientIp(HttpRequest req)
-    {
-        var fwd = req.Headers["X-Forwarded-For"].ToString();
-        if (!string.IsNullOrEmpty(fwd))
-            return fwd.Split(',')[0].Trim();
-        return req.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-    }
+    internal static string ClientIp(HttpRequest req) => HavalApi.Auth.RequestIp.Of(req);
 
     private static string? ReferrerHost(string? referrer)
     {

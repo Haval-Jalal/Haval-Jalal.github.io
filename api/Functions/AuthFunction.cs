@@ -100,8 +100,7 @@ public class AuthFunction(ISecurityStore security, AdminGate gate, ILogger<AuthF
         if (LastLogged.TryGetValue(key, out var last) && now - last < LogThrottle) return;
         LastLogged[key] = now;
 
-        var fwd = req.Headers["X-Forwarded-For"].ToString();
-        var ip = !string.IsNullOrEmpty(fwd) ? fwd.Split(',')[0].Trim() : req.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var ip = HavalApi.Auth.RequestIp.Of(req);
         var ipHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Salt + ip)))[..12].ToLowerInvariant();
 
         await security.AppendAsync(new AuthAttempt(

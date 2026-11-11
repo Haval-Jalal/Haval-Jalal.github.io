@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using HavalApi.Agent;
+using HavalApi.Auth;
 using HavalApi.Data;
 using HavalApi.Mail;
 using Microsoft.AspNetCore.Http;
@@ -89,7 +90,7 @@ public class LabFunction(IBuildStore builds, ILeadStore leads, IMailer mailer, A
         string id,
         CancellationToken ct)
     {
-        if (!guard.TryTake("unlock", ClientIp(req), 10, TimeSpan.FromHours(1)))
+        if (!guard.TryTake("unlock", RequestIp.Of(req), 10, TimeSpan.FromHours(1)))
             return new ObjectResult(new { error = "rate_limited" }) { StatusCode = StatusCodes.Status429TooManyRequests };
 
         UnlockDto? dto;
@@ -149,12 +150,6 @@ public class LabFunction(IBuildStore builds, ILeadStore leads, IMailer mailer, A
     }
 
     private static bool ValidVisitor(string v) => v.Length is >= 16 and <= 64 && v.All(c => char.IsLetterOrDigit(c) || c == '-');
-
-    private static string ClientIp(HttpRequest req)
-    {
-        var fwd = req.Headers["X-Forwarded-For"].ToString();
-        return !string.IsNullOrEmpty(fwd) ? fwd.Split(',')[0].Trim() : req.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-    }
 
     private static string? Clip(string? s, int max) => string.IsNullOrWhiteSpace(s) ? null : s.Trim()[..Math.Min(s.Trim().Length, max)];
 
