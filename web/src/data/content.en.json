@@ -2,14 +2,14 @@
   "profile": {
     "name": "Haval Jalal",
     "role": "Software Developer",
-    "tagline": "A software developer with industrial precision and creative ambition, bridging structure and innovation.",
+    "tagline": "I am looking for a junior developer role, preferably .NET and React, in Gothenburg or remote. CV, LinkedIn and e-mail are right here, and I usually reply the same day.",
     "location": "Gothenburg",
-    "availability": "Open to assignments in Gothenburg and remote",
+    "availability": "Looking for a junior developer role · Gothenburg or remote",
     "headline": {
-      "lead": "Building digital products with",
+      "lead": "Junior software developer with",
       "accent": "industrial precision."
     },
-    "intro": "Fifteen years at Volvo Cars, ten of them as a team leader in the assembly plant. Now a software developer working in .NET and React, building production-ready applications from database to UI.",
+    "intro": "Fifteen years at Volvo Cars, ten of them as a team leader on the assembly floor. Now a .NET and React developer building production-ready applications from database to UI, looking for a junior role where I get to do that full time.",
     "about": "I've worked on the production floor, led teams and seen what works when you change how people work. I bring that experience into my code: I build applications end-to-end, from database design and secure .NET APIs to React interfaces and cloud deployment, with a focus on clean architecture, security, validation and delivery.",
     "links": {
       "github": "https://github.com/Haval-Jalal",
@@ -48,7 +48,8 @@
           "label": "carcheck.se",
           "url": "https://www.carcheck.se"
         }
-      ]
+      ],
+      "role": "Everything: idea, backend, frontend, payments and operations"
     },
     {
       "slug": "presync",
@@ -73,7 +74,8 @@
       "images": [
         "/work/presync-1.webp"
       ],
-      "links": null
+      "links": null,
+      "role": "Frontend and backend in a team of three"
     },
     {
       "slug": "dojo-future",
@@ -100,7 +102,8 @@
         "/work/dojo-future-2.webp",
         "/work/dojo-future-3.webp"
       ],
-      "links": null
+      "links": null,
+      "role": "Development, debugging and making it ready to sell, together with the team"
     },
     {
       "slug": "eventify",
@@ -126,7 +129,8 @@
         "/work/eventify-1.webp",
         "/work/eventify-erd.webp"
       ],
-      "links": null
+      "links": null,
+      "role": ""
     },
     {
       "slug": "job-application-tracker",
@@ -150,7 +154,8 @@
       "images": [
         "/work/jat-1.webp"
       ],
-      "links": null
+      "links": null,
+      "role": ""
     },
     {
       "slug": "mini-ecommerce-db",
@@ -175,64 +180,70 @@
         "/work/ecommerce-1.webp",
         "/work/ecommerce-erd.webp"
       ],
-      "links": null
+      "links": null,
+      "role": ""
     }
   ],
   "journey": [
     {
-      "period": "2011 – 2014",
-      "title": "Assembly worker at the assembly plant",
-      "org": "Volvo Cars, Torslanda",
-      "text": "Started on the line in Torslanda. Learned about takt time, quality and how a factory works when everything has to be right every minute.",
-      "bullets": null
+      "period": "Now",
+      "title": "Studying, leading and building at once",
+      "org": "Gothenburg",
+      "text": "Second year of the .NET developer programme, team leader at Volvo Cars at 75 % and junior software engineer at InFiNet Code part time. In spring 2027 I do my second internship in the platform team at Volvo Cars. Looking for a junior developer role, preferably .NET and React.",
+      "bullets": [
+        ".NET developer programme, NBI Handelsakademin",
+        "Team leader at Volvo Cars, 75 %",
+        "Junior software engineer at InFiNet Code, part time",
+        "Second internship in the platform team at Volvo Cars, February to May 2027"
+      ]
     },
     {
-      "period": "2014 – present",
-      "title": "Team leader, Production & Quality",
-      "org": "Volvo Cars, Torslanda",
-      "text": "Leading a production team since 2014, and since autumn 2025 at 75% alongside my studies. Structuring work, motivating people and delivering under pressure is everyday life here, and it's exactly what's needed in a development team too.",
+      "period": "Autumn 2026",
+      "title": "Internship 1: developer in a platform team",
+      "org": "Volvo Cars, Gothenburg",
+      "text": "Ten weeks as a developer in a team building apps for production. Four stories through the whole stack in Angular and Java, my own pull requests, code review and pipelines in Azure DevOps. Presented my changes at a release meeting and was invited back for the second internship.",
       "bullets": [
-        "Lead a production team with a focus on quality, safety and delivery",
-        "Coach, train and develop team members",
-        "Drive continuous improvement initiatives",
-        "Process optimization and workflow efficiency"
+        "Angular and TypeScript in the frontend",
+        "Java and Spring in the backend",
+        "Azure DevOps pipelines and code review",
+        "Invited back to the same team"
+      ]
+    },
+    {
+      "period": "February 2026 –",
+      "title": "Junior software engineer & project lead",
+      "org": "InFiNet Code, Gothenburg (part time)",
+      "text": "Building websites, apps and automation for small businesses, from the first client meeting to launch. Leading the projects and delivering both frontend and backend.",
+      "bullets": [
+        "Client sites and demos for small businesses",
+        "PreSync and Dojo Future together with the team",
+        "Project management: planning, follow-up and delivery"
       ]
     },
     {
       "period": "Autumn 2025",
       "title": "From machines to software",
       "org": "NBI Handelsakademin, Gothenburg",
-      "text": "Started studying to become a .NET software developer alongside work. A two-year YH program covering full-stack, Clean Architecture, SQL and the cloud, graduating in 2027. What began as a fascination with automation and digital systems became a career change.",
+      "text": "Started studying to become a .NET developer alongside the job. A two-year vocational programme with fullstack, Clean Architecture, SQL and cloud. What began as a fascination with automation and digital systems became a career change.",
       "bullets": null
     },
     {
-      "period": "February 2026 –",
-      "title": "Junior software engineer & project lead",
-      "org": "InFiNet Code, Gothenburg (part-time)",
-      "text": "Building websites, apps and automation for small businesses, from the first client meeting to launch. I lead the projects and deliver both frontend and backend.",
+      "period": "2014 – today",
+      "title": "Team leader, production & quality",
+      "org": "Volvo Cars, Torslanda",
+      "text": "Leading a production team since 2014, at 75 % alongside the studies since autumn 2025. Structuring work, motivating people and delivering under pressure is everyday life here, and exactly what a development team needs too.",
       "bullets": [
-        "Client sites and demos for small businesses",
-        "PreSync and DOJO together with the team",
-        "Project management: planning, follow-up and delivery"
+        "Leading a production team with focus on quality, safety and delivery",
+        "Coaching, training and developing team members",
+        "Driving continuous improvement initiatives",
+        "Process optimisation and streamlining of workflows"
       ]
     },
     {
-      "period": "Autumn 2026",
-      "title": "LIA 1: developer in a platform team",
-      "org": "Volvo Cars, Gothenburg",
-      "text": "A ten-week internship as a developer in a team building apps for production. Four stories across the whole stack in Angular and Java, my own pull requests, code reviews and pipelines in Azure DevOps. Presented my changes at a release meeting and was invited back for LIA 2.",
-      "bullets": [
-        "Angular and TypeScript on the frontend",
-        "Java and Spring on the backend",
-        "Azure DevOps pipelines and code review",
-        "LIA 2 in the same team, February to May 2027"
-      ]
-    },
-    {
-      "period": "Now",
-      "title": "Building production-ready applications",
-      "org": "Gothenburg · remote",
-      "text": "Open to assignments. Building full-stack solutions in .NET and React, with AI agents as a natural part of the toolbox. Next step: LIA 2 at Volvo Cars, February 1 to May 14, 2027.",
+      "period": "2011 – 2014",
+      "title": "Assembler on the production line",
+      "org": "Volvo Cars, Torslanda",
+      "text": "Started on the line in Torslanda. Learned pace, quality and how a factory works when everything has to be right every minute.",
       "bullets": null
     }
   ],
@@ -365,5 +376,5 @@
       "kontakt"
     ]
   },
-  "updatedAt": "2026-11-10T11:32:54.0171103Z"
+  "updatedAt": "2026-11-12T09:52:04.7246632Z"
 }

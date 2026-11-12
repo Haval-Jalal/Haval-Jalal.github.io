@@ -2,14 +2,14 @@
   "profile": {
     "name": "Haval Jalal",
     "role": "Systemutvecklare",
-    "tagline": "Systemutvecklare med industriell precision och kreativ ambition, en bro mellan struktur och innovation.",
+    "tagline": "Jag söker en juniorroll som systemutvecklare, gärna .NET och React, i Göteborg eller på distans. CV, LinkedIn och e-post finns här, och jag svarar oftast samma dag.",
     "location": "Göteborg",
-    "availability": "Öppen för uppdrag i Göteborg och remote",
+    "availability": "Söker juniorroll som systemutvecklare · Göteborg eller remote",
     "headline": {
-      "lead": "Bygger digitala produkter med",
+      "lead": "Junior systemutvecklare med",
       "accent": "industriell precision."
     },
-    "intro": "Femton år på Volvo Cars, tio av dem som lagledare i monteringsfabriken. Nu systemutvecklare inom .NET och React som bygger produktionsklara applikationer från databas till UI.",
+    "intro": "Femton år på Volvo Cars, tio av dem som lagledare i monteringsfabriken. Nu systemutvecklare inom .NET och React som bygger produktionsklara applikationer från databas till UI, och söker en juniorroll där jag får göra det på heltid.",
     "about": "Jag har stått i produktionen, lett team och sett vad som funkar när man förändrar hur folk jobbar. Den erfarenheten tar jag med in i koden: jag bygger applikationer end-to-end, från databasdesign och säkra .NET-API:er till React-gränssnitt och molndeploy, med fokus på clean architecture, säkerhet, validering och leverans.",
     "links": {
       "github": "https://github.com/Haval-Jalal",
@@ -48,7 +48,8 @@
           "label": "carcheck.se",
           "url": "https://www.carcheck.se"
         }
-      ]
+      ],
+      "role": "Allt: idé, backend, frontend, betalningar och drift"
     },
     {
       "slug": "presync",
@@ -73,7 +74,8 @@
       "images": [
         "/work/presync-1.webp"
       ],
-      "links": null
+      "links": null,
+      "role": "Frontend och backend i ett team på tre"
     },
     {
       "slug": "dojo-future",
@@ -100,7 +102,8 @@
         "/work/dojo-future-2.webp",
         "/work/dojo-future-3.webp"
       ],
-      "links": null
+      "links": null,
+      "role": "Utveckling, felsökning och säljredo tillsammans med teamet"
     },
     {
       "slug": "eventify",
@@ -126,7 +129,8 @@
         "/work/eventify-1.webp",
         "/work/eventify-erd.webp"
       ],
-      "links": null
+      "links": null,
+      "role": ""
     },
     {
       "slug": "job-application-tracker",
@@ -150,7 +154,8 @@
       "images": [
         "/work/jat-1.webp"
       ],
-      "links": null
+      "links": null,
+      "role": ""
     },
     {
       "slug": "mini-ecommerce-db",
@@ -175,15 +180,51 @@
         "/work/ecommerce-1.webp",
         "/work/ecommerce-erd.webp"
       ],
-      "links": null
+      "links": null,
+      "role": ""
     }
   ],
   "journey": [
     {
-      "period": "2011 – 2014",
-      "title": "Montör i monteringsfabriken",
-      "org": "Volvo Cars, Torslanda",
-      "text": "Började på linan i Torslanda. Lärde mig takt, kvalitet och hur en fabrik fungerar när allt ska stämma varje minut.",
+      "period": "Nu",
+      "title": "Pluggar, leder och bygger samtidigt",
+      "org": "Göteborg",
+      "text": "Andra året på YH-utbildningen till systemutvecklare .NET, lagledare på Volvo Cars på 75 % och junior software engineer på InFiNet Code på deltid. Våren 2027 gör jag min andra praktik i plattformsteamet på Volvo Cars. Söker en juniorroll som systemutvecklare, gärna .NET och React.",
+      "bullets": [
+        "Systemutvecklare .NET, NBI Handelsakademin",
+        "Lagledare på Volvo Cars, 75 %",
+        "Junior software engineer på InFiNet Code, deltid",
+        "LIA 2 i plattformsteamet på Volvo Cars, februari till maj 2027"
+      ]
+    },
+    {
+      "period": "Hösten 2026",
+      "title": "LIA 1: utvecklare i plattformsteam",
+      "org": "Volvo Cars, Göteborg",
+      "text": "Tio veckors praktik som utvecklare i ett team som bygger appar för produktionen. Fyra stories genom hela stacken i Angular och Java, egna pull requests, kodgranskning och pipelines i Azure DevOps. Presenterade mina ändringar på ett releasemöte och blev inbjuden tillbaka till LIA 2.",
+      "bullets": [
+        "Angular och TypeScript i frontend",
+        "Java och Spring i backend",
+        "Azure DevOps-pipelines och kodgranskning",
+        "Inbjuden tillbaka till samma team"
+      ]
+    },
+    {
+      "period": "Februari 2026 –",
+      "title": "Junior software engineer & project lead",
+      "org": "InFiNet Code, Göteborg (deltid)",
+      "text": "Bygger hemsidor, appar och automatisering åt små företag, från första kundmöte till lansering. Leder projekten och levererar både frontend och backend.",
+      "bullets": [
+        "Kundsajter och demos åt småföretag",
+        "PreSync och Dojo Future tillsammans med teamet",
+        "Projektledning: planering, uppföljning och leverans"
+      ]
+    },
+    {
+      "period": "Hösten 2025",
+      "title": "Från maskiner till mjukvara",
+      "org": "NBI Handelsakademin, Göteborg",
+      "text": "Började studera till systemutvecklare .NET vid sidan av jobbet. Tvåårig YH-utbildning med fullstack, Clean Architecture, SQL och molnet. Det som började som fascination för automation och digitala system blev ett yrkesbyte.",
       "bullets": null
     },
     {
@@ -199,40 +240,10 @@
       ]
     },
     {
-      "period": "Hösten 2025",
-      "title": "Från maskiner till mjukvara",
-      "org": "NBI Handelsakademin, Göteborg",
-      "text": "Började studera till systemutvecklare .NET vid sidan av jobbet. Tvåårig YH-utbildning med fullstack, Clean Architecture, SQL och molnet, examen 2027. Det som började som fascination för automation och digitala system blev ett yrkesbyte.",
-      "bullets": null
-    },
-    {
-      "period": "Februari 2026 –",
-      "title": "Junior software engineer & project lead",
-      "org": "InFiNet Code, Göteborg (deltid)",
-      "text": "Bygger hemsidor, appar och automatisering åt små företag, från första kundmöte till lansering. Leder projekten och levererar både frontend och backend.",
-      "bullets": [
-        "Kundsajter och demos åt småföretag",
-        "PreSync och DOJO tillsammans med teamet",
-        "Projektledning: planering, uppföljning och leverans"
-      ]
-    },
-    {
-      "period": "Hösten 2026",
-      "title": "LIA 1: utvecklare i plattformsteam",
-      "org": "Volvo Cars, Göteborg",
-      "text": "Tio veckors praktik som utvecklare i ett team som bygger appar för produktionen. Fyra stories genom hela stacken i Angular och Java, egna pull requests, kodgranskning och pipelines i Azure DevOps. Presenterade mina ändringar på ett releasemöte och blev inbjuden tillbaka till LIA 2.",
-      "bullets": [
-        "Angular och TypeScript i frontend",
-        "Java och Spring i backend",
-        "Azure DevOps-pipelines och kodgranskning",
-        "LIA 2 i samma team, februari till maj 2027"
-      ]
-    },
-    {
-      "period": "Nu",
-      "title": "Bygger produktion-klara applikationer",
-      "org": "Göteborg · remote",
-      "text": "Öppen för uppdrag. Bygger fullstack-lösningar i .NET och React, med AI-agenter som en naturlig del av verktygslådan. Nästa steg: LIA 2 på Volvo Cars, 1 februari till 14 maj 2027.",
+      "period": "2011 – 2014",
+      "title": "Montör i monteringsfabriken",
+      "org": "Volvo Cars, Torslanda",
+      "text": "Började på linan i Torslanda. Lärde mig takt, kvalitet och hur en fabrik fungerar när allt ska stämma varje minut.",
       "bullets": null
     }
   ],
@@ -365,5 +376,5 @@
       "kontakt"
     ]
   },
-  "updatedAt": "2026-11-10T11:32:53.8495954Z"
+  "updatedAt": "2026-11-12T09:52:04.5356026Z"
 }
