@@ -15,13 +15,14 @@ public interface IMailer
 }
 
 // Sends through Resend (https://resend.com, free tier). Needs RESEND_API_KEY and LEAD_NOTIFY_EMAIL.
-// Until a domain is verified, Resend only delivers "onboarding@resend.dev" to the account owner's
-// own address, which covers the lead and booking notifications to Haval.
+// MAIL_FROM is an address on the verified sending domain (havaljalal.se, verified 2026-11-12); nobody
+// reads that mailbox, so every mail carries Haval's own address as reply-to.
 public sealed class ResendMailer(IHttpClientFactory http, ILogger<ResendMailer> log) : IMailer
 {
     private static readonly string? ApiKey = Environment.GetEnvironmentVariable("RESEND_API_KEY");
     private static readonly string? To = Environment.GetEnvironmentVariable("LEAD_NOTIFY_EMAIL");
     private static readonly string From = Environment.GetEnvironmentVariable("MAIL_FROM") ?? "Build Lab <onboarding@resend.dev>";
+    private static readonly string[]? ReplyTo = string.IsNullOrWhiteSpace(To) ? null : [To!];
 
     public bool Enabled => !string.IsNullOrWhiteSpace(ApiKey) && !string.IsNullOrWhiteSpace(To);
 
@@ -37,10 +38,10 @@ public sealed class ResendMailer(IHttpClientFactory http, ILogger<ResendMailer> 
         }
         var client = http.CreateClient("resend");
         object payload = attachment is null
-            ? new { from = From, to = new[] { to }, subject, text }
+            ? new { from = From, to = new[] { to }, reply_to = ReplyTo, subject, text }
             : new
             {
-                from = From, to = new[] { to }, subject, text,
+                from = From, to = new[] { to }, reply_to = ReplyTo, subject, text,
                 attachments = new[] { new { filename = attachment.FileName, content = Convert.ToBase64String(attachment.Content), content_type = attachment.ContentType } },
             };
         var res = await client.PostAsJsonAsync("emails", payload, ct);

@@ -194,7 +194,7 @@ public class BookingFunction(IBookingStore store, IMailer mailer, AgentGuard gua
             Admin: {SiteUrl}/admin
             """, ct, ics);
 
-        // Visitor (delivers once the sending domain is verified at Resend)
+        // Visitor
         var subject = cancelled
             ? (sv ? "Ditt möte med Haval Jalal är avbokat" : "Your meeting with Haval Jalal is cancelled")
             : (sv ? $"Bekräftat: möte med Haval Jalal {when}" : $"Confirmed: meeting with Haval Jalal {when}");
