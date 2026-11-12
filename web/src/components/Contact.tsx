@@ -20,7 +20,6 @@ export default function Contact() {
     ...(bookable ? [{ icon: CalendarDays, label: t("contact.book"), href: L("/boka"), sub: t("contact.book_sub") }] : [{ icon: MessageSquare, label: t("contact.chat"), href: "#build-lab", sub: t("contact.chat_sub") }]),
     { icon: FileDown, label: t("contact.cv"), href: `/api/cv.pdf?lang=${locale}`, sub: t("contact.cv_sub") },
   ];
-  const tool = { label: t("contact.tool"), href: L("/cv"), sub: t("contact.tool_sub") };
   return (
     <section id="kontakt" className="surface-a relative text-fg">
       <div
@@ -77,23 +76,6 @@ export default function Contact() {
           ))}
         </m.ul>
 
-        <m.a
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          href={tool.href}
-          className="group mx-auto mt-6 flex max-w-4xl items-center gap-4 rounded-2xl border border-ember-400/30 bg-ember-500/10 p-4 transition-colors hover:bg-ember-500/15"
-        >
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-ember-500 text-night-950">
-            <FileDown className="size-4" />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-sm font-medium text-fg">{tool.label}</span>
-            <span className="block text-xs text-fg-muted">{tool.sub}</span>
-          </span>
-          <ArrowUpRight className="ml-auto size-4 shrink-0 text-ember-300 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </m.a>
 
         <ContactForm bookable={bookable} />
 

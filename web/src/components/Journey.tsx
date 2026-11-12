@@ -60,9 +60,10 @@ export default function Journey() {
             <m.li key={step.title} variants={reveal} className="relative pb-12 last:pb-0">
               <span
                 className={`absolute -left-[2.35rem] top-1.5 grid size-5 place-items-center rounded-full border-2 border-night-900 ${
-                  i === journey.length - 1 ? "bg-ember-500 shadow-[0_0_18px_rgba(232,147,58,0.6)]" : "bg-night-700"
+                  i === 0 ? "bg-ember-500 shadow-[0_0_18px_rgba(232,147,58,0.6)]" : "bg-night-700"
                 }`}
               />
+              <div className={i === 0 ? "panel-tile rounded-2xl border-ember-400/30 p-6" : ""}>
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-ember-300">{step.period}</p>
               <h3 className="mt-2 text-2xl font-semibold tracking-tight text-fg">{step.title}</h3>
               <p className="text-sm text-fg-muted">{step.org}</p>
@@ -77,6 +78,7 @@ export default function Journey() {
                   ))}
                 </ul>
               )}
+              </div>
             </m.li>
           ))}
         </m.ol>

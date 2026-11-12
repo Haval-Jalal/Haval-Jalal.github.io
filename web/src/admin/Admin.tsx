@@ -1037,7 +1037,7 @@ function ContentEditor() {
         <ListEditor<Project>
           items={draft.projects}
           onChange={(projects) => update((d) => ({ ...d, projects }))}
-          create={() => ({ slug: `projekt-${Date.now()}`, title: "Nytt projekt", status: "", tagline: "", summary: "", highlights: [], tags: [], images: [], links: [], repo: "", year: String(new Date().getFullYear()) })}
+          create={() => ({ slug: `projekt-${Date.now()}`, title: "Nytt projekt", status: "", tagline: "", summary: "", highlights: [], tags: [], images: [], links: [], repo: "", role: "", year: String(new Date().getFullYear()) })}
           label={(x) => x.title}
           render={(x, set) => (
             <>
@@ -1060,6 +1060,7 @@ function ContentEditor() {
                 <Field label="År" value={x.year} onChange={(v) => set({ ...x, year: v })} />
               </div>
               <Field label="Tagline (en rad, visas i fetstil)" value={x.tagline ?? ""} onChange={(v) => set({ ...x, tagline: v })} />
+              <Field label="Min roll (en rad, valfri, t.ex. frontend och backend i ett team på tre)" value={x.role ?? ""} onChange={(v) => set({ ...x, role: v })} />
               <Area label="Berättelsen (vad det är, för vem, vilket problem det löser)" value={x.summary} onChange={(v) => set({ ...x, summary: v })} />
               <Area label="Vad det gör (en punkt per rad, visas med bock)" value={(x.highlights ?? []).join("\n")} onChange={(v) => set({ ...x, highlights: v.split("\n").map((t) => t.trim()).filter(Boolean) })} />
               <Field label="Taggar (kommaseparerade)" value={x.tags.join(", ")} onChange={(v) => set({ ...x, tags: v.split(",").map((t) => t.trim()).filter(Boolean) })} />

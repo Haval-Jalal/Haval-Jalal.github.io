@@ -2,7 +2,7 @@ import { m, useScroll, useTransform } from "motion/react";
 import { Mark } from "./Mark";
 import { Volume2, VolumeX } from "lucide-react";
 import { useSiteContent } from "../lib/content";
-import { L, otherLocaleUrl, t } from "../lib/i18n";
+import { L, locale, otherLocaleUrl, t } from "../lib/i18n";
 
 type Props = {
   soundOn: boolean;
@@ -67,7 +67,7 @@ export default function Nav({ soundOn, onToggleSound, dark = false }: Props) {
           >
             {soundOn ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
           </button>
-          <a href="#kontakt" className={`rounded-full px-4 py-2 text-[13px] font-medium transition-transform hover:-translate-y-px ${cta}`}>
+          <a href={`/api/cv.pdf?lang=${locale}`} target="_blank" rel="noreferrer" className={`rounded-full px-4 py-2 text-[13px] font-medium transition-transform hover:-translate-y-px ${cta}`}>
             {t("nav.cta")}
           </a>
         </div>

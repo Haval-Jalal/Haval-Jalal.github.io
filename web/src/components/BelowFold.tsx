@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import Projects from "./Projects";
 import Journey from "./Journey";
 import Stack from "./Stack";
+import Playground from "./Playground";
 import BuildLab from "./BuildLab";
 import Gallery from "./Gallery";
 import Contact from "./Contact";
@@ -19,6 +20,7 @@ export default function BelowFold() {
       <Projects />
       <Journey />
       <Stack />
+      <Playground />
       <BuildLab />
       <Gallery />
       <Contact />

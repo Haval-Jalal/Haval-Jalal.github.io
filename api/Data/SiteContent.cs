@@ -41,7 +41,8 @@ public sealed record Project(
     string Tagline = "",
     List<string>? Highlights = null,
     List<string>? Images = null,
-    List<ProjectLink>? Links = null);
+    List<ProjectLink>? Links = null,
+    string Role = "");
 
 public sealed record ProjectLink(string Label, string Url);
 

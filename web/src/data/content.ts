@@ -34,6 +34,8 @@ export type Project = {
   tags: string[];
   images?: string[];
   links?: ProjectLink[];
+  // One line about what Haval did on it, so a team product reads as his work, not his product.
+  role?: string;
   repo: string;
   year: string;
   hidden?: boolean;

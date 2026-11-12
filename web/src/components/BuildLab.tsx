@@ -15,6 +15,7 @@ export default function BuildLab() {
     <Section
       id="build-lab"
       tone="b"
+      className="[&>div:nth-child(2)]:pt-4"
       eyebrow={t("lab.eyebrow")}
       title={
         <>

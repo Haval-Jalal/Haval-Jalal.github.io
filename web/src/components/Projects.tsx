@@ -169,7 +169,12 @@ function ProjectCard({ project: p, onOpen }: { project: Project; onOpen: (index:
             ))}
           </ul>
         )}
-        {p.tagline && <p className="mt-4 font-medium text-fg">{p.tagline}</p>}
+        {p.role && (
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-ember-300">
+            {t("projects.role")} · <span className="normal-case tracking-normal text-fg-muted">{p.role}</span>
+          </p>
+        )}
+        {p.tagline && <p className={`${p.role ? "mt-2" : "mt-4"} font-medium text-fg`}>{p.tagline}</p>}
         {p.summary && <p className="mt-2 whitespace-pre-line text-pretty text-sm leading-relaxed text-fg-muted">{p.summary}</p>}
         {highlights.length > 0 && (
           <ul className="mt-4 space-y-1.5">
