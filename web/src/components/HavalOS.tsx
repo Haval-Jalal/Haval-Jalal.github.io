@@ -31,14 +31,13 @@ type Props = {
   mouseY: MotionValue<number>;
 };
 
-type View = "overview" | "projects" | "stack" | "experience" | "education" | "lab" | "contact";
+type View = "overview" | "projects" | "stack" | "journey" | "lab" | "contact";
 
 const VIEWS: { key: View; icon: typeof FolderGit2; label: () => string; section: string }[] = [
   { key: "overview", icon: LayoutDashboard, label: () => t("os.overview"), section: "" },
   { key: "projects", icon: FolderGit2, label: () => t("os.projects"), section: "#projekt" },
   { key: "stack", icon: Code2, label: () => t("os.stack"), section: "#stack" },
-  { key: "experience", icon: Briefcase, label: () => t("os.experience"), section: "#resan" },
-  { key: "education", icon: GraduationCap, label: () => t("os.education"), section: "#resan" },
+  { key: "journey", icon: Briefcase, label: () => t("os.journey"), section: "#resan" },
   { key: "lab", icon: Sparkles, label: () => t("os.lab"), section: "#build-lab" },
   { key: "contact", icon: Mail, label: () => t("os.contact"), section: "#kontakt" },
 ];
@@ -104,10 +103,8 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
                     <ProjectsView projects={projects} />
                   ) : view === "stack" ? (
                     <StackView />
-                  ) : view === "experience" ? (
-                    <ExperienceView />
-                  ) : view === "education" ? (
-                    <EducationView />
+                  ) : view === "journey" ? (
+                    <JourneyView />
                   ) : view === "lab" ? (
                     <LabView />
                   ) : (
@@ -250,7 +247,7 @@ function Overview({ projects, onSelect }: { projects: Project[]; onSelect: (v: V
           value={year === null ? "…" : year.toLocaleString(numberLocale)}
           delta={sub}
         />
-        <Kpi icon={Briefcase} label={t("os.years_volvo")} value="10+" delta={t("os.team_lead")} onClick={() => onSelect("experience")} />
+        <Kpi icon={Briefcase} label={t("os.years_volvo")} value="10+" delta={t("os.team_lead")} onClick={() => onSelect("journey")} />
         <button type="button" onClick={() => onSelect("contact")} className="pointer-events-auto rounded-xl bg-gradient-to-br from-ember-400 to-ember-600 p-4 text-left text-night-950">
           <div className="flex items-center justify-between text-xs font-medium">
             <span>{t("os.status")}</span>
@@ -468,11 +465,11 @@ function StackView() {
   );
 }
 
-function ExperienceView() {
-  const { journey } = useSiteContent().content;
+function JourneyView() {
+  const { journey, education } = useSiteContent().content;
   return (
     <>
-      <Heading title={t("os.experience")} sub={t("os.experience_sub")} section="#resan" />
+      <Heading title={t("os.journey")} sub={t("os.journey_sub")} section="#resan" />
       <ol className="space-y-2">
         {journey.map((s) => (
           <li key={s.title} className="panel-tile flex items-start gap-3 rounded-xl p-3">
@@ -484,28 +481,24 @@ function ExperienceView() {
           </li>
         ))}
       </ol>
-    </>
-  );
-}
-
-function EducationView() {
-  const { education } = useSiteContent().content;
-  return (
-    <>
-      <Heading title={t("os.education")} sub={t("os.education_sub")} section="#resan" />
-      <ul className="space-y-2">
-        {education.map((e) => (
-          <li key={e.school + e.program} className="panel-tile flex items-start gap-3 rounded-xl p-3">
-            <span className="grid size-7 shrink-0 place-items-center rounded-md bg-ember-500/15 text-ember-300">
-              <GraduationCap className="size-3.5" strokeWidth={1.75} />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-medium text-fg">{e.program}</span>
-              <span className="block text-xs text-fg-muted">{e.school}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
+      {education.length > 0 && (
+        <>
+          <p className="mt-5 mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-fg-faint">{t("os.education")}</p>
+          <ul className="space-y-2">
+            {education.map((e) => (
+              <li key={e.school + e.program} className="panel-tile flex items-start gap-3 rounded-xl p-3">
+                <span className="grid size-7 shrink-0 place-items-center rounded-md bg-ember-500/15 text-ember-300">
+                  <GraduationCap className="size-3.5" strokeWidth={1.75} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-fg">{e.program}</span>
+                  <span className="block text-xs text-fg-muted">{e.school}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </>
   );
 }
@@ -612,8 +605,8 @@ function SearchView({ query, projects, onPick }: { query: string; projects: Proj
   const has = (...parts: (string | undefined)[]) => parts.some((p) => p?.toLowerCase().includes(q));
   for (const p of projects) if (has(p.title, p.tagline, p.summary, ...p.tags)) hits.push({ kind: t("os.kind_project"), title: p.title, sub: p.tags.join(" · "), view: "projects" });
   for (const g of skills) for (const s of g.items) if (has(s, g.title)) hits.push({ kind: t("os.kind_skill"), title: s, sub: g.title, view: "stack" });
-  for (const s of journey) if (has(s.title, s.org, s.text)) hits.push({ kind: t("os.kind_experience"), title: s.title, sub: `${s.org} · ${s.period}`, view: "experience" });
-  for (const e of education) if (has(e.school, e.program)) hits.push({ kind: t("os.kind_education"), title: e.program, sub: e.school, view: "education" });
+  for (const s of journey) if (has(s.title, s.org, s.text)) hits.push({ kind: t("os.kind_experience"), title: s.title, sub: `${s.org} · ${s.period}`, view: "journey" });
+  for (const e of education) if (has(e.school, e.program)) hits.push({ kind: t("os.kind_education"), title: e.program, sub: e.school, view: "journey" });
   return (
     <>
       <Heading title={`${t("os.results")} "${query.trim()}"`} sub={`${hits.length} ${t("os.hits")}`} />

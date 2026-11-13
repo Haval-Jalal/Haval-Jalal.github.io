@@ -200,6 +200,7 @@ function ProjectCard({ project: p, onOpen }: { project: Project; onOpen: (index:
           ))}
           <a
             href="#kontakt"
+            onClick={() => window.dispatchEvent(new CustomEvent("contact:prefill", { detail: p.title }))}
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-1.5 text-xs text-fg transition-colors hover:border-ember-400/50"
           >
             {t("projects.ask")} <ArrowRight className="size-3.5" />

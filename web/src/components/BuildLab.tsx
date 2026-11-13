@@ -4,7 +4,6 @@ import { ChevronDown, Clock, Loader2, Lock, LockOpen, Send, Sparkles, Wand2 } fr
 import Section, { reveal, stagger } from "./Section";
 import { LabActions, LabFrame, Plan } from "./LabViewer";
 import { AgentError, friendlyError, getStatus, PLAN_MARKER, sendLead, streamBuild, type BudgetMode } from "../lib/agent";
-import { AgentTeaser } from "./Agent";
 import { getBuild, listBuilds, visitorId, type Build, type BuildSummary } from "../lib/lab";
 import { relativeTime } from "../lib/github";
 import { trackEvent } from "../lib/beacon";
@@ -24,7 +23,7 @@ export default function BuildLab() {
       }
       lede={t("lab.lede")}
     >
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[1.8fr_1fr]">
         <Lab />
         <m.div
           initial="hidden"
@@ -33,7 +32,6 @@ export default function BuildLab() {
           variants={stagger}
           className="flex min-w-0 flex-col gap-4"
         >
-          <AgentTeaser />
           <m.div variants={reveal} className="panel-tile rounded-3xl p-6">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-ember-300">{t("lab.how")}</p>
             <ol className="mt-3 space-y-2 text-sm text-fg-muted">

@@ -1,6 +1,6 @@
 import { m } from "motion/react";
-import { ArrowUpRight, CalendarDays, Check, FileDown, Linkedin, Loader2, Mail, MessageSquare, Send } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowUpRight, CalendarDays, Check, FileDown, Linkedin, Loader2, Mail, Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { getBookingInfo } from "../lib/booking";
 import { sendContact } from "../lib/posts";
 import { trackEvent } from "../lib/beacon";
@@ -17,7 +17,7 @@ export default function Contact() {
   const links = [
     { icon: Linkedin, label: "LinkedIn", href: profile.links.linkedin || "#", sub: profile.links.linkedin ? t("contact.linkedin_sub") : t("contact.coming") },
     { icon: Mail, label: t("contact.email"), href: profile.links.email ? `mailto:${profile.links.email}` : "#", sub: profile.links.email || t("contact.coming") },
-    ...(bookable ? [{ icon: CalendarDays, label: t("contact.book"), href: L("/boka"), sub: t("contact.book_sub") }] : [{ icon: MessageSquare, label: t("contact.chat"), href: "#build-lab", sub: t("contact.chat_sub") }]),
+    ...(bookable ? [{ icon: CalendarDays, label: t("contact.book"), href: L("/boka"), sub: t("contact.book_sub") }] : []),
     { icon: FileDown, label: t("contact.cv"), href: `/api/cv.pdf?lang=${locale}`, sub: t("contact.cv_sub") },
   ];
   return (
@@ -102,6 +102,24 @@ function ContactForm({ bookable }: { bookable: boolean }) {
   const [website, setWebsite] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+
+  // "Fråga om detta" on a project card lands here with the project named, so the mail says
+  // which project caught the visitor's eye.
+  useEffect(() => {
+    const onPrefill = (e: Event) => {
+      setStatus("idle");
+      setMessage(t("form.about").replace("{project}", (e as CustomEvent<string>).detail) + " ");
+      window.setTimeout(() => {
+        const el = messageRef.current;
+        if (!el) return;
+        el.focus({ preventScroll: true });
+        el.setSelectionRange(el.value.length, el.value.length);
+      }, 700);
+    };
+    window.addEventListener("contact:prefill", onPrefill);
+    return () => window.removeEventListener("contact:prefill", onPrefill);
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +169,7 @@ function ContactForm({ bookable }: { bookable: boolean }) {
               <input required value={name} onChange={(e) => setName(e.target.value)} placeholder={t("viewer.name")} autoComplete="name" className={field} />
               <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("viewer.email")} autoComplete="email" className={field} />
             </div>
-            <textarea required value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder={t("form.message")} className={field} />
+            <textarea ref={messageRef} required value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder={t("form.message")} className={field} />
             {error && <p className="text-xs text-red-300">{error}</p>}
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs text-fg-faint">{t("book.privacy")}</p>
