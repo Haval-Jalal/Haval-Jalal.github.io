@@ -75,7 +75,7 @@ export default function HavalOS({ mouseX, mouseY }: Props) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1.1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
       style={{ y, perspective: 1600 }}
-      className="relative mx-auto w-full max-w-5xl"
+      className="relative mx-auto w-full max-w-6xl"
     >
       <m.div
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
