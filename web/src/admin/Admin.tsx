@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Mark } from "../components/Mark";
-import { BarChart3, Bot, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical, CalendarDays, Newspaper, Mail, Loader2 } from "lucide-react";
+import { BarChart3, Bot, Cpu, FileDown, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical, CalendarDays, Newspaper, Mail, Loader2 } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
 import type { JourneyStep, Project, SiteContent } from "../data/content";
@@ -12,7 +12,7 @@ import Posts from "./Posts";
 import { AdminLangContext, AiButton } from "./AiHelp";
 import { sendWeeklyReport } from "../lib/posts";
 
-type Tab = "overview" | "content" | "posts" | "pitches" | "lab" | "bookings" | "leads" | "javal" | "ai" | "security" | "settings";
+type Tab = "overview" | "content" | "cv" | "posts" | "pitches" | "lab" | "bookings" | "leads" | "javal" | "ai" | "security" | "settings";
 
 export default function Admin() {
   const auth = useAuth();
@@ -46,6 +46,7 @@ export default function Admin() {
   const tabs: { key: Tab; label: string; icon: typeof BarChart3 }[] = [
     { key: "overview", label: "Översikt", icon: BarChart3 },
     { key: "content", label: "Innehåll", icon: FileText },
+    { key: "cv", label: "Mitt CV", icon: FileDown },
     { key: "posts", label: "Nu & changelog", icon: Newspaper },
     { key: "pitches", label: "Rekryterare", icon: Target },
     { key: "lab", label: "Build Lab", icon: FlaskConical },
@@ -92,6 +93,7 @@ export default function Admin() {
         <main className="p-6 md:p-10">
           {tab === "overview" && <Overview />}
           {tab === "content" && <ContentEditor />}
+          {tab === "cv" && <CvEditor />}
           {tab === "posts" && <Posts />}
           {tab === "pitches" && <Pitches />}
           {tab === "lab" && <Builds />}
@@ -639,6 +641,195 @@ function Leads() {
             </li>
           ))}
         </ul>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Mitt CV ---------- */
+
+type CvContact = { label: string; value: string; url?: string | null };
+type CvExperience = { period: string; title: string; org: string; text: string; bullets: string[] };
+type CvProject = { title: string; summary: string; tags: string[]; url?: string | null; year: string };
+type CvSkillGroup = { title: string; items: string[] };
+type CvEducation = { school: string; program: string; period?: string };
+type CvDoc = {
+  name: string; role: string; location: string; summary: string;
+  contacts: CvContact[]; experience: CvExperience[]; projects: CvProject[]; skills: CvSkillGroup[]; education: CvEducation[];
+  footer: string; accent: string;
+};
+
+// The CV as its own document, one per language. Until one is saved, the PDF is derived from the
+// site content; "Hämta från sajten" loads that version into the form to start from.
+function CvEditor() {
+  const [lang, setLang] = useState<Lang>("sv");
+  const [doc, setDoc] = useState<CvDoc | null>(null);
+  const [stored, setStored] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const load = (source?: "site") => {
+    setDoc(null);
+    fetch(`/api/manage/cv?lang=${lang}${source ? "&source=site" : ""}`)
+      .then((r) => r.json())
+      .then((d: { stored: boolean; cv: CvDoc }) => { setDoc(d.cv); setStored(d.stored); setDirty(!!source); })
+      .catch(() => setMsg("Kunde inte hämta CV:t."));
+  };
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [lang]);
+
+  const update = (fn: (d: CvDoc) => CvDoc) => { setDoc((d) => (d ? fn(d) : d)); setDirty(true); };
+  const save = async () => {
+    if (!doc) return;
+    setMsg("Sparar…");
+    const r = await fetch(`/api/manage/cv?lang=${lang}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(doc) });
+    if (r.ok) { setStored(true); setDirty(false); setMsg("Sparat. Ladda ner CV ger den nya versionen direkt."); }
+    else setMsg("Kunde inte spara.");
+    setTimeout(() => setMsg(""), 4000);
+  };
+  const reset = async () => {
+    if (!window.confirm("Ta bort det egna CV-dokumentet och gå tillbaka till det som skapas från sajten?")) return;
+    await fetch(`/api/manage/cv?lang=${lang}`, { method: "DELETE" });
+    load();
+  };
+  const lines = (v: string[]) => v.join("\n");
+  const unlines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
+
+  return (
+    <div className="max-w-3xl">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Mitt CV</h1>
+          <p className="mt-1 text-sm text-fg-muted">
+            {stored ? "Eget CV-dokument. Det här är vad Ladda ner CV ger." : "Inget eget dokument ännu: CV:t skapas från sajtens innehåll. Ändra och spara för att ta över."}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {(["sv", "en"] as Lang[]).map((l) => (
+            <button key={l} onClick={() => setLang(l)} className={`rounded-full px-3 py-1.5 text-xs font-medium ${lang === l ? "bg-ember-500 text-night-950" : "border border-white/10 text-fg-muted hover:text-fg"}`}>
+              {l === "sv" ? "Svenska" : "English"}
+            </button>
+          ))}
+          <a href={`/api/cv.pdf?lang=${lang}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs text-fg hover:border-ember-400/50">
+            <ExternalLink className="size-3.5" /> Visa PDF
+          </a>
+        </div>
+      </header>
+
+      {!doc ? (
+        <p className="mt-6 text-fg-muted">Hämtar…</p>
+      ) : (
+        <>
+          <Group title="Huvud">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Namn" value={doc.name} onChange={(v) => update((d) => ({ ...d, name: v }))} />
+              <Field label="Titel" value={doc.role} onChange={(v) => update((d) => ({ ...d, role: v }))} />
+              <Field label="Ort" value={doc.location} onChange={(v) => update((d) => ({ ...d, location: v }))} />
+            </div>
+            <Area label="Profil" value={doc.summary} onChange={(v) => update((d) => ({ ...d, summary: v }))} />
+          </Group>
+
+          <Group title="Kontakt">
+            <ListEditor
+              items={doc.contacts}
+              onChange={(contacts) => update((d) => ({ ...d, contacts }))}
+              create={() => ({ label: "", value: "", url: "" })}
+              label={(x) => x.label || "Ny kontakt"}
+              render={(x, set) => (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Field label="Etikett" value={x.label} onChange={(v) => set({ ...x, label: v })} />
+                  <Field label="Visas som" value={x.value} onChange={(v) => set({ ...x, value: v })} />
+                  <Field label="Länk (valfri)" value={x.url ?? ""} onChange={(v) => set({ ...x, url: v || null })} />
+                </div>
+              )}
+            />
+          </Group>
+
+          <Group title="Erfarenhet (nyast först)">
+            <ListEditor
+              items={doc.experience}
+              onChange={(experience) => update((d) => ({ ...d, experience }))}
+              create={() => ({ period: "", title: "", org: "", text: "", bullets: [] })}
+              label={(x) => x.title || "Ny erfarenhet"}
+              render={(x, set) => (
+                <>
+                  <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
+                    <Field label="Period" value={x.period} onChange={(v) => set({ ...x, period: v })} />
+                    <Field label="Titel" value={x.title} onChange={(v) => set({ ...x, title: v })} />
+                  </div>
+                  <Field label="Arbetsgivare, ort" value={x.org} onChange={(v) => set({ ...x, org: v })} />
+                  <Area label="Text" value={x.text} onChange={(v) => set({ ...x, text: v })} />
+                  <Area label="Punkter (en per rad)" value={lines(x.bullets)} onChange={(v) => set({ ...x, bullets: unlines(v) })} />
+                </>
+              )}
+            />
+          </Group>
+
+          <Group title="Projekt (urval)">
+            <ListEditor
+              items={doc.projects}
+              onChange={(projects) => update((d) => ({ ...d, projects }))}
+              create={() => ({ title: "", summary: "", tags: [], url: null, year: String(new Date().getFullYear()) })}
+              label={(x) => x.title || "Nytt projekt"}
+              render={(x, set) => (
+                <>
+                  <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+                    <Field label="Titel" value={x.title} onChange={(v) => set({ ...x, title: v })} />
+                    <Field label="År" value={x.year} onChange={(v) => set({ ...x, year: v })} />
+                  </div>
+                  <Area label="Beskrivning" value={x.summary} onChange={(v) => set({ ...x, summary: v })} />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Tekniker (kommaseparerade)" value={x.tags.join(", ")} onChange={(v) => set({ ...x, tags: v.split(",").map((t) => t.trim()).filter(Boolean) })} />
+                    <Field label="Länk (valfri)" value={x.url ?? ""} onChange={(v) => set({ ...x, url: v || null })} />
+                  </div>
+                </>
+              )}
+            />
+          </Group>
+
+          <Group title="Stack och övrigt (högerspalten)">
+            <ListEditor
+              items={doc.skills}
+              onChange={(skills) => update((d) => ({ ...d, skills }))}
+              create={() => ({ title: "", items: [] })}
+              label={(x) => x.title || "Ny grupp"}
+              render={(x, set) => (
+                <>
+                  <Field label="Rubrik" value={x.title} onChange={(v) => set({ ...x, title: v })} />
+                  <Field label="Innehåll (kommaseparerat)" value={x.items.join(", ")} onChange={(v) => set({ ...x, items: v.split(",").map((t) => t.trim()).filter(Boolean) })} />
+                </>
+              )}
+            />
+          </Group>
+
+          <Group title="Utbildning">
+            <ListEditor
+              items={doc.education}
+              onChange={(education) => update((d) => ({ ...d, education }))}
+              create={() => ({ school: "", program: "", period: "" })}
+              label={(x) => x.program || "Ny utbildning"}
+              render={(x, set) => (
+                <>
+                  <Field label="Program" value={x.program} onChange={(v) => set({ ...x, program: v })} />
+                  <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+                    <Field label="Skola" value={x.school} onChange={(v) => set({ ...x, school: v })} />
+                    <Field label="Period" value={x.period ?? ""} onChange={(v) => set({ ...x, period: v })} />
+                  </div>
+                </>
+              )}
+            />
+          </Group>
+
+          <div className="sticky bottom-0 mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 bg-night-950/90 py-3 backdrop-blur">
+            <div className="flex items-center gap-3 text-xs text-fg-muted">
+              <button onClick={() => load("site")} className="rounded-full border border-white/10 px-3 py-1.5 hover:text-fg">Hämta från sajten</button>
+              {stored && <button onClick={() => void reset()} className="rounded-full border border-white/10 px-3 py-1.5 hover:text-red-300">Ta bort eget dokument</button>}
+              <span>{msg}</span>
+            </div>
+            <button onClick={() => void save()} disabled={!dirty} className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-4 py-2 text-sm font-medium text-night-950 disabled:opacity-40">
+              <Save className="size-4" /> Spara
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

@@ -84,7 +84,7 @@ public sealed class CvDocument(CvModel cv) : IDocument
                     s.Spacing(10);
                     foreach (var e in experience)
                     {
-                        s.Item().Column(item =>
+                        s.Item().ShowEntire().Column(item =>
                         {
                             item.Item().Row(r =>
                             {
@@ -112,7 +112,7 @@ public sealed class CvDocument(CvModel cv) : IDocument
                     s.Spacing(8);
                     foreach (var p in projects)
                     {
-                        s.Item().Column(item =>
+                        s.Item().ShowEntire().Column(item =>
                         {
                             item.Item().Row(r =>
                             {
@@ -163,6 +163,7 @@ public sealed class CvDocument(CvModel cv) : IDocument
                         {
                             item.Item().Text(e.Program).FontSize(9).SemiBold();
                             item.Item().Text(e.School).FontSize(8.5f).FontColor(Muted);
+                            if (!string.IsNullOrWhiteSpace(e.Period)) item.Item().Text(e.Period).FontSize(8).FontColor(_accent).SemiBold();
                         });
                     }
                 }));

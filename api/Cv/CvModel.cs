@@ -25,7 +25,7 @@ public sealed record CvContact(string Label, string Value, string? Url = null);
 public sealed record CvExperience(string Period, string Title, string Org, string Text, List<string> Bullets);
 public sealed record CvProject(string Title, string Summary, List<string> Tags, string? Url, string Year);
 public sealed record CvSkillGroup(string Title, List<string> Items);
-public sealed record CvEducation(string School, string Program);
+public sealed record CvEducation(string School, string Program, string Period = "");
 
 public static class CvMapper
 {
