@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { m } from "motion/react";
-import { Clock, Loader2, Lock, LockOpen, Send, Sparkles, Wand2 } from "lucide-react";
+import { ChevronDown, Clock, Loader2, Lock, LockOpen, Send, Sparkles, Wand2 } from "lucide-react";
 import Section, { reveal, stagger } from "./Section";
 import { LabActions, LabFrame, Plan } from "./LabViewer";
 import { AgentError, friendlyError, getStatus, PLAN_MARKER, sendLead, streamBuild, type BudgetMode } from "../lib/agent";
@@ -68,21 +68,15 @@ function Lab() {
   const [current, setCurrent] = useState<Build | null>(null);
   const [mine, setMine] = useState<BuildSummary[]>([]);
   const [mode, setMode] = useState<BudgetMode>("full");
+  const [showMine, setShowMine] = useState(false);
   const abort = useRef<AbortController | null>(null);
 
-  // On load: budget mode, the visitor's earlier prototypes, and the latest one back in the viewer.
+  // On load: budget mode and the list of the visitor's earlier prototypes. The lab itself opens
+  // empty; earlier builds sit behind the "my earlier builds" button (Haval did not want the last
+  // one to reappear every visit).
   useEffect(() => {
     void getStatus().then(setMode);
-    void listBuilds().then(async (list) => {
-      setMine(list);
-      if (list.length > 0) {
-        const b = await getBuild(list[0].id);
-        if (b) {
-          setCurrent(b);
-          setIdea(b.idea);
-        }
-      }
-    });
+    void listBuilds().then(setMine);
   }, []);
 
   const stopped = mode === "stopped";
@@ -96,6 +90,7 @@ function Lab() {
       setIdea(b.idea);
       setRaw("");
       setState({ status: "idle" });
+      setShowMine(false);
     }
   };
 
@@ -225,30 +220,41 @@ function Lab() {
       )}
 
       {mine.length > 0 && (
-        <div className="mt-2 rounded-[1.25rem] border border-white/5 bg-night-950/40 p-4">
-          <p className="flex items-center gap-2 px-1 font-mono text-[11px] uppercase tracking-[0.2em] text-fg-faint">
+        <div className="mt-2 rounded-[1.25rem] border border-white/5 bg-night-950/40">
+          <button
+            type="button"
+            onClick={() => setShowMine((v) => !v)}
+            aria-expanded={showMine}
+            className="flex w-full items-center gap-2 px-5 py-3.5 text-left font-mono text-[11px] uppercase tracking-[0.2em] text-fg-faint transition-colors hover:text-fg-muted"
+          >
             <Clock className="size-3" /> {t("lab.mine")}
-          </p>
-          <ul className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {mine.map((b) => (
-              <li key={b.id} className="shrink-0">
-                <button
-                  type="button"
-                  onClick={() => void open(b.id)}
-                  className={`w-56 rounded-xl border p-3 text-left transition-colors ${
-                    current?.id === b.id ? "border-ember-400/50 bg-ember-500/10" : "border-white/8 bg-white/[0.03] hover:border-white/20"
-                  }`}
-                >
-                  <p className="truncate text-sm font-medium text-fg">{b.title}</p>
-                  <p className="mt-0.5 truncate text-xs text-fg-muted">{b.idea}</p>
-                  <p className="mt-2 flex items-center gap-1.5 text-[11px] text-fg-faint">
-                    {b.unlocked ? <LockOpen className="size-3 text-emerald-300" /> : <Lock className="size-3" />}
-                    {relativeTime(b.ts)}
-                  </p>
-                </button>
-              </li>
-            ))}
-          </ul>
+            <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] tracking-normal text-fg-muted">{mine.length}</span>
+            <ChevronDown className={`ml-auto size-3.5 transition-transform ${showMine ? "rotate-180" : ""}`} />
+          </button>
+          {showMine && (
+            <ul className="space-y-1.5 px-3 pb-3">
+              {mine.map((b) => (
+                <li key={b.id}>
+                  <button
+                    type="button"
+                    onClick={() => void open(b.id)}
+                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                      current?.id === b.id ? "border-ember-400/50 bg-ember-500/10" : "border-white/8 bg-white/[0.03] hover:border-white/20"
+                    }`}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-fg">{b.title}</span>
+                      <span className="block truncate text-xs text-fg-muted">{b.idea}</span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-fg-faint">
+                      {b.unlocked ? <LockOpen className="size-3 text-emerald-300" /> : <Lock className="size-3" />}
+                      {relativeTime(b.ts)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </m.div>
