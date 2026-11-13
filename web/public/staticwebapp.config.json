@@ -4,7 +4,10 @@
   },
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/*.{png,jpg,jpeg,ico,svg,webp,mp4,pdf}"]
+    "exclude": ["/assets/*", "/*.{png,jpg,jpeg,ico,svg,webp,mp4,pdf,webmanifest}"]
+  },
+  "mimeTypes": {
+    ".webmanifest": "application/manifest+json"
   },
   "routes": [
     { "route": "/en", "rewrite": "/_pages/en.html" },
