@@ -172,7 +172,7 @@ function ContactForm({ bookable }: { bookable: boolean }) {
             <textarea ref={messageRef} required value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder={t("form.message")} className={field} />
             {error && <p className="text-xs text-red-300">{error}</p>}
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-fg-faint">{t("book.privacy")}</p>
+              <p className="text-xs text-fg-faint">{t("form.privacy")}</p>
               <button
                 type="submit"
                 disabled={status === "sending"}
