@@ -109,7 +109,8 @@ function ContactForm({ bookable }: { bookable: boolean }) {
   useEffect(() => {
     const onPrefill = (e: Event) => {
       setStatus("idle");
-      setMessage(t("form.about").replace("{project}", (e as CustomEvent<string>).detail) + " ");
+      const detail = (e as CustomEvent<string | { text: string }>).detail;
+      setMessage(typeof detail === "string" ? t("form.about").replace("{project}", detail) + " " : detail.text);
       window.setTimeout(() => {
         const el = messageRef.current;
         if (!el) return;

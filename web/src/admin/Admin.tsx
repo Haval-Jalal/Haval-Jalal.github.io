@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Mark } from "../components/Mark";
-import { BarChart3, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical, CalendarDays, Newspaper, Mail, Loader2 } from "lucide-react";
+import { BarChart3, Bot, Cpu, FileText, Inbox, LogOut, Save, Settings as SettingsIcon, ExternalLink, Plus, Trash2, ChevronUp, ChevronDown, ShieldAlert, ShieldCheck, ShieldOff, Upload, X, Star, Target, Sparkles, FlaskConical, CalendarDays, Newspaper, Mail, Loader2 } from "lucide-react";
 import { loginUrl, logoutUrl, useAuth } from "../lib/auth";
 import { useSiteContent } from "../lib/content";
 import type { JourneyStep, Project, SiteContent } from "../data/content";
@@ -12,7 +12,7 @@ import Posts from "./Posts";
 import { AdminLangContext, AiButton } from "./AiHelp";
 import { sendWeeklyReport } from "../lib/posts";
 
-type Tab = "overview" | "content" | "posts" | "pitches" | "lab" | "bookings" | "leads" | "ai" | "security" | "settings";
+type Tab = "overview" | "content" | "posts" | "pitches" | "lab" | "bookings" | "leads" | "javal" | "ai" | "security" | "settings";
 
 export default function Admin() {
   const auth = useAuth();
@@ -51,6 +51,7 @@ export default function Admin() {
     { key: "lab", label: "Build Lab", icon: FlaskConical },
     { key: "bookings", label: "Bokning", icon: CalendarDays },
     { key: "leads", label: "Leads", icon: Inbox },
+    { key: "javal", label: "Javal", icon: Bot },
     { key: "ai", label: "AI & kostnad", icon: Cpu },
     { key: "security", label: "Säkerhet", icon: ShieldAlert },
     { key: "settings", label: "Inställningar", icon: SettingsIcon },
@@ -96,6 +97,7 @@ export default function Admin() {
           {tab === "lab" && <Builds />}
           {tab === "bookings" && <Bookings />}
           {tab === "leads" && <Leads />}
+          {tab === "javal" && <JavalAdmin />}
           {tab === "ai" && <AiUsage />}
           {tab === "security" && <Security me={auth.user.userId} />}
           {tab === "settings" && <SettingsEditor />}
@@ -638,6 +640,111 @@ function Leads() {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/* ---------- Javal ---------- */
+
+type AgentConfig = { briefing: string; never: string; updatedAt: string };
+type UnansweredQuestion = { id: string; ts: string; lang: string; question: string; topic: string };
+
+const BRIEFING_HINT = `Skriv som till en ny kollega som ska svara i ditt ställe. Till exempel:
+
+Så jobbar jag: ...
+Det här vill jag ha av ett team: ...
+Plats och arbetsform: Göteborg eller remote, ...
+Språk: svenska och engelska flytande, ...
+Uppsägningstid och start: tas i samtal.
+Lön: tas i samtal.
+Körkort: ...
+Läser och lär mig just nu: ...
+Fritid: ...
+Så når man mig bäst: ...`;
+
+const NEVER_HINT = `En rad per sak. Lämnas den tom gäller standard: inget startdatum, inget internt från Volvo Cars.
+
+Till exempel:
+- Inget exakt startdatum, det tar jag i ett samtal.
+- Inga interna systemnamn, kollegor eller chefer på Volvo Cars.
+- Inga löneanspråk.`;
+
+function JavalAdmin() {
+  const [config, setConfig] = useState<AgentConfig | null>(null);
+  const [saved, setSaved] = useState<AgentConfig | null>(null);
+  const [saving, setSaving] = useState("");
+  const [questions, setQuestions] = useState<UnansweredQuestion[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/manage/agent/config").then((r) => r.json()).then((c: AgentConfig) => { setConfig(c); setSaved(c); }).catch(() => { setConfig({ briefing: "", never: "", updatedAt: "" }); });
+    fetch("/api/manage/agent/questions").then((r) => r.json()).then((d) => setQuestions(d.questions ?? [])).catch(() => setQuestions([]));
+  }, []);
+
+  const dirty = !!config && !!saved && (config.briefing !== saved.briefing || config.never !== saved.never);
+  const save = async () => {
+    if (!config) return;
+    setSaving("Sparar…");
+    try {
+      const r = await fetch("/api/manage/agent/config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ briefing: config.briefing, never: config.never }) });
+      if (!r.ok) throw new Error(String(r.status));
+      const c = (await r.json()) as AgentConfig;
+      setConfig(c); setSaved(c); setSaving("Sparat. Javal använder den nya texten direkt.");
+    } catch {
+      setSaving("Kunde inte spara.");
+    }
+    setTimeout(() => setSaving(""), 4000);
+  };
+  const remove = async (id: string) => {
+    await fetch(`/api/manage/agent/questions/${id}`, { method: "DELETE" });
+    setQuestions((q) => (q ?? []).filter((x) => x.id !== id));
+  };
+
+  if (!config) return <p className="text-fg-muted">Hämtar…</p>;
+  return (
+    <div className="max-w-3xl">
+      <h1 className="text-2xl font-semibold tracking-tight">Javal</h1>
+      <p className="mt-1 text-sm text-fg-muted">Det Javal vet utöver sajten, det han aldrig säger, och frågorna han inte kunde svara på. Briefingen är privat och visas aldrig för besökare.</p>
+
+      <Group title="Briefing">
+        <label className="block text-xs text-fg-muted">
+          Det Javal får veta om dig (privat)
+          <textarea value={config.briefing} onChange={(e) => setConfig({ ...config, briefing: e.target.value })} rows={16} placeholder={BRIEFING_HINT}
+            className="mt-1 w-full rounded-md border border-white/10 bg-night-900 px-3 py-2 font-mono text-[13px] leading-relaxed text-fg placeholder:text-fg-faint/70 focus:border-ember-400/60 focus:outline-none" />
+        </label>
+        <label className="block text-xs text-fg-muted">
+          Det Javal aldrig säger
+          <textarea value={config.never} onChange={(e) => setConfig({ ...config, never: e.target.value })} rows={6} placeholder={NEVER_HINT}
+            className="mt-1 w-full rounded-md border border-white/10 bg-night-900 px-3 py-2 font-mono text-[13px] leading-relaxed text-fg placeholder:text-fg-faint/70 focus:border-ember-400/60 focus:outline-none" />
+        </label>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs text-fg-faint">{saving || (saved?.updatedAt && saved.updatedAt !== "0001-01-01T00:00:00" ? `Senast sparad ${new Date(saved.updatedAt).toLocaleString("sv-SE")}` : "Inte sparad ännu.")}</p>
+          <button onClick={() => void save()} disabled={!dirty} className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-4 py-2 text-sm font-medium text-night-950 disabled:opacity-40">
+            <Save className="size-4" /> Spara
+          </button>
+        </div>
+      </Group>
+
+      <Group title="Frågor Javal inte kunde svara på">
+        {questions === null ? (
+          <p className="text-sm text-fg-muted">Hämtar…</p>
+        ) : questions.length === 0 ? (
+          <p className="text-sm text-fg-faint">Inga ännu. När en besökare frågar något som inte finns i materialet hamnar frågan här, utan uppgifter om vem som frågade. Rensas efter 90 dagar.</p>
+        ) : (
+          <ul className="divide-y divide-white/5">
+            {questions.map((q) => (
+              <li key={q.id} className="flex items-start justify-between gap-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm text-fg">{q.question}</p>
+                  <p className="mt-0.5 font-mono text-[11px] text-fg-faint">{q.topic && <span className="mr-2 rounded-full border border-white/10 px-1.5">{q.topic}</span>}{q.lang} · {new Date(q.ts).toLocaleString("sv-SE")}</p>
+                </div>
+                <button onClick={() => void remove(q.id)} className="grid size-8 shrink-0 place-items-center rounded-lg text-fg-faint hover:bg-white/[0.06] hover:text-fg" aria-label="Ta bort" title="Ta bort">
+                  <Trash2 className="size-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Group>
     </div>
   );
 }

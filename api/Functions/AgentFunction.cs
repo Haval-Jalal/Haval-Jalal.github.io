@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HavalApi.Functions;
 
-public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate, ILeadStore leads, IUsageStore usage, IBuildStore builds, IMailer mailer, AnthropicCostService cost, ILogger<AgentFunction> log)
+public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate, ILeadStore leads, IUsageStore usage, IBuildStore builds, IAgentStore agentStore, IMailer mailer, AnthropicCostService cost, ILogger<AgentFunction> log)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan Hour = TimeSpan.FromHours(1);
@@ -49,7 +49,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         {
             var turns = dto.Messages.Select(m => new ChatTurn(m.Role == "assistant" ? "assistant" : "user", m.Text.Trim())).ToList();
             var reply = await agent.ChatAsync(turns, dto.Lang == "en" ? "en" : "sv", ct);
-            return new OkObjectResult(new { reply = reply.Text, refused = reply.Refused });
+            return new OkObjectResult(new { reply = reply.Text, refused = reply.Refused, actions = reply.Actions.Select(a => new { type = a.Type, args = a.Args }) });
         }
         catch (AnthropicApiException ex)
         {
@@ -183,6 +183,52 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         return new OkObjectResult(new { leads = await leads.ListAsync(100, ct), spentTodayUsd = await usage.SpentTodayUsdAsync(ct), dailyCapUsd = guard.DailyCapUsd });
     }
 
+    // Admin: Javal's private briefing and the list of things he must never say.
+    [Function("ManageAgentConfigGet")]
+    public async Task<IActionResult> ManageAgentConfigGet(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/agent/config")] HttpRequest req,
+        CancellationToken ct)
+    {
+        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
+        return new OkObjectResult(await agentStore.GetConfigAsync(ct));
+    }
+
+    [Function("ManageAgentConfigPut")]
+    public async Task<IActionResult> ManageAgentConfigPut(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "manage/agent/config")] HttpRequest req,
+        CancellationToken ct)
+    {
+        var user = await gate.AdminAsync(req, ct);
+        if (user is null) return new UnauthorizedResult();
+        var dto = await ReadAsync<AgentConfigDto>(req, ct);
+        if (dto is null) return new BadRequestObjectResult(new { error = "invalid_json" });
+        var config = new AgentConfig((dto.Briefing ?? "").Trim(), (dto.Never ?? "").Trim(), DateTime.UtcNow);
+        if (config.Briefing.Length > 12000 || config.Never.Length > 4000) return new BadRequestObjectResult(new { error = "too_long" });
+        await agentStore.SaveConfigAsync(config, ct);
+        log.LogInformation("Javal briefing updated by {User}", user.UserDetails);
+        return new OkObjectResult(config);
+    }
+
+    // Admin: questions Javal could not answer (no visitor identity, 90 days).
+    [Function("ManageAgentQuestions")]
+    public async Task<IActionResult> ManageAgentQuestions(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/agent/questions")] HttpRequest req,
+        CancellationToken ct)
+    {
+        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
+        return new OkObjectResult(new { questions = await agentStore.ListQuestionsAsync(200, ct) });
+    }
+
+    [Function("ManageAgentQuestionDelete")]
+    public async Task<IActionResult> ManageAgentQuestionDelete(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "manage/agent/questions/{id}")] HttpRequest req,
+        string id,
+        CancellationToken ct)
+    {
+        if (await gate.AdminAsync(req, ct) is null) return new UnauthorizedResult();
+        return await agentStore.DeleteQuestionAsync(id, ct) ? new OkObjectResult(new { ok = true }) : new NotFoundResult();
+    }
+
     // Admin: token and cost history for the AI features.
     [Function("ManageAi")]
     public async Task<IActionResult> ManageAi(
@@ -243,6 +289,11 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         [JsonPropertyName("idea")] public string? Idea { get; set; }
         [JsonPropertyName("visitor")] public string? Visitor { get; set; }
         [JsonPropertyName("lang")] public string? Lang { get; set; }
+    }
+    private sealed class AgentConfigDto
+    {
+        [JsonPropertyName("briefing")] public string? Briefing { get; set; }
+        [JsonPropertyName("never")] public string? Never { get; set; }
     }
     private sealed class LeadDto
     {

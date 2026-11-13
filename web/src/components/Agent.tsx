@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, m } from "motion/react";
-import { Loader2, MessageCircle, Send, Trash2, X } from "lucide-react";
+import { FileDown, Loader2, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { onAgentOpen, openAgent, useDigitalHaval } from "../lib/chat";
+import { onAgentClose } from "../lib/agentActions";
 import type { Agent3DProps, IntroPhase } from "./Agent3D";
 
 // three.js is 600 kB and compiling the character's shaders blocks the main thread for a good
@@ -41,7 +42,7 @@ function Agent3D(props: Agent3DProps) {
     </Suspense>
   );
 }
-import { t } from "../lib/i18n";
+import { locale, t } from "../lib/i18n";
 
 /* ---------- The face ---------- */
 
@@ -208,6 +209,9 @@ export default function AgentWidget() {
   const bottom = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
+  // On a phone the chat is a bottom sheet; when Javal scrolls the page somewhere, get out of the way.
+  useEffect(() => onAgentClose(() => setOpen(false)), []);
+
   // Other parts of the site can open the panel and hand over a question.
   useEffect(
     () =>
@@ -328,7 +332,14 @@ export default function AgentWidget() {
                 m.role === "user" ? (
                   <p key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-ember-500 px-4 py-2.5 text-night-950">{m.text}</p>
                 ) : (
-                  <p key={i} className="w-fit max-w-[90%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-white/10 bg-white/[0.04] px-4 py-2.5 text-fg">{m.text}</p>
+                  <div key={i} className="w-fit max-w-[90%] space-y-2">
+                    <p className="whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-white/10 bg-white/[0.04] px-4 py-2.5 text-fg">{m.text}</p>
+                    {m.actions?.some((a) => a.type === "offer_cv") && (
+                      <a href={`/api/cv.pdf?lang=${locale}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-ember-500 px-3.5 py-1.5 text-xs font-medium text-night-950">
+                        <FileDown className="size-3.5" /> {t("chat.cv")}
+                      </a>
+                    )}
+                  </div>
                 ),
               )}
               {busy && (

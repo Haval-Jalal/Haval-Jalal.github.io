@@ -196,6 +196,7 @@ const sv = {
   "chat.placeholder": "Ställ en fråga…",
   "chat.aria": "Fråga Javal",
   "chat.send": "Skicka",
+  "chat.cv": "Ladda ner CV (PDF)",
 
   // Gallery
   "gallery.eyebrow": "Galleri",
@@ -539,6 +540,7 @@ const en: Record<keyof typeof sv, string> = {
   "chat.placeholder": "Ask a question…",
   "chat.aria": "Ask Javal",
   "chat.send": "Send",
+  "chat.cv": "Download CV (PDF)",
 
   "gallery.eyebrow": "Gallery",
   "gallery.title": "Built by",

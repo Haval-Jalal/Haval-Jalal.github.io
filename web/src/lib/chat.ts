@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AgentError, chat, friendlyError, type ChatMsg } from "./agent";
 import { trackEvent } from "./beacon";
+import { runAgentActions } from "./agentActions";
 
 const CHAT_KEY = "hj_chat";
 const OPEN_EVENT = "hj:agent-open";
@@ -37,8 +38,12 @@ export function useDigitalHaval() {
       setError(null);
       trackEvent("chat_message");
       try {
-        const { reply } = await chat(next);
-        setMessages([...next, { role: "assistant", text: reply }]);
+        const { reply, actions = [] } = await chat(next);
+        setMessages([...next, { role: "assistant", text: reply, actions: actions.length ? actions : undefined }]);
+        if (actions.length) {
+          trackEvent("chat_action");
+          runAgentActions(actions);
+        }
         setSpeaking(true);
         setTimeout(() => setSpeaking(false), Math.min(6000, 1500 + reply.length * 15));
       } catch (e) {

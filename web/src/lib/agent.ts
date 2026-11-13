@@ -1,7 +1,9 @@
 // Client for the AI endpoints in the .NET API.
 import { locale, t } from "./i18n";
 
-export type ChatMsg = { role: "user" | "assistant"; text: string };
+import type { AgentAction } from "./agentActions";
+
+export type ChatMsg = { role: "user" | "assistant"; text: string; actions?: AgentAction[] };
 
 export class AgentError extends Error {
   constructor(public code: string) {
@@ -49,11 +51,11 @@ export async function getStatus(): Promise<BudgetMode> {
   }
 }
 
-export async function chat(messages: ChatMsg[]): Promise<{ reply: string; refused: boolean }> {
+export async function chat(messages: ChatMsg[]): Promise<{ reply: string; refused: boolean; actions?: AgentAction[] }> {
   const r = await fetch("/api/agent/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, lang: locale }),
+    body: JSON.stringify({ messages: messages.map(({ role, text }) => ({ role, text })), lang: locale }),
   });
   if (!r.ok) throw new AgentError(await codeOf(r));
   return r.json();
