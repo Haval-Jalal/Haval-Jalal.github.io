@@ -17,14 +17,15 @@ export default function Journey() {
       }
       lede={profile.about}
     >
-      <div className="grid gap-12 md:grid-cols-[1fr_1.4fr] md:gap-16">
+      {/* The portrait source is 400 px wide, so the column is capped at 320 px to keep it sharp. */}
+      <div className="grid gap-12 md:grid-cols-[320px_1fr] md:gap-16">
         {/* Portrait + facts */}
         <m.aside
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
           variants={stagger}
-          className="md:sticky md:top-28 md:self-start"
+          className="mx-auto w-full max-w-[320px] md:sticky md:top-28 md:mx-0 md:self-start"
         >
           <m.div
             variants={reveal}
