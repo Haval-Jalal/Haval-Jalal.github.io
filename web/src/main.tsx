@@ -18,6 +18,19 @@ const ChangelogPage = lazy(() => import("./pages/ChangelogPage"));
 const path = sitePath;
 document.documentElement.lang = locale;
 if (locale === "en") document.title = "Haval Jalal – .NET & React Developer in Gothenburg";
+// The indexable routes get their <head> prerendered at build time (scripts/prerender-heads.mjs);
+// this covers everything else (trailing slashes, /lab/{id}, /boka) so no page claims to be the start page.
+{
+  const sv = sitePath === "/now" ? "/nu" : sitePath === "/book" ? "/boka" : sitePath;
+  const en = sitePath === "/" ? "/en" : "/en" + sv.replace(/^\/nu$/, "/now").replace(/^\/boka$/, "/book");
+  const here = "https://havaljalal.se" + (locale === "en" ? en : sv);
+  const set = (sel: string, attr: string, value: string) => document.head.querySelector(sel)?.setAttribute(attr, value);
+  set('link[rel="canonical"]', "href", here);
+  set('meta[property="og:url"]', "content", here);
+  set('link[hreflang="sv"]', "href", "https://havaljalal.se" + sv);
+  set('link[hreflang="x-default"]', "href", "https://havaljalal.se" + sv);
+  set('link[hreflang="en"]', "href", "https://havaljalal.se" + en);
+}
 const clean = path.replace(/\/$/, "") || "/";
 const page = path.startsWith("/admin") ? "admin" : path.startsWith("/lab/") ? "lab" : path.startsWith("/for/") ? "pitch" : clean === "/boka" || clean === "/book" ? "book" : clean === "/cv" ? "cv" : clean === "/nu" || clean === "/now" ? "now" : clean === "/changelog" ? "changelog" : "site";
 

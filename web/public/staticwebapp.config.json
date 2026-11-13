@@ -7,6 +7,13 @@
     "exclude": ["/assets/*", "/*.{png,jpg,jpeg,ico,svg,webp,mp4,pdf}"]
   },
   "routes": [
+    { "route": "/en", "rewrite": "/_pages/en.html" },
+    { "route": "/cv", "rewrite": "/_pages/cv.html" },
+    { "route": "/en/cv", "rewrite": "/_pages/en-cv.html" },
+    { "route": "/nu", "rewrite": "/_pages/nu.html" },
+    { "route": "/en/now", "rewrite": "/_pages/en-now.html" },
+    { "route": "/changelog", "rewrite": "/_pages/changelog.html" },
+    { "route": "/en/changelog", "rewrite": "/_pages/en-changelog.html" },
     { "route": "/api/manage/*", "allowedRoles": ["admin"] },
     { "route": "/.auth/login/twitter", "statusCode": 404 },
     { "route": "/.auth/login/aad", "statusCode": 404 }
