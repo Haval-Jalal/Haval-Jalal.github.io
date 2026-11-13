@@ -17,6 +17,7 @@ export default function Playground() {
     <Section
       id="lekplats"
       tone="b"
+      edgeBottom="self"
       eyebrow={t("play.eyebrow")}
       title={
         <>

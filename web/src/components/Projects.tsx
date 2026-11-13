@@ -23,6 +23,7 @@ export default function Projects() {
     <Section
       id="projekt"
       tone="a"
+      edgeTop="clear"
       eyebrow={t("projects.eyebrow")}
       title={
         <>

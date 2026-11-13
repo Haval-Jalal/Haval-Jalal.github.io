@@ -92,13 +92,35 @@ body {
   border: 1px solid color-mix(in oklab, white 8%, transparent);
 }
 
-/* Section surfaces: ~6-8% see-through so the terrain glows behind the content. */
+/* Section surfaces: two near-black tones, ~6-8% see-through so the terrain glows behind the
+   content. Each surface ramps from a shared mid tone at its top and bottom edge into its own tone,
+   so an a|b seam is a soft 2 x --edge gradient instead of a hard line. The edge-* modifiers make an
+   edge keep its own tone (two sections of the same tone that should read as one block) or fade
+   from transparent (the first section under the hero, where the terrain shows). */
+.surface-a,
+.surface-b {
+  --edge: clamp(96px, 18vh, 240px);
+  --surface-mid: color-mix(in oklab, #09090e 92.5%, transparent);
+  --edge-top: var(--surface-mid);
+  --edge-bottom: var(--surface-mid);
+  background: linear-gradient(
+    to bottom,
+    var(--edge-top) 0,
+    var(--surface-self) var(--edge),
+    var(--surface-self) calc(100% - var(--edge)),
+    var(--edge-bottom) 100%
+  );
+}
 .surface-a {
-  background: color-mix(in oklab, var(--color-night-950) 93%, transparent);
+  --surface-self: color-mix(in oklab, var(--color-night-950) 93%, transparent);
 }
 .surface-b {
-  background: color-mix(in oklab, var(--color-night-900) 92%, transparent);
+  --surface-self: color-mix(in oklab, var(--color-night-900) 92%, transparent);
 }
+.edge-top-self { --edge-top: var(--surface-self); }
+.edge-bottom-self { --edge-bottom: var(--surface-self); }
+.edge-top-clear { --edge-top: transparent; }
+.edge-bottom-clear { --edge-bottom: transparent; }
 
 @media (prefers-reduced-motion: reduce) {
   *,

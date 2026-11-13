@@ -19,14 +19,19 @@ type Props = {
   lede?: string;
   children: ReactNode;
   className?: string;
+  // How the surface meets its neighbours: "mid" (default) blends into the shared mid tone, "self"
+  // keeps its own tone to the edge (next to a section of the same tone), "clear" fades from
+  // transparent (under the hero, where the terrain shows through).
+  edgeTop?: "mid" | "self" | "clear";
+  edgeBottom?: "mid" | "self" | "clear";
 };
 
 // Shared section shell. Two alternating near-black surfaces, both slightly transparent,
-// scrolling over the fixed terrain canvas.
-export default function Section({ id, tone, eyebrow, title, lede, children, className = "" }: Props) {
+// scrolling over the fixed terrain canvas. Seams between tones are soft gradients (see index.css).
+export default function Section({ id, tone, eyebrow, title, lede, children, className = "", edgeTop = "mid", edgeBottom = "mid" }: Props) {
+  const edges = `${edgeTop === "mid" ? "" : `edge-top-${edgeTop}`} ${edgeBottom === "mid" ? "" : `edge-bottom-${edgeBottom}`}`;
   return (
-    <section id={id} className={`relative text-fg ${tone === "a" ? "surface-a" : "surface-b"} ${className}`}>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+    <section id={id} className={`relative text-fg ${tone === "a" ? "surface-a" : "surface-b"} ${edges} ${className}`}>
       <div className="relative mx-auto max-w-6xl px-5 py-28 md:py-36">
         <m.div
           initial="hidden"
