@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Check, Copy, Download, ExternalLink, Linkedin, Send } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, Linkedin, Send, X } from "lucide-react";
 import { AgentError, friendlyError } from "../lib/agent";
 import { downloadUrl, linkedInShareUrl, shareUrl, unlockBuild, type Build } from "../lib/lab";
 import { trackEvent } from "../lib/beacon";
@@ -9,7 +9,8 @@ const input = "rounded-xl border border-white/10 bg-night-900 px-3 py-2 text-sm 
 
 // The finished prototype: sandbox, plan and the gated download. Shared by the Build Lab section
 // and the stand-alone /lab/{id} page.
-export function LabFrame({ build, height = "h-[520px]" }: { build: Build; height?: string }) {
+// onClose (Build Lab only): closes the prototype and returns the lab to the empty idea box.
+export function LabFrame({ build, height = "h-[520px]", onClose }: { build: Build; height?: string; onClose?: () => void }) {
   return (
     <div className="min-w-0 overflow-hidden rounded-[1.25rem] border border-white/5 bg-night-950">
       <div className="flex items-center gap-1.5 border-b border-white/5 bg-[#111] px-3 py-2">
@@ -17,6 +18,18 @@ export function LabFrame({ build, height = "h-[520px]" }: { build: Build; height
         <span className="size-2.5 rounded-full bg-[#febc2e]" />
         <span className="size-2.5 rounded-full bg-[#28c840]" />
         <span className="ml-3 truncate font-mono text-[11px] text-white/50">{build.title} · {t("viewer.sandbox")}</span>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("viewer.close")}
+            title={t("viewer.close")}
+            className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 font-mono text-[11px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <X className="size-3.5" />
+            <span className="hidden sm:inline">{t("viewer.close")}</span>
+          </button>
+        )}
       </div>
       {/* key = id: the document is mounted exactly once, so clicks inside never trigger a reload. */}
       <iframe key={build.id} title={build.title} sandbox="allow-scripts" srcDoc={build.html} className={`${height} w-full bg-night-950`} />

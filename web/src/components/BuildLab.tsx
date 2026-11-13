@@ -83,6 +83,14 @@ function Lab() {
   const markerAt = raw.indexOf(PLAN_MARKER);
   const streamingHtml = markerAt >= 0 ? raw.slice(0, markerAt) : raw;
 
+  // Back to the empty lab: no prototype, no idea, nothing streaming.
+  const close = () => {
+    setCurrent(null);
+    setRaw("");
+    setIdea("");
+    setState({ status: "idle" });
+  };
+
   const open = async (id: string) => {
     const b = await getBuild(id);
     if (b) {
@@ -208,7 +216,7 @@ function Lab() {
 
       {state.status !== "running" && current && (
         <div className="mt-2 space-y-2">
-          <LabFrame build={current} />
+          <LabFrame build={current} onClose={close} />
           <div className="min-w-0 rounded-[1.25rem] border border-white/5 bg-night-950/60 p-5 md:p-7">
             {current.plan && <Plan text={current.plan} />}
             <LabActions build={current} onUnlocked={() => {

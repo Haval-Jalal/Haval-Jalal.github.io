@@ -208,6 +208,7 @@ const sv = {
 
   // Lab viewer / page
   "viewer.sandbox": "sandlåda",
+  "viewer.close": "Stäng",
   "viewer.download_html": "Ladda ner HTML",
   "viewer.download_code": "Ladda ner koden",
   "viewer.copied": "Länk kopierad",
@@ -549,6 +550,7 @@ const en: Record<keyof typeof sv, string> = {
   "gallery.open": "Open the prototype",
 
   "viewer.sandbox": "sandbox",
+  "viewer.close": "Close",
   "viewer.download_html": "Download HTML",
   "viewer.download_code": "Download the code",
   "viewer.copied": "Link copied",
