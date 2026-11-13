@@ -32,14 +32,14 @@ export default function Contact() {
           whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
           variants={stagger}
-          className="mx-auto max-w-3xl text-center"
+          className="max-w-2xl"
         >
           <m.p variants={reveal} className="font-mono text-xs uppercase tracking-[0.22em] text-ember-300">
             {t("contact.eyebrow")}
           </m.p>
           <m.h2
             variants={reveal}
-            className="mt-4 text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.025em] md:text-6xl"
+            className="mt-4 text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.025em] md:text-5xl"
           >
             {t("contact.title")} <span className="text-ember-300">{t("contact.title_accent")}</span>
           </m.h2>
@@ -53,7 +53,7 @@ export default function Contact() {
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
           variants={stagger}
-          className="mx-auto mt-14 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          className={`mt-14 grid gap-3 sm:grid-cols-2 ${links.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}
         >
           {links.map(({ icon: Icon, label, href, sub }) => (
             <m.li key={label} variants={reveal}>
@@ -142,7 +142,7 @@ function ContactForm({ bookable }: { bookable: boolean }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="panel-tile mx-auto mt-10 max-w-4xl rounded-3xl p-6 md:p-8"
+      className="panel-tile mt-6 rounded-3xl p-6 md:p-8"
     >
       {status === "done" ? (
         <div className="py-6 text-center">
