@@ -30,7 +30,7 @@ public class AgentFunction(AgentService agent, AgentGuard guard, AdminGate gate,
         return new OkObjectResult(new { mode });
     }
 
-    // Digital Haval: small JSON round-trip, no streaming needed for short answers.
+    // Javal (chat): small JSON round-trip, no streaming needed for short answers.
     [Function("AgentChat")]
     public async Task<IActionResult> Chat(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "agent/chat")] HttpRequest req,

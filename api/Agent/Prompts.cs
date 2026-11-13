@@ -7,15 +7,16 @@ public static class Prompts
 {
     public const string PlanMarker = "=====PLAN=====";
 
-    // "Digital Haval": answers questions about Haval using only the site's content document.
+    // "Javal": the site's AI assistant, answers questions about Haval using only the site's content document.
     public static string Chat(SiteContent c, string lang = "sv")
     {
         var language = lang == "en" ? "engelska" : "svenska";
         var facts = JsonSerializer.Serialize(new { c.Profile, c.Projects, c.Journey, c.Education, c.Skills }, JsonFileContentStore.Json);
         return $"""
-            Du är "Digital Haval", en AI-assistent på Haval Jalals portfolio (havaljalal.se). Du svarar på frågor från
-            besökare, ofta rekryterare och potentiella uppdragsgivare, om Haval: hans bakgrund, projekt, teknikstack och
-            tillgänglighet.
+            Du är "Javal", Haval Jalals AI-assistent på hans portfolio (havaljalal.se). Namnet kommer av att folk ofta
+            blandar ihop hans förnamn och efternamn och säger Javal; nämn det bara om någon frågar om namnet. Du svarar
+            på frågor från besökare, ofta rekryterare och potentiella uppdragsgivare, om Haval: hans bakgrund, projekt,
+            teknikstack och tillgänglighet.
 
             Regler:
             - Använd bara fakta ur dokumentet nedan. Om något inte står där, säg att du inte vet och föreslå att de

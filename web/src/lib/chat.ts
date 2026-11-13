@@ -5,7 +5,7 @@ import { trackEvent } from "./beacon";
 const CHAT_KEY = "hj_chat";
 const OPEN_EVENT = "hj:agent-open";
 
-// One conversation with Digital Haval, shared by the floating agent and the Build Lab card.
+// One conversation with Javal (the AI assistant), shared by the floating agent and the Build Lab card.
 // History lives in localStorage so it survives reloads.
 export function useDigitalHaval() {
   const [messages, setMessages] = useState<ChatMsg[]>(() => {

@@ -292,13 +292,13 @@ export default function AgentWidget() {
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             role="dialog"
-            aria-label="Digital Haval"
+            aria-label="Javal"
             className="panel-glass pointer-events-auto mx-3 mb-3 flex max-h-[min(70vh,560px)] flex-col overflow-hidden rounded-3xl text-fg shadow-2xl shadow-black/60 sm:mx-0 sm:mb-4 sm:w-[380px]"
           >
             <header className="flex items-center gap-3 border-b border-white/5 px-4 py-3">
               <span className="relative grid place-items-center"><span className="absolute inset-[5px] rounded-full bg-[#0b0908]" aria-hidden="true" /><Agent3D mood={mood} size={44} className="relative" /></span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">Digital Haval</p>
+                <p className="text-sm font-semibold">Javal</p>
                 <p className="truncate text-[11px] text-fg-muted">{busy ? t("chat.thinking") : t("agent.sub")}</p>
               </div>
               {messages.length > 0 && (
@@ -410,7 +410,7 @@ export default function AgentWidget() {
                 transition={{ duration: 0.2 }}
                 className="mr-3 hidden overflow-hidden whitespace-nowrap rounded-full border border-white/10 bg-night-900/90 px-3.5 py-2 text-sm text-fg backdrop-blur sm:block"
               >
-                Digital Haval
+                Javal
               </m.span>
             )}
           </AnimatePresence>
@@ -436,7 +436,7 @@ export function AgentTeaser() {
           <MessageCircle className="size-6" strokeWidth={1.75} />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-fg">Digital Haval</p>
+          <p className="font-semibold text-fg">Javal</p>
           <p className="text-sm text-fg-muted">{t("agent.teaser")}</p>
         </div>
       </div>

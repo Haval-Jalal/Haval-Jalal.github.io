@@ -13,7 +13,7 @@ export function lowPower(): boolean {
   return (navigator.hardwareConcurrency ?? 8) <= 4 || window.matchMedia("(pointer: coarse)").matches;
 }
 
-// Digital Haval as a little 3D character: a glossy dark sphere with an ember core, big glowing
+// Javal (the site's AI assistant) as a little 3D character: a glossy dark sphere with an ember core, big glowing
 // eyes that look at the pointer, a rotating ring of light, squash-and-stretch when touched,
 // particles when it thinks and pulses when it speaks. Falls back to the SVG face without WebGL.
 // A tiny studio for the reflections: warm ember panels, one cool panel, a thin white strip, dark otherwise.

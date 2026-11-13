@@ -314,7 +314,7 @@ type ActualCost = {
   error?: string | null;
 };
 
-const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Digital Haval (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)", pitch: "Rekryterarläge, utkast (Sonnet 5.5)", translate: "Översättning av innehåll (Sonnet 5.5)", draft: "Skrivhjälp i admin (Sonnet 5.5)" };
+const FEATURE_LABEL: Record<string, string> = { build: "Build Lab (Opus 5.5)", chat: "Javal (Sonnet 5.5)", cvpolish: "CV-byggaren, AI-text (Sonnet 5.5)", pitch: "Rekryterarläge, utkast (Sonnet 5.5)", translate: "Översättning av innehåll (Sonnet 5.5)", draft: "Skrivhjälp i admin (Sonnet 5.5)" };
 const MODEL_LABEL = (m: string) => (m === "övrigt" ? "Övrigt" : m.replace("claude-", "").replace(/-/g, " "));
 const usd = (n: number) => `${n.toFixed(n < 1 ? 3 : 2)} USD`;
 const tok = (n: number) => n.toLocaleString("sv-SE");

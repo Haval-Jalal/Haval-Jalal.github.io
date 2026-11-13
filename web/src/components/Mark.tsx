@@ -1,5 +1,5 @@
 // The site mark: a small glowing ember, the same glow as the Nu dot in the nav and the core of
-// Digital Haval. Used wherever the name needs a mark: nav, Haval OS, admin, pitch pages.
+// Javal, the AI assistant. Used wherever the name needs a mark: nav, Haval OS, admin, pitch pages.
 export function Mark({ size = 10, className = "" }: { size?: number; className?: string }) {
   return (
     <span
