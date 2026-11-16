@@ -375,7 +375,7 @@ export default function AgentWidget() {
         )}
       </AnimatePresence>
 
-      <div className="pointer-events-auto flex items-end justify-end gap-3 px-4 pb-4 sm:p-0">
+      <div className="pointer-events-auto flex origin-bottom-right scale-[0.72] items-end justify-end gap-3 px-4 pb-4 sm:scale-100 sm:p-0">
         <AnimatePresence>
           {bubble && !open && (
             <m.button

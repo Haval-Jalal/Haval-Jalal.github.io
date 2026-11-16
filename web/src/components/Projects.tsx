@@ -34,7 +34,7 @@ export default function Projects() {
     >
       <Rail count={projects.length}>
         {projects.map((p) => (
-          <m.li key={p.slug} id={`projekt-${p.slug}`} variants={reveal} className="flex w-[82vw] max-w-sm shrink-0 snap-start scroll-mt-24 md:w-[calc((100%-1.25rem)/2)] md:max-w-none xl:w-[calc((100%-2.5rem)/3)]">
+          <m.li key={p.slug} id={`projekt-${p.slug}`} variants={reveal} className="flex w-full shrink-0 snap-start scroll-mt-24 md:w-[calc((100%-1.25rem)/2)] xl:w-[calc((100%-2.5rem)/3)]">
             <ProjectCard project={p} onOpen={(index) => setLightbox({ project: p, index })} />
           </m.li>
         ))}
@@ -80,43 +80,72 @@ function Rail({ count, children }: { count: number; children: React.ReactNode })
     el.scrollBy({ left: dir * (el.clientWidth + gap), behavior: "smooth" });
   };
 
+  const goTo = (i: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const gap = parseFloat(getComputedStyle(el).columnGap) || 0;
+    el.scrollTo({ left: i * (el.clientWidth + gap), behavior: "smooth" });
+  };
+
+  const arrows = (size: string) => (
+    <div className="flex gap-2">
+      <button
+        type="button"
+        onClick={() => page(-1)}
+        disabled={pos.atStart}
+        className={`grid ${size} place-items-center rounded-full border border-white/10 text-fg transition-colors hover:border-ember-400/50 disabled:opacity-30 disabled:hover:border-white/10`}
+        aria-label={t("projects.prev")}
+      >
+        <ChevronLeft className="size-5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => page(1)}
+        disabled={pos.atEnd}
+        className={`grid ${size} place-items-center rounded-full border border-white/10 text-fg transition-colors hover:border-ember-400/50 disabled:opacity-30 disabled:hover:border-white/10`}
+        aria-label={t("projects.next")}
+      >
+        <ChevronRight className="size-5" />
+      </button>
+    </div>
+  );
+
   return (
     <div className="relative">
+      {/* Phone: dots + arrows above the rail, so "more to the right" is clear before the tall card
+          pushes the controls off-screen. Desktop keeps its own counter below (unchanged). */}
+      {pos.pages > 1 && (
+        <div className="mb-5 flex items-center justify-between md:hidden">
+          <div className="flex items-center gap-1.5" aria-hidden>
+            {Array.from({ length: pos.pages }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`${i + 1} / ${pos.pages}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === pos.index ? "w-6 bg-ember-400" : "w-1.5 bg-white/20"}`}
+              />
+            ))}
+          </div>
+          {arrows("size-9")}
+        </div>
+      )}
       <m.ul
         ref={ref}
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: "-60px" }}
         variants={stagger}
-        className="-mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain px-5 pb-4 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+        className="-mx-5 flex snap-x snap-mandatory scroll-pl-5 gap-5 overflow-x-auto overscroll-x-contain px-5 pb-4 [scrollbar-width:none] md:mx-0 md:scroll-pl-0 md:px-0 [&::-webkit-scrollbar]:hidden"
         aria-label={t("projects.eyebrow")}
       >
         {children}
       </m.ul>
-      <div className="mt-2 flex items-center justify-between">
+      <div className="mt-2 hidden items-center justify-between md:flex">
         <p className="font-mono text-xs text-fg-faint" aria-live="polite">
           {pos.index + 1} / {pos.pages}
         </p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => page(-1)}
-            disabled={pos.atStart}
-            className="grid size-10 place-items-center rounded-full border border-white/10 text-fg transition-colors hover:border-ember-400/50 disabled:opacity-30 disabled:hover:border-white/10"
-            aria-label={t("projects.prev")}
-          >
-            <ChevronLeft className="size-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => page(1)}
-            disabled={pos.atEnd}
-            className="grid size-10 place-items-center rounded-full border border-white/10 text-fg transition-colors hover:border-ember-400/50 disabled:opacity-30 disabled:hover:border-white/10"
-            aria-label={t("projects.next")}
-          >
-            <ChevronRight className="size-5" />
-          </button>
-        </div>
+        {arrows("size-10")}
       </div>
     </div>
   );

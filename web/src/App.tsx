@@ -79,7 +79,7 @@ export default function App() {
     : "border border-ink/15 bg-sand-50/50 text-ink hover:bg-sand-50";
 
   return (
-    <div className={`grain ${dark ? "bg-night-950" : ""}`}>
+    <div className={`grain overflow-x-clip ${dark ? "bg-night-950" : ""}`}>
       <Nav soundOn={soundOn} onToggleSound={toggleSound} dark={dark} />
 
       <section className="relative min-h-[140vh] max-md:pb-40">
@@ -109,7 +109,7 @@ export default function App() {
             </m.p>
             <m.h1
               variants={fade}
-              className={`text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.03em] md:text-7xl ${
+              className={`text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.03em] [overflow-wrap:break-word] md:text-7xl md:leading-[1.02] ${
                 dark ? "text-white" : "text-ink"
               }`}
             >
