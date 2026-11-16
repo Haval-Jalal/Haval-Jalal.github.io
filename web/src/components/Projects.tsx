@@ -116,13 +116,14 @@ function Rail({ count, children }: { count: number; children: React.ReactNode })
           pushes the controls off-screen. Desktop keeps its own counter below (unchanged). */}
       {pos.pages > 1 && (
         <div className="mb-5 flex items-center justify-between md:hidden">
-          <div className="flex items-center gap-1.5" aria-hidden>
+          <div className="flex items-center gap-1.5" role="group" aria-label={t("projects.eyebrow")}>
             {Array.from({ length: pos.pages }).map((_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => goTo(i)}
-                aria-label={`${i + 1} / ${pos.pages}`}
+                aria-label={`${t("projects.goto")} ${i + 1}`}
+                aria-current={i === pos.index ? "true" : undefined}
                 className={`h-1.5 rounded-full transition-all duration-300 ${i === pos.index ? "w-6 bg-ember-400" : "w-1.5 bg-white/20"}`}
               />
             ))}
