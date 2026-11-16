@@ -167,7 +167,7 @@ function TabStrip({ view, onSelect }: { view: View; onSelect: (v: View) => void 
           key={key}
           type="button"
           onClick={() => onSelect(key)}
-          className={`pointer-events-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs ${
+          className={`pointer-events-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2.5 text-xs ${
             key === view ? "bg-white/[0.08] text-fg" : "text-fg-muted"
           }`}
         >
