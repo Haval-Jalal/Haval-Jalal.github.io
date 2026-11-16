@@ -128,6 +128,7 @@ const sv = {
   "projects.close": "Stäng",
   "projects.prev": "Föregående",
   "projects.next": "Nästa",
+  "projects.goto": "Gå till projekt",
   "projects.images_alt": "Bilder",
 
   // Journey / Stack
@@ -474,6 +475,7 @@ const en: Record<keyof typeof sv, string> = {
   "projects.close": "Close",
   "projects.prev": "Previous",
   "projects.next": "Next",
+  "projects.goto": "Go to project",
   "projects.images_alt": "Images",
 
   "journey.eyebrow": "The journey",
