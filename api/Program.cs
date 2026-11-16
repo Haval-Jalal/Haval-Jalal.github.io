@@ -16,6 +16,9 @@ var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
 
+// SWA globalHeaders don't reach the Functions-proxied /api/* responses; add nosniff here.
+builder.UseMiddleware<HavalApi.SecurityHeadersMiddleware>();
+
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("github", client =>
 {
